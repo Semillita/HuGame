@@ -60,6 +60,10 @@ public class Shader {
 		}
 	}
 	
+	public int getProgramID() {
+		return shaderProgramID;
+	}
+	
 	public void compile() {
 		int vertexShaderID, fragmentShaderID;
 		
@@ -88,6 +92,7 @@ public class Shader {
 		}
 		
 		shaderProgramID = glCreateProgram();
+		System.out.println("Shader program ID: " + shaderProgramID);
 		glAttachShader(shaderProgramID, vertexShaderID);
 		glAttachShader(shaderProgramID, fragmentShaderID);
 		glLinkProgram(shaderProgramID);

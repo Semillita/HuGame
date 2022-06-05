@@ -26,9 +26,8 @@ public class HuGame {
 
 	private static Window window;
 	private static Input input;
-	private static ApplicationListener listener;
-	
 	private static Renderer renderer;
+	private static ApplicationListener listener;
 	
 	public static void start(ApplicationListener listener, WindowConfiguration config) {
 		create(listener, config);
@@ -38,6 +37,10 @@ public class HuGame {
 	
 	public static Input getInput() {
 		return input;
+	}
+	
+	public static Renderer getRenderer() {
+		return renderer;
 	}
 	
 	private static void create(ApplicationListener listener, WindowConfiguration config) {
@@ -54,6 +57,8 @@ public class HuGame {
 		
 		HuGame.listener = listener;
 		listener.onCreate();
+		
+		renderer = new Renderer();
 	}
 	
 	private static void mainloop() {
