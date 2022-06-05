@@ -16,6 +16,12 @@ import org.lwjgl.opengl.GLDebugMessageCallbackI;
 import io.semillita.hugame.graphics.material.Materials;
 import io.semillita.hugame.util.Transform;
 
+import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
+import static org.lwjgl.opengl.GL11.GL_UNSIGNED_INT;
+import static org.lwjgl.opengl.GL11.glDrawElements;
+import static org.lwjgl.opengl.GL20.glDisableVertexAttribArray;
+import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
+import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL43.*;
 
 /** Renderer master class for rendering all different components */
@@ -30,6 +36,7 @@ public class Renderer {
 	private Map<Model, List<Transform>> modelDrawQueue;
 	private Camera camera;
 	private Shader instanceShader;
+	private Shader batchShader;
 	
 	private float[] transformArray;
 	
@@ -44,6 +51,8 @@ public class Renderer {
 		camera = new Camera(new Vector3f(0, 20, 20));
 		instanceShader = new Shader("/shaders/instance_shader.glsl");
 		instanceShader.compile();
+		batchShader = new Shader("/shaders/batch_shader.glsl");
+		batchShader.compile();
 		
 		System.out.println("Vertex attributes defined");
 	
@@ -102,10 +111,10 @@ public class Renderer {
 			// Uploads projection and view matrices to the shader
 			GLUtils.uploadMatricesToShader(camera, instanceShader);
 			activateAndBindTextures(textures);
-			uploadTexturesToShader(getTextureSlotArray(textures.size()));
+			uploadTexturesToShader(getTextureSlotArray(textures.size()), instanceShader);
 			
 			glBindVertexArray(vaoID);
-			//enableVertexAttribArrays(0, 1, 2, 3, 4, 5, 6, 7);
+			enableVertexAttribArrays(0, 1, 2, 3, 4, 5, 6, 7);
 			
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
 			
@@ -116,7 +125,7 @@ public class Renderer {
 			
 			glDrawElementsInstanced(GL_TRIANGLES, model.getIndexAmount(), GL_UNSIGNED_INT, 0, transforms.size());
 			
-			//disableVertexAttribArrays(0, 1, 2, 3, 4, 5, 6, 7);
+			disableVertexAttribArrays(0, 1, 2, 3, 4, 5, 6, 7);
 			glBindVertexArray(0);
 			unbindTextures(model.getTextures());
 			
@@ -126,13 +135,30 @@ public class Renderer {
 			
 			camera.adjustProjection();
 		}
-//		IntBuffer buffer = BufferUtils.createIntBuffer(1);
-//		buffer.wrap(new int[] {1});
-//		buffer.flip();
-//		
-//		int handle = glGenBuffers();
-//		glBufferData(handle, buffer, GL_SHADER_STORAGE_BUFFER);
-//		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, handle);
+		
+	}
+	
+	void renderBatch(Batch batch) {
+		GLUtils.fillVBO(batch.getVboID(), batch.getVertices());
+		batch.getShader().use();
+		GLUtils.uploadMatricesToShader(batch.getCamera(), batch.getShader());
+	
+		activateAndBindTextures(batch.getTextures());
+		uploadTexturesToShader(getTextureSlotArray(batch.getTextures().size() + 1), batch.getShader());
+		
+		glBindVertexArray(batch.getVaoID());
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		
+		glDrawElements(GL_TRIANGLES, batch.getTextures().size() * 6, GL_UNSIGNED_INT, 0);
+
+		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
+		
+		glBindVertexArray(0);
+
+		unbindTextures(batch.getTextures());
+		batch.getShader().detach();
 	}
 	
 	private void activateAndBindTextures(List<Texture> textures) {
@@ -142,8 +168,8 @@ public class Renderer {
 		}
 	}
 	
-	private void uploadTexturesToShader(int[] textureSlots) {
-		instanceShader.uploadTextureArray("uTextures", textureSlots);
+	private void uploadTexturesToShader(int[] textureSlots, Shader shader) {
+		shader.uploadTextureArray("uTextures", textureSlots);
 	}
 	
 	private void unbindTextures(List<Texture> textures) {

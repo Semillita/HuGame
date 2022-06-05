@@ -5,14 +5,19 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import io.semillita.hugame.core.ApplicationListener;
 import io.semillita.hugame.core.HuGame;
+import io.semillita.hugame.graphics.Batch;
+import io.semillita.hugame.graphics.Camera;
 import io.semillita.hugame.graphics.Model;
 import io.semillita.hugame.graphics.ModelBuilder;
+import io.semillita.hugame.graphics.OrthographicCamera;
 import io.semillita.hugame.graphics.Renderer;
+import io.semillita.hugame.graphics.Shader;
 import io.semillita.hugame.graphics.Texture;
 import io.semillita.hugame.graphics.Textures;
 import io.semillita.hugame.graphics.material.Material;
@@ -30,23 +35,22 @@ public class Application extends ApplicationListener {
 		HuGame.start(new Application(), new WindowConfiguration().width(960).height(540).title("Hugo").x(500).y(300).decorated(true));
 	}
 
-	private Renderer renderer;
+//	private Renderer renderer;
 	private Model cubeModel;
-	private Transform cubeTransform;
-	
-	private Transform[] transforms;
 	
 	private Texture[] grassSides;
+	private Texture groundTexture;
 	
-	private Model groundModel;
-	private Transform groundTransform;
-
 	private Model playerModel;
 	private Transform playerTransform;
 	
 	Material playerMat;
 	
 	float playerX = 0, playerZ = 0;
+	
+	private Batch batch;
+	private Camera camera2D;
+	private Shader shader;
 	
 	@Override
 	public void onCreate() {
@@ -60,20 +64,10 @@ public class Application extends ApplicationListener {
 		grassSides[4] = Textures.get("/grass_left.png");
 		grassSides[5] = Textures.get("/grass_right.png");
 		
+		groundTexture = Textures.get("/ground.png");
+		
 		builder.cube(grassSides[0], grassSides[1], grassSides[2], grassSides[3], grassSides[4], grassSides[5]);
 		cubeModel = builder.generate();
-		
-		transforms = new Transform[64];
-		
-		for(int x = 0; x < 8; x++) {
-			for (int y = 0; y < 8; y++) {
-				float xx = -100 + x * 20;
-				float yy = -50 + y * 20;
-				
-				Transform transform = new Transform(new Vector3f(xx, yy, 0), new Vector3f(0, 0, 0), new Vector3f(1, 1, 1));
-				transforms[x * 8 + y] = transform;
-			}
-		}
 		
 		Texture side = Textures.get("/grass_bottom.png");
 		builder.cube(side, side, side, side, side, side);
@@ -81,11 +75,18 @@ public class Application extends ApplicationListener {
 		playerTransform = new Transform(new Vector3f(playerX, 1, playerZ), new Vector3f(0, 0, 0), new Vector3f(1, 2, 1));
 		
 		playerMat = Materials.get(new MaterialCreateInfo(new Vector3f(1, 0, 0)));
-		renderer = new Renderer();
+//		renderer = new Renderer();
+		
+		batch = new Batch();
+		camera2D = new OrthographicCamera(new Vector2f(0, 0));
+		shader = new Shader("/shaders/batch_shader.glsl");
+		shader.compile();
 	}
 
 	@Override
 	public void onRender() {
+		final Renderer renderer = HuGame.getRenderer();
+		
 		List<Transform> cubeTransforms = new ArrayList<>();
 		
 		for (int x = (int) playerX - 12; x < playerX + 12; x++) {
@@ -118,6 +119,29 @@ public class Application extends ApplicationListener {
 		playerTransform.position.x = playerX;
 		playerTransform.position.z = playerZ;
 		playerTransform.update();
+		
+		// Render 2D
+		batch.useCamera(camera2D);
+		batch.submitShader(shader);
+		batch.begin();
+		
+		for (int i = 0; i < 10; i++) {
+			batch.drawQuad(groundTexture, i * 100, i * 100, 100, 100);
+		}
+		
+		for (int i = 0; i < 10; i++) {
+			batch.drawQuad(groundTexture, 200 + i * 100, i * 100, 100, 100);
+		}
+		
+		for (int i = 0; i < 10; i++) {
+			batch.drawQuad(groundTexture, 400 + i * 100, i * 100, 100, 100);
+		}
+		
+		for (int i = 0; i < 10; i++) {
+			batch.drawQuad(groundTexture, 600 + i * 100, i * 100, 100, 100);
+		}
+		
+		batch.end();
 	}
 
 	@Override

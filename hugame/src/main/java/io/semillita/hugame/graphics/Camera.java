@@ -6,7 +6,7 @@ import org.joml.Vector3f;
 
 public class Camera {
 
-	private Matrix4f projectionMatrix, viewMatrix;
+	protected Matrix4f projectionMatrix, viewMatrix;
 	public Vector3f position;
 	
 	public Camera(Vector3f position) {
