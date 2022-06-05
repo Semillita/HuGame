@@ -213,45 +213,6 @@ public class Batch {
 		textures.clear();
 		idx = 0;
 	}
-
-	private void useShader(Shader shader) {
-		shader.use();
-	}
-	
-	private void fillVertexBuffer(int vboID, float[] vertices) {
-		glBindBuffer(GL_ARRAY_BUFFER, vboID);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, vertices);
-	}
-	
-	private void uploadMatricesToShader(Camera camera, Shader shader) {
-		shader.uploadMat4f("uProjection", camera.getProjectionMatrix());
-		shader.uploadMat4f("uView", camera.getViewMatrix());
-	}
-	
-	private void activateAndBindTextures(List<Texture> textures) {
-		for (int textureIndex = 0; textureIndex < textures.size(); textureIndex++) {
-			glActiveTexture(GL_TEXTURE0 + textureIndex);
-			textures.get(textureIndex).bind();
-		}
-	}
-	
-	private void uploadTexturesToShader(int[] textureSlots) {
-		shader.uploadTextureArray("uTextures", textureSlots);
-	}
-	
-	private void unbindTextures(List<Texture> textures) {
-		for(var texture : textures) {
-			texture.unbind();
-		}
-	}
-	
-	private int[] getTextureSlotArray(int size) {
-		int[] textureSlots = new int[size];
-		for (int i = 0; i < size; i++) {
-			textureSlots[i] = i;
-		}
-		return textureSlots;
-	}
 	
 	private int createVAO() {
 		var vaoID = glGenVertexArrays();
