@@ -54,17 +54,7 @@ public class Batch {
 		vboID = createVBO();
 		createEBO();
 
-		glVertexAttribPointer(0, POSITION_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, POSITION_OFFSET);
-		glEnableVertexAttribArray(0);
-
-		glVertexAttribPointer(1, COLOR_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, COLOR_OFFSET);
-		glEnableVertexAttribArray(1);
-
-		glVertexAttribPointer(2, TEX_COORDS_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_COORDS_OFFSET);
-		glEnableVertexAttribArray(2);
-
-		glVertexAttribPointer(3, TEX_ID_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_ID_OFFSET);
-		glEnableVertexAttribArray(3);
+		setVertexAttribPointers();
 	}
 
 	public int getVaoID() {
@@ -92,7 +82,6 @@ public class Batch {
 	}
 	
 	public void begin() {
-		System.out.println("Batch begin");
 		idx = 0;
 		textures = new ArrayList<>();
 	}
@@ -102,7 +91,6 @@ public class Batch {
 	}
 
 	public void drawQuad(Texture texture, int x, int y, int width, int height) {
-		// Check if any limit is reached
 		if (idx / 40 >= maxQuadCount || textures.size() >= textureSlotAmount - 1) {
 			flush();
 		}
@@ -206,8 +194,6 @@ public class Batch {
 	}
 
 	public void flush() {
-		System.out.println("Batch flush");
-		
 		HuGame.getRenderer().renderBatch(this);
 		
 		textures.clear();
@@ -242,6 +228,20 @@ public class Batch {
 
 	private int[] getQuadIndices(int quadOffset) {
 		return Arrays.asList(3, 2, 0, 0, 2, 1).stream().mapToInt(index -> index + quadOffset).toArray();
+	}
+	
+	private void setVertexAttribPointers() {
+		glVertexAttribPointer(0, POSITION_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, POSITION_OFFSET);
+		glEnableVertexAttribArray(0);
+
+		glVertexAttribPointer(1, COLOR_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, COLOR_OFFSET);
+		glEnableVertexAttribArray(1);
+
+		glVertexAttribPointer(2, TEX_COORDS_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_COORDS_OFFSET);
+		glEnableVertexAttribArray(2);
+
+		glVertexAttribPointer(3, TEX_ID_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_ID_OFFSET);
+		glEnableVertexAttribArray(3);
 	}
 	
 }
