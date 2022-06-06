@@ -10,12 +10,8 @@ import org.lwjgl.opengl.GL40;
 import org.lwjgl.opengl.GL43;
 import org.lwjgl.opengl.GLUtil;
 
-import io.semillita.hugame.annotations.WindowBuild;
 import io.semillita.hugame.graphics.Renderer;
 import io.semillita.hugame.input.Input;
-import io.semillita.hugame.annotations.OnCreate;
-import io.semillita.hugame.annotations.OnRender;
-import io.semillita.hugame.annotations.OnClose;
 import io.semillita.hugame.util.ClassFinder;
 import io.semillita.hugame.window.Window;
 import io.semillita.hugame.window.WindowConfiguration;

@@ -139,26 +139,26 @@ public class Renderer {
 	}
 	
 	void renderBatch(Batch batch) {
+		var textures = batch.getTextures();
+		
 		GLUtils.fillVBO(batch.getVboID(), batch.getVertices());
-		batch.getShader().use();
-		GLUtils.uploadMatricesToShader(batch.getCamera(), batch.getShader());
+		batchShader.use();
+		GLUtils.uploadMatricesToShader(batch.getCamera(), batchShader);
 	
 		activateAndBindTextures(batch.getTextures());
-		uploadTexturesToShader(getTextureSlotArray(batch.getTextures().size() + 1), batch.getShader());
+		uploadTexturesToShader(getTextureSlotArray(textures.size() + 1), batchShader);
 		
 		glBindVertexArray(batch.getVaoID());
-		glEnableVertexAttribArray(0);
-		glEnableVertexAttribArray(1);
+		enableVertexAttribArrays(0, 1);
 		
-		glDrawElements(GL_TRIANGLES, batch.getTextures().size() * 6, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, textures.size() * 6, GL_UNSIGNED_INT, 0);
 
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
+		disableVertexAttribArrays(0, 1);
 		
 		glBindVertexArray(0);
 
-		unbindTextures(batch.getTextures());
-		batch.getShader().detach();
+		unbindTextures(textures);
+		batchShader.detach();
 	}
 	
 	private void activateAndBindTextures(List<Texture> textures) {
