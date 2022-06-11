@@ -113,7 +113,7 @@ public class Window {
 	public void clear() {
 //		System.out.println("Clearing framebuffer");
 		//glClearColor(0.1f, 0.1f, 0.1f, 1);
-		glClearColor(0, 0, 0, 0);	
+		glClearColor(1, 1, 0.5f, 1);	
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 	

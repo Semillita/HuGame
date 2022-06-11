@@ -27,7 +27,7 @@ void main()
 #version 430 core
 
 struct Material {
-	vec3 ambientColor;
+	vec4 ambientColor;
 };
 
 layout(std430, binding = 0) readonly buffer materialBuffer
@@ -45,7 +45,7 @@ out vec4 color;
 
 void main()
 {
-	vec4 ambient = vec4(materials[0].ambientColor.xyz, 1.0);
-
-    color = fColor * texture(uTextures[fTexID], fTexCoords) + ambient;
+	vec4 ambient = materials[0].ambientColor;
+    //color = fColor * texture(uTextures[fTexID], fTexCoords) + ambient;
+    color = ambient;
 }

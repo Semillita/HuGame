@@ -1,6 +1,7 @@
 package io.semillita.hugame.graphics;
 
 import org.joml.Vector3f;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryStack;
 
 import io.semillita.hugame.graphics.material.Material;
@@ -18,16 +19,8 @@ public class MaterialBuffer {
 	private final int handle;
 	
 	public MaterialBuffer(List<Material> materials) {
-		System.out.println("---- Materialbuffer with " + materials.size() + " materials ----");
 		handle = createBuffer();
 		fillBuffer(materials);
-		
-//		try(MemoryStack mem = MemoryStack.stackPush()) {
-//			  FloatBuffer buffer = mem.floats(1.0f);
-//			  buffer.flip();
-//			  glBufferData(handle, buffer, GL_SHADER_STORAGE_BUFFER);
-//			  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, handle);
-//			}
 	}
 	
 	public void bind() {
@@ -40,28 +33,50 @@ public class MaterialBuffer {
 	}
 	
 	private void fillBuffer(List<Material> materials) {
-		System.out.println("Filling material buffer");
-		try(MemoryStack stack = MemoryStack.stackPush()) {
-			var buffer = stack.malloc(materials.size() * Material.SIZE_IN_BYTES);
-			int index = 0;
-			for (int i = 0; i < materials.size(); i++) {
-				var mat = materials.get(i);
-				buffer.put(index, mat.getBytes());
-				index += Material.SIZE_IN_BYTES;
+//		try(MemoryStack stack = MemoryStack.stackPush()) {
+//			int index = 0;
+//			byte[] bytes = new byte[materials.size() * Material.SIZE_IN_BYTES];
+//			System.out.println("Mat bytes");
+//			for (int i = 0; i < materials.size(); i++) {
+//				var mat = materials.get(i);
+//				var matBytes = mat.getBytes();
+//				for (int j = 0; j < matBytes.length; j++) {
+//					bytes[index] = matBytes[j];
+//					System.out.println(matBytes[j]);
+//					index++;
+//				}
+//			}
+//			var buffer = stack.bytes(bytes);
+//			
+//			System.out.println("Array");
+//			for (var b : bytes) {
+//				System.out.println(b);
+//			}
+//
+//			System.out.println("Buffer");
+//			for (int i = 0; i < 12; i++) {
+//				System.out.println(buffer.get(i));
+//			}
+//			
+//			buffer.flip();
+//			
+//			glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle);
+//			glBufferData(GL_SHADER_STORAGE_BUFFER, buffer, GL_STATIC_DRAW);
+//		}
+		
+		final var bufferSize = materials.size() * Material.SIZE_IN_BYTES;
+		final var buffer = MemoryStack.stackPush().malloc(bufferSize);
+		
+		for (var mat : materials) {
+			for (var b : mat.getBytes()) {
+				buffer.put(b);
 			}
-			buffer.flip();
-			
-			System.out.println("Bind buffer");
-			
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle);
-			
-			System.out.println("Buffer data");
-			
-			glBufferData(GL_SHADER_STORAGE_BUFFER, buffer, GL_STATIC_DRAW);
-			
-			System.out.println("Done with buffer data");
 		}
 		
+		buffer.flip();
+		
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, buffer, GL_STATIC_DRAW);
 	}
 	
 }

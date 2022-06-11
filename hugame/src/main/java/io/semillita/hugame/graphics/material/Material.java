@@ -10,10 +10,10 @@ import io.semillita.hugame.graphics.Texture;
 
 public class Material {
 	
-	public static final int SIZE_IN_BYTES = 3 * Float.BYTES;
+	public static final int SIZE_IN_BYTES = 4 * Float.BYTES;
 	
 	private final int index;
-	private final Vector3f ambientColor;
+	private final Vector4f ambientColor;
 	
 	Material(MaterialCreateInfo createInfo, int index) {
 		this.index = index;
@@ -25,18 +25,19 @@ public class Material {
 		return index;
 	}
 	
-	public Vector3f getAmbientColor() {
+	public Vector4f getAmbientColor() {
 		return ambientColor;
 	}
 	
 	public byte[] getBytes() {
-		byte[] bytes = new byte[12];
+		byte[] bytes = new byte[16];
 		
 		//ByteBuffer.allocate(4).putFloat(ambientColor.x).putFlo
 		
 		int xBits =  Float.floatToIntBits(ambientColor.x);
 		int yBits =  Float.floatToIntBits(ambientColor.y);
 		int zBits =  Float.floatToIntBits(ambientColor.z);
+		int wBits =  Float.floatToIntBits(ambientColor.w);
 		
 	    bytes[0] = (byte) (xBits >> 24);
 	    bytes[1] = (byte) (xBits >> 16);
@@ -52,6 +53,11 @@ public class Material {
 	    bytes[9] = (byte) (zBits >> 16);
 	    bytes[10] = (byte) (zBits >> 8);
 	    bytes[11] = (byte) (zBits);
+	    
+	    bytes[12] = (byte) (wBits >> 24);
+	    bytes[13] = (byte) (wBits >> 16);
+	    bytes[14] = (byte) (wBits >> 8);
+	    bytes[15] = (byte) (wBits);
 		
 		return bytes;
 	}
