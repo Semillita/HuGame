@@ -138,6 +138,10 @@ public class Renderer {
 		
 	}
 	
+	public Camera getCamera() {
+		return camera;
+	}
+	
 	void renderBatch(Batch batch) {
 		var textures = batch.getTextures();
 		

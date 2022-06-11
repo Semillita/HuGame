@@ -88,6 +88,9 @@ public class Application extends ApplicationListener {
 	@Override
 	public void onRender() {
 		final Renderer renderer = HuGame.getRenderer();
+
+		var camera = renderer.getCamera();
+		camera.position.x += 1;
 		
 		List<Transform> cubeTransforms = new ArrayList<>();
 		
