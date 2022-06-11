@@ -44,6 +44,7 @@ public class Application extends ApplicationListener {
 	private Model playerModel;
 	private Transform playerTransform;
 	
+	Material blockMat;
 	Material playerMat;
 	
 	float playerX = 0, playerZ = 0;
@@ -74,7 +75,8 @@ public class Application extends ApplicationListener {
 		playerModel = builder.generate();
 		playerTransform = new Transform(new Vector3f(playerX, 1, playerZ), new Vector3f(0, 0, 0), new Vector3f(1, 2, 1));
 		
-		playerMat = Materials.get(new MaterialCreateInfo(new Vector3f(1, 0, 0)));
+		blockMat = Materials.get(new MaterialCreateInfo(new Vector4f(0.0f, 0.0f, 1.0f, 1.0f)));
+		playerMat = Materials.get(new MaterialCreateInfo(new Vector4f(1.0f, 0.0f, 0.0f, 1.0f)));
 //		renderer = new Renderer();
 		
 		batch = new Batch();
