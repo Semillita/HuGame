@@ -14,21 +14,36 @@ public class Camera {
 		this.projectionMatrix = new Matrix4f();
 		this.viewMatrix = new Matrix4f();
 		adjustProjection();
+		lookAt(position, new Vector3f(0, 0, 0), new Vector3f(0, 1, 0));
 	}
 	
 	public void adjustProjection() {
 		projectionMatrix.identity();
-		//projectionMatrix.ortho(0.0f, 1920, 0.0f, 1080, 0.0f, 100.0f);
-//		projectionMatrix.setPerspectiveRect(1920, 1080, 0.1f, 500f);
 		projectionMatrix.setPerspective(45, 1920 / 1080f, 0.1f, 1000f);
+	}
+	
+	public void lookInDirection(Vector3f direction) {
+		lookInDirection(position, direction, new Vector3f(0, 1, 0));
+	}
+	
+	public void lookInDirection(Vector3f direction, Vector3f up) {
+		lookInDirection(position, direction, up);
+	}
+	
+	public void lookInDirection(Vector3f position, Vector3f direction, Vector3f up) {
+		lookAt(position, new Vector3f(position).add(direction), up);
+	}
+	
+	public void lookAt(Vector3f position, Vector3f target, Vector3f up) {
+		var matrix = new Matrix4f().identity();
+		matrix.lookAt(position, target, up);
+		viewMatrix = matrix;
+	}
+	
+	public void setDirection(Vector3f direction, Vector3f up) {
+		final var matrix = new Matrix4f().identity();
 		
-		Vector3f cameraFront = new Vector3f(0.0f, 0.0f, -1.0f);
-		Vector3f cameraUp = new Vector3f(0.0f, 1.0f, 0.0f);
-		viewMatrix.identity();
-		viewMatrix.lookAt(position,
-				//cameraFront.add(position),
-				new Vector3f(0, 0, 0),
-				cameraUp);
+		matrix.lookAlong(direction.x, direction.y, direction.z, up.x, up.y, up.z);
 	}
 	
 	public Matrix4f getViewMatrix() {
@@ -45,7 +60,11 @@ public class Camera {
 	
 	public void setPosition(Vector3f position) {
 		this.position = new Vector3f(position.x, position.y, position.z);
-		adjustProjection();
+	}
+	
+	// Not used, keeping for later
+	private String vecString(Vector3f vec) {
+		return "( " + vec.x + ", " + vec.y + ", " + vec.z + " )";
 	}
 	
 }

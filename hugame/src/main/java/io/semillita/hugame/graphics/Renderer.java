@@ -45,8 +45,6 @@ public class Renderer {
 //	private FrameBuffer fb;
 	
 	public Renderer() {
-		System.out.println("New Renderer");
-		
 		modelDrawQueue = new HashMap<>();
 		camera = new Camera(new Vector3f(0, 20, 20));
 		instanceShader = new Shader("/shaders/instance_shader.glsl");
@@ -54,8 +52,6 @@ public class Renderer {
 		batchShader = new Shader("/shaders/batch_shader.glsl");
 		batchShader.compile();
 		
-		System.out.println("Vertex attributes defined");
-	
 		transformArray = new float[MAX_INSTANCES * INSTANCE_SIZE];
 		
 		// Material buffer test
@@ -111,7 +107,7 @@ public class Renderer {
 			// Uploads projection and view matrices to the shader
 			GLUtils.uploadMatricesToShader(camera, instanceShader);
 			activateAndBindTextures(textures);
-			uploadTexturesToShader(getTextureSlotArray(textures.size()), instanceShader);
+			uploadTexturesToShader(getTextureSlotArray(textures.size()), instanceShader);	
 			
 			glBindVertexArray(vaoID);
 			enableVertexAttribArrays(0, 1, 2, 3, 4, 5, 6, 7);
@@ -119,7 +115,6 @@ public class Renderer {
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
 			
 //			glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, "Test");
-			//System.out.println("Binding material buffer");
 			matBuffer.bind();
 //			glPopDebugGroup();
 			

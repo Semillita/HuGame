@@ -92,7 +92,6 @@ public class Shader {
 		}
 		
 		shaderProgramID = glCreateProgram();
-		System.out.println("Shader program ID: " + shaderProgramID);
 		glAttachShader(shaderProgramID, vertexShaderID);
 		glAttachShader(shaderProgramID, fragmentShaderID);
 		glLinkProgram(shaderProgramID);

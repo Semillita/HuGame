@@ -35,7 +35,6 @@ public class Texture {
 			System.out.println("imageBuffer is null");
 		}
 
-		System.out.println(data.buffer());
 		stbi_image_free(data.buffer());
 
 		unbind();

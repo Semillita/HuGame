@@ -43,9 +43,6 @@ private static Map<String, Set<Class<?>>> packageClasses;
 		var stream = ClassLoader.getSystemClassLoader()
 				.getResourceAsStream(packageName.replaceAll("[.]", "/"));
 		
-		System.out.println(stream);
-		
-		
 		return new BufferedReader(new InputStreamReader(stream))
 				.lines()
 				.collect(Collectors.toSet());

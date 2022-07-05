@@ -46,7 +46,7 @@ out vec4 color;
 void main()
 {
 	vec4 ambient = materials[0].ambientColor;
-    color = fColor * texture(uTextures[fTexID], fTexCoords);
+    //color = fColor * texture(uTextures[fTexID], fTexCoords);
     //color = fColor * texture(uTextures[fTexID], fTexCoords) + ambient;
-    //color = ambient;
+    color = ambient;
 }

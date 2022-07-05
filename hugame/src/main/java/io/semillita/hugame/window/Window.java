@@ -40,8 +40,6 @@ public class Window {
 		
 		handle = glfwCreateWindow(config.width, config.height, config.title, monitor, 0);
 		
-		System.out.println(handle);
-		
 		glfwSetWindowPos(handle, config.x, config.y);
 				
 		glfwMakeContextCurrent(handle);
@@ -106,19 +104,15 @@ public class Window {
 	}
 	
 	public void pollEvents() {
-//		System.out.println("Polling events");
 		glfwPollEvents();
 	}
 	
 	public void clear() {
-//		System.out.println("Clearing framebuffer");
-		//glClearColor(0.1f, 0.1f, 0.1f, 1);
 		glClearColor(1, 1, 0.5f, 1);	
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 	
 	public void swapBuffers() {
-//		System.out.println("Swapping buffers");
 		glfwSwapBuffers(handle);
 	}
 	
