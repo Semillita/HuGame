@@ -1,2 +1,2 @@
 # HuGame
-Experimental game engine
+Experimental game framework
