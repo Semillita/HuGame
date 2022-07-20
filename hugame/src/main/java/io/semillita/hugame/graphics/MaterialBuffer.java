@@ -11,7 +11,9 @@ import static org.lwjgl.opengl.GL43.*;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class MaterialBuffer {
@@ -33,40 +35,10 @@ public class MaterialBuffer {
 	}
 	
 	private void fillBuffer(List<Material> materials) {
-//		try(MemoryStack stack = MemoryStack.stackPush()) {
-//			int index = 0;
-//			byte[] bytes = new byte[materials.size() * Material.SIZE_IN_BYTES];
-//			System.out.println("Mat bytes");
-//			for (int i = 0; i < materials.size(); i++) {
-//				var mat = materials.get(i);
-//				var matBytes = mat.getBytes();
-//				for (int j = 0; j < matBytes.length; j++) {
-//					bytes[index] = matBytes[j];
-//					System.out.println(matBytes[j]);
-//					index++;
-//				}
-//			}
-//			var buffer = stack.bytes(bytes);
-//			
-//			System.out.println("Array");
-//			for (var b : bytes) {
-//				System.out.println(b);
-//			}
-//
-//			System.out.println("Buffer");
-//			for (int i = 0; i < 12; i++) {
-//				System.out.println(buffer.get(i));
-//			}
-//			
-//			buffer.flip();
-//			
-//			glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle);
-//			glBufferData(GL_SHADER_STORAGE_BUFFER, buffer, GL_STATIC_DRAW);
-//		}
-		
 		final var bufferSize = materials.size() * Material.SIZE_IN_BYTES;
 		final var buffer = MemoryStack.stackPush().malloc(bufferSize);
 		
+		int index = 0;
 		for (var mat : materials) {
 			for (var b : mat.getBytes()) {
 				buffer.put(b);

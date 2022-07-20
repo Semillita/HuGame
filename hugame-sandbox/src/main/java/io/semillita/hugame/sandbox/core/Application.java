@@ -44,8 +44,8 @@ public class Application extends ApplicationListener {
 	private Model playerModel;
 	private Transform playerTransform;
 	
-	Material blockMat;
-	Material playerMat;
+	Material blueMat;
+	Material redMat;
 	
 	float playerX = 0, playerZ = 0;
 	
@@ -75,8 +75,8 @@ public class Application extends ApplicationListener {
 		playerModel = builder.generate();
 		playerTransform = new Transform(new Vector3f(playerX, 1, playerZ), new Vector3f(0, 0, 0), new Vector3f(1, 2, 1));
 		
-		blockMat = Materials.get(new MaterialCreateInfo(new Vector4f(0.0f, 0.0f, 1.0f, 1.0f)));
-		playerMat = Materials.get(new MaterialCreateInfo(new Vector4f(1.0f, 0.0f, 0.0f, 1.0f)));
+		blueMat = Materials.get(new MaterialCreateInfo(new Vector4f(0.0f, 0.0f, 1.0f, 1.0f)));
+		redMat = Materials.get(new MaterialCreateInfo(new Vector4f(1.0f, 0.0f, 0.0f, 1.0f)));
 //		renderer = new Renderer();
 		
 		batch = new Batch();
@@ -106,11 +106,11 @@ public class Application extends ApplicationListener {
 		}
 		
 		for (var transform : cubeTransforms) {
-			renderer.draw(cubeModel, transform);
+			renderer.draw(cubeModel, transform, blueMat);
 		}
 		//renderer.draw(cubeModel, transforms[0]);
 		//renderer.draw(groundModel, groundTransform);
-		renderer.draw(playerModel, playerTransform);
+		renderer.draw(playerModel, playerTransform, redMat);
 		renderer.renderModels();
 		
 		cubeTransforms.clear();

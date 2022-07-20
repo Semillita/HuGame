@@ -42,7 +42,7 @@ public class Model {
 	private static final int VERTEX_SIZE = POSITION_SIZE + COLOR_SIZE + TEX_COORDS_SIZE + TEX_ID_SIZE;
 	private static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
 	
-	private static final int INSTANCE_SIZE = TRANSFORM_SIZE;
+	private static final int INSTANCE_SIZE = TRANSFORM_SIZE + 1;
 	private static final int INSTANCE_SIZE_BYTES = INSTANCE_SIZE * Float.BYTES;
 	
 	private static final int MAX_INSTANCES = 10000;
@@ -90,6 +90,10 @@ public class Model {
 		glVertexAttribPointer(7, TRANSFORM_COLUMN_SIZE, GL_FLOAT, false, INSTANCE_SIZE_BYTES, 3 * TRANSFORM_COLUMN_SIZE * Float.BYTES);
 		glEnableVertexAttribArray(7);
 		glVertexAttribDivisor(7, 1);
+		
+		glVertexAttribPointer(8, 1, 					GL_INT,   false, INSTANCE_SIZE_BYTES, 4 * TRANSFORM_COLUMN_SIZE * Float.BYTES);
+		glEnableVertexAttribArray(8);
+		glVertexAttribDivisor(8, 1);
 		
 		eboID = createEBO(indices);
 		

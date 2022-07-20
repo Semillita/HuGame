@@ -13,7 +13,10 @@ import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GLDebugMessageCallbackI;
 
+import io.semillita.hugame.environment.PointLight;
+import io.semillita.hugame.graphics.material.Material;
 import io.semillita.hugame.graphics.material.Materials;
+import io.semillita.hugame.graphics.opengl.LightBuffer;
 import io.semillita.hugame.util.Transform;
 
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
@@ -33,29 +36,25 @@ public class Renderer {
 	private static final int INSTANCE_SIZE = TRANSFORM_SIZE;
 	private static final int INSTANCE_SIZE_BYTES = INSTANCE_SIZE * Float.BYTES;
 	
-	private Map<Model, List<Transform>> modelDrawQueue;
+	private Map<Model, List<InstanceData>> modelInstanceData;
 	private Camera camera;
 	private Shader instanceShader;
 	private Shader batchShader;
 	
-	private float[] transformArray;
-	
 	private MaterialBuffer matBuffer;
-	
-//	private FrameBuffer fb;
+	private LightBuffer lightBuffer;
 	
 	public Renderer() {
-		modelDrawQueue = new HashMap<>();
+		modelInstanceData = new HashMap<>();
 		camera = new Camera(new Vector3f(0, 20, 20));
 		instanceShader = new Shader("/shaders/instance_shader.glsl");
 		instanceShader.compile();
 		batchShader = new Shader("/shaders/batch_shader.glsl");
 		batchShader.compile();
 		
-		transformArray = new float[MAX_INSTANCES * INSTANCE_SIZE];
-		
 		// Material buffer test
 		matBuffer = new MaterialBuffer(Materials.collect());
+		//lightBuffer = new LightBuffer(new PointLight(new Vector3f(20, 20, 20)));
 		
 		glDebugMessageCallback(new GLDebugMessageCallbackI() {
 			
@@ -68,26 +67,27 @@ public class Renderer {
 //		fb = new FrameBuffer();
 	}
 
-	public void draw(Model model, Transform transform) {
-		if (modelDrawQueue.containsKey(model)) {
-			modelDrawQueue.get(model).add(transform);
-		} else {
-			modelDrawQueue.put(model, new ArrayList<>(Arrays.asList(transform)));
+	public void draw(Model model, Transform transform, Material material) {
+		var instanceData = new InstanceData(transform, material);
+		
+		var instanceDataList = modelInstanceData.get(model);
+		if (instanceDataList == null) {
+			instanceDataList = new ArrayList<>();
+			modelInstanceData.put(model, instanceDataList);
 		}
+		instanceDataList.add(instanceData);
 	}
 	
 	public void renderModels() {
-//		System.out.println("renderModels()");
-		
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_MULTISAMPLE);
 			
-		for (var entry : modelDrawQueue.entrySet()) {
+		for (var entry : modelInstanceData.entrySet()) {
 			var model = entry.getKey();
-			var transforms = entry.getValue();
+			var instanceDataList = entry.getValue();
 			
 			// Array of floats containing the values of the transform matrices
-			var transformArray = createTransformArray(transforms);
+			var instanceDataArray = createInstanceDataArray(instanceDataList);
 			
 			// VAO of the model
 			var vaoID = model.getVAO();
@@ -100,17 +100,17 @@ public class Renderer {
 			var textures = model.getTextures();
 			
 			// Fills the per-instance VBO with the transformation matrices
-			GLUtils.fillVBO(i_vboID, transformArray);
+			GLUtils.fillVBO(i_vboID, instanceDataArray);
 			
 			instanceShader.use();
 			
 			// Uploads projection and view matrices to the shader
 			GLUtils.uploadMatricesToShader(camera, instanceShader);
 			activateAndBindTextures(textures);
-			uploadTexturesToShader(getTextureSlotArray(textures.size()), instanceShader);	
+			uploadTexturesToShader(getTextureSlotArray(textures.size()), instanceShader);
 			
 			glBindVertexArray(vaoID);
-			enableVertexAttribArrays(0, 1, 2, 3, 4, 5, 6, 7);
+			enableVertexAttribArrays(0, 1, 2, 3, 4, 5, 6, 7, 8);
 			
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
 			
@@ -118,15 +118,15 @@ public class Renderer {
 			matBuffer.bind();
 //			glPopDebugGroup();
 			
-			glDrawElementsInstanced(GL_TRIANGLES, model.getIndexAmount(), GL_UNSIGNED_INT, 0, transforms.size());
+			glDrawElementsInstanced(GL_TRIANGLES, model.getIndexAmount(), GL_UNSIGNED_INT, 0, instanceDataList.size());
 			
-			disableVertexAttribArrays(0, 1, 2, 3, 4, 5, 6, 7);
+			disableVertexAttribArrays(0, 1, 2, 3, 4, 5, 6, 7, 8);
 			glBindVertexArray(0);
 			unbindTextures(model.getTextures());
 			
 			instanceShader.detach();
 			
-			transforms.clear();
+			instanceDataList.clear();
 			
 			camera.adjustProjection();
 		}
@@ -193,13 +193,14 @@ public class Renderer {
 		return IntStream.range(0, size).toArray();
 	}
 	
-	private float[] createTransformArray(List<Transform> transforms) {
-		transformArray = new float[transforms.size() * 16];
-		for (int i = 0; i < transforms.size(); i++) {
-			var transform = transforms.get(i);
-			transform.getMatrix().get(transformArray, i * 16);
+	private float[] createInstanceDataArray(List<InstanceData> instanceData) {
+		var instanceDataArray = new float[instanceData.size() * 17];
+		for (int i = 0; i < instanceData.size(); i++) {
+			var instance = instanceData.get(i);
+			instance.transform().getMatrix().get(instanceDataArray, i * 17);
+			instanceDataArray[i * 17 + 16] = (float) instance.material().getIndex();
 		}
-		return transformArray;
+		return instanceDataArray;
 	}
 
 }
