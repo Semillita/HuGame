@@ -1,25 +1,39 @@
 package io.semillita.hugame.graphics;
 
+import java.awt.Dimension;
+
+import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
-public class OrthographicCamera extends Camera {
+public non-sealed class OrthographicCamera extends Camera {
 
-	public OrthographicCamera(Vector2f position) {
-		super(new Vector3f(position.x, position.y, 1));
+	protected Vector3f position;
+	protected Vector3f direction;
+	protected Vector3f up;
+	protected Dimension viewportSize;
+
+	public OrthographicCamera(Vector3f position, int viewportWidth, int viewportHeight) {
+		this(position, new Vector3f(0, 0, -1), new Vector3f(0, 1, 0), viewportWidth, viewportHeight);
+	}
+
+	public OrthographicCamera(Vector3f position, Vector3f direction, Vector3f up, int viewportWidth,
+			int viewportHeight) {
+		this.position = position;
+		this.direction = direction;
+		this.up = up;
+		viewportSize = new Dimension(viewportWidth, viewportHeight);
+		update();
 	}
 
 	@Override
-	public void adjustProjection() {
-		super.projectionMatrix.identity();
-		super.projectionMatrix.ortho(0.0f, 1920, 0.0f, 1080, 0.0f, 100.0f);
-		
+	public void update() {
+		super.projectionMatrix = new Matrix4f().identity().ortho(-viewportSize.width / 2f, viewportSize.width / 2f,
+				-viewportSize.height / 2f, viewportSize.height / 2f, 0.0f, 100.0f);
+
 		Vector3f cameraFront = new Vector3f(0.0f, 0.0f, -1.0f);
 		Vector3f cameraUp = new Vector3f(0.0f, 1.0f, 0.0f);
-		super.viewMatrix.identity();
-		super.viewMatrix.lookAt(super.position,
-				cameraFront.add(super.position),
-				cameraUp);
+		super.viewMatrix = new Matrix4f().identity().lookAt(position, cameraFront.add(position), cameraUp);
 	}
-	
+
 }

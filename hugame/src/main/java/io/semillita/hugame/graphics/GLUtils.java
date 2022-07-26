@@ -51,12 +51,8 @@ public class GLUtils {
 	}
 	
 	public static void uploadMatricesToShader(Camera camera, Shader shader) {
-//		System.out.println("Uploading camera matrices");
 		shader.uploadMat4f("uProjection", camera.getProjectionMatrix());
 		shader.uploadMat4f("uView", camera.getViewMatrix());
-		
-		//shader.uploadMat4f("uProjection", new Matrix4f().identity());
-		//shader.uploadMat4f("uView", new Matrix4f().identity());
 	}
 	
 }

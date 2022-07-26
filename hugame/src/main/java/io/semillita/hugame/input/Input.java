@@ -2,24 +2,46 @@ package io.semillita.hugame.input;
 
 import static org.lwjgl.glfw.GLFW.*;
 
+import java.awt.Point;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.BiConsumer;
+
+import io.semillita.hugame.core.HuGame;
 
 public class Input {
 
 	private final long windowHandle;
 	private final Map<Key, Boolean> pressedKeys;
 	
+	private Point mousePosition;
+	private Optional<BiConsumer<Integer, Integer>> maybeMouseClickListener;
+	
 	public Input(long windowHandle) {
 		this.windowHandle = windowHandle;
 		pressedKeys = new HashMap<>();
+		mousePosition = new Point(0, 0);
+		maybeMouseClickListener = Optional.empty();
 		
 		glfwSetKeyCallback(windowHandle, this::keyCallback);
 		glfwSetCursorPosCallback(windowHandle, this::mouseMoveCallback);
 	}
 	
+	public Point getMousePosition() {
+		return mousePosition;
+	}
+	
 	public boolean isKeyPressed(Key key) {
 		return pressedKeys.containsKey(key) ? pressedKeys.get(key) : false;
+	}
+	
+	public void acceptMousePosition(BiConsumer<Integer, Integer> consumer) {
+		consumer.accept(mousePosition.x, mousePosition.y);
+	}
+	
+	public void setMouseClickCallback(BiConsumer<Integer, Integer> listener) {
+		this.maybeMouseClickListener = Optional.ofNullable(listener);
 	}
 	
 	private void keyCallback(long window, int key, int scancode, int action, int mods) {
@@ -36,19 +58,20 @@ public class Input {
 	}
 	
 	private void mouseMoveCallback(long window, double x, double y) {
+		mousePosition = new Point((int) x, HuGame.getWindow().getHeight() - 1 - ((int) y));
 	}
 	
 	private void keyPressed(int glfwKeyCode) {
-		Key jFuryKey = getJFuryKeyCode(glfwKeyCode);
+		Key jFuryKey = getHuGameKeyCode(glfwKeyCode);
 		pressedKeys.put(jFuryKey, true);
 	}
 	
 	private void keyReleased(int key) {
-		Key jFuryKey = getJFuryKeyCode(key);
+		Key jFuryKey = getHuGameKeyCode(key);
 		pressedKeys.put(jFuryKey, false);
 	}
 	
-	public Key getJFuryKeyCode (int glfwKeyCode) {
+	public Key getHuGameKeyCode (int glfwKeyCode) {
 		switch (glfwKeyCode) {
 		case GLFW_KEY_SPACE:
 			return Key.SPACE;

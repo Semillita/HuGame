@@ -31,6 +31,10 @@ public class HuGame {
 		destroy();
 	}
 	
+	public static Window getWindow() {
+		return window;
+	}
+	
 	public static Input getInput() {
 		return input;
 	}

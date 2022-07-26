@@ -37,16 +37,19 @@ public class Renderer {
 	private static final int INSTANCE_SIZE_BYTES = INSTANCE_SIZE * Float.BYTES;
 	
 	private Map<Model, List<InstanceData>> modelInstanceData;
-	private Camera camera;
+	private PerspectiveCamera camera;
 	private Shader instanceShader;
 	private Shader batchShader;
 	
 	private MaterialBuffer matBuffer;
 	private LightBuffer lightBuffer;
 	
+	//TODO: Renderer::getBatch();
+	
 	public Renderer() {
 		modelInstanceData = new HashMap<>();
-		camera = new Camera(new Vector3f(0, 20, 20));
+		camera = new PerspectiveCamera(new Vector3f(0, 20, 20));
+		camera.lookAt(new Vector3f(0, 0, 0));
 		instanceShader = new Shader("/shaders/instance_shader.glsl");
 		instanceShader.compile();
 		batchShader = new Shader("/shaders/batch_shader.glsl");
@@ -128,16 +131,19 @@ public class Renderer {
 			
 			instanceDataList.clear();
 			
-			camera.adjustProjection();
+			camera.update();
 		}
 		
 	}
 	
-	public Camera getCamera() {
+	public PerspectiveCamera getCamera() {
 		return camera;
 	}
 	
 	void renderBatch(Batch batch) {
+		glDisable(GL_DEPTH_TEST);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		
 		var textures = batch.getTextures();
 		
 		GLUtils.fillVBO(batch.getVboID(), batch.getVertices());

@@ -30,6 +30,10 @@ public class Batch {
 	private static final int VERTEX_SIZE = POSITION_SIZE + COLOR_SIZE + TEX_COORDS_SIZE + TEX_ID_SIZE;
 	private static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
 
+	public static Shader getDefaultShader() {
+		return new Shader("/shaders/batch_shader.glsl");
+	}
+	
 	private final int textureSlotAmount;
 	
 	private int vaoID;
@@ -37,7 +41,7 @@ public class Batch {
 
 	private int maxQuadCount = 1000;
 	private float[] vertices;
-	private Camera camera;
+	private Camera2D camera;
 	private Shader shader;
 	private List<Texture> textures;
 
@@ -56,7 +60,7 @@ public class Batch {
 
 		setVertexAttribPointers();
 	}
-
+	
 	public int getVaoID() {
 		return vaoID;
 	}
@@ -185,7 +189,7 @@ public class Batch {
 		idx += 10;
 	}
 
-	public void useCamera(Camera camera) {
+	public void useCamera(Camera2D camera) {
 		this.camera = camera;
 	}
 

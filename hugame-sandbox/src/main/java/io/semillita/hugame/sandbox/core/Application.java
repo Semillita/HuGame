@@ -13,6 +13,7 @@ import io.semillita.hugame.core.ApplicationListener;
 import io.semillita.hugame.core.HuGame;
 import io.semillita.hugame.graphics.Batch;
 import io.semillita.hugame.graphics.Camera;
+import io.semillita.hugame.graphics.Camera2D;
 import io.semillita.hugame.graphics.Model;
 import io.semillita.hugame.graphics.ModelBuilder;
 import io.semillita.hugame.graphics.OrthographicCamera;
@@ -50,8 +51,10 @@ public class Application extends ApplicationListener {
 	float playerX = 0, playerZ = 0;
 	
 	private Batch batch;
-	private Camera camera2D;
+	private Camera2D camera2D;
 	private Shader shader;
+	
+	private HugoButton button;
 	
 	@Override
 	public void onCreate() {
@@ -80,17 +83,28 @@ public class Application extends ApplicationListener {
 //		renderer = new Renderer();
 		
 		batch = new Batch();
-		camera2D = new OrthographicCamera(new Vector2f(0, 0));
-		shader = new Shader("/shaders/batch_shader.glsl");
-		shader.compile();
+		camera2D = new Camera2D(new Vector2f(0, 0), 1920, 1080);
+		shader = Batch.getDefaultShader();
+		
+		button = new HugoButton();
+		button.setScreenToWorldCoordinateMapping(camera2D::screenToWorldCoords);
+		
+		HuGame.getInput().setMouseClickCallback((x, y) -> {
+			button.mouseDown();
+		});
 	}
 
 	@Override
 	public void onRender() {
+		HuGame.getInput().acceptMousePosition((x, y) -> {
+			System.out.printf("Mouse position: %d, %d%n", x, y);
+			var worldPos = camera2D.screenToWorldCoords(x, y);
+			System.out.printf("Mouse position in world: %d, %d%n", worldPos.x, worldPos.y);
+		});
+		
 		final Renderer renderer = HuGame.getRenderer();
 
 		var camera = renderer.getCamera();
-		camera.position.x += 1;
 		
 		List<Transform> cubeTransforms = new ArrayList<>();
 		
@@ -99,7 +113,7 @@ public class Application extends ApplicationListener {
 				for (int y = -6; y < 1; y++) {
 					var dis = Math.sqrt(Math.pow(x - playerX, 2) + Math.pow(z - playerZ, 2) + Math.pow(y - 0, 2));
 					if (dis <= 9) {
-						cubeTransforms.add(new Transform(new Vector3f(x, y, z), new Vector3f(0, 0, 0), new Vector3f(1, 1, 1)));
+						cubeTransforms.add(new Transform(new Vector3f(x, y, z), new Vector3f(0, 0, 0), new Vector3f(1, 1, 1)));	
 					}
 				}
 			}
@@ -130,21 +144,23 @@ public class Application extends ApplicationListener {
 		batch.submitShader(shader);
 		batch.begin();
 		
-		for (int i = 0; i < 10; i++) {
-			batch.drawQuad(groundTexture, i * 100, i * 100, 100, 100);
-		}
-		
-		for (int i = 0; i < 10; i++) {
-			batch.drawQuad(groundTexture, 200 + i * 100, i * 100, 100, 100);
-		}
-		
-		for (int i = 0; i < 10; i++) {
-			batch.drawQuad(groundTexture, 400 + i * 100, i * 100, 100, 100);
-		}
-		
-		for (int i = 0; i < 10; i++) {
-			batch.drawQuad(groundTexture, 600 + i * 100, i * 100, 100, 100);
-		}
+//		for (int i = 0; i < 10; i++) {
+//			batch.drawQuad(groundTexture, i * 100, i * 100, 100, 100);
+//		}
+//		
+//		for (int i = 0; i < 10; i++) {
+//			batch.drawQuad(groundTexture, 200 + i * 100, i * 100, 100, 100);
+//		}
+//		
+//		for (int i = 0; i < 10; i++) {
+//			batch.drawQuad(groundTexture, 400 + i * 100, i * 100, 100, 100);
+//		}
+//		
+//		for (int i = 0; i < 10; i++) {
+//			batch.drawQuad(groundTexture, 600 + i * 100, i * 100, 100, 100);
+//		}
+		button.update();
+		button.render(batch);
 		
 		batch.end();
 	}

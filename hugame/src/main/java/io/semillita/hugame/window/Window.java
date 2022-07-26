@@ -3,11 +3,12 @@ package io.semillita.hugame.window;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL40.*;
 
+import java.awt.Dimension;
 import java.util.function.Supplier;
 
 import org.lwjgl.opengl.GL;
 
-import io.semillita.hugame.graphics.Graphics;
+//import io.semillita.hugame.graphics.Graphics;
 
 public class Window {
 
@@ -19,8 +20,10 @@ public class Window {
 	private Runnable onRender;
 	private Supplier<Boolean> onClose;
 	private WindowConfiguration config;
+	private Dimension size;
+//	@Deprecated
+//	public Graphics graphics;
 	
-	public Graphics graphics;
 	
 	public Window(WindowConfiguration config) {
 		this.config = config;
@@ -49,7 +52,7 @@ public class Window {
 		
 		GL.createCapabilities();
 		
-		//graphics = new Graphics();
+		size = new Dimension(config.width, config.height);
 	}
 	
 	public void setVisible(boolean visible) {
@@ -57,13 +60,11 @@ public class Window {
 	}
 
 	public int getWidth() {
-		// TODO Auto-generated method stub
-		return 0;
+		return size.width;
 	}
 
 	public int getHeight() {
-		// TODO Auto-generated method stub
-		return 0;
+		return size.height;
 	}
 
 	public int getX() {
@@ -77,8 +78,7 @@ public class Window {
 	}
 	
 	public void requestAttention() {
-		// TODO Auto-generated method stub
-		
+		glfwRequestWindowAttention(handle);
 	}
 
 	public boolean close() {
@@ -99,6 +99,7 @@ public class Window {
 		onRender.run();
 	}
 	
+	@Deprecated
 	public void update() {
 //		graphics.update();
 	}

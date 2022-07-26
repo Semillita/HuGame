@@ -2,9 +2,9 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.semillita.hugame</groupId>
   <artifactId>hugame</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.1</version>
   <name>HuGame</name>
-  <description>Core engine for floating island game</description>
+  <description>Game development platform</description>
   <properties>
 	<lwjgl.version>3.3.1</lwjgl.version>
 	<joml.version>1.10.4</joml.version>
@@ -13,7 +13,6 @@
     <maven.compiler.target>17</maven.compiler.target>
     <maven.compiler.source>17</maven.compiler.source>
 </properties>
-
 <profiles>
 	<profile>
 		<id>lwjgl-natives-linux-amd64</id>
