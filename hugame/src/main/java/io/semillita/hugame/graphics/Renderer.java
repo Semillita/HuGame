@@ -68,6 +68,8 @@ public class Renderer {
 		}, 0);
 		
 //		fb = new FrameBuffer();
+		
+		glEnable(GL_BLEND);
 	}
 
 	public void draw(Model model, Transform transform, Material material) {

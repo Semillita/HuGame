@@ -25,6 +25,7 @@ import io.semillita.hugame.graphics.material.Material;
 import io.semillita.hugame.graphics.material.MaterialCreateInfo;
 import io.semillita.hugame.graphics.material.Materials;
 import io.semillita.hugame.input.Key;
+import io.semillita.hugame.ui.Slider;
 import io.semillita.hugame.util.Transform;
 import io.semillita.hugame.window.WindowConfiguration;
 
@@ -55,6 +56,7 @@ public class Application extends ApplicationListener {
 	private Shader shader;
 	
 	private HugoButton button;
+	private Slider slider;
 	
 	@Override
 	public void onCreate() {
@@ -89,19 +91,24 @@ public class Application extends ApplicationListener {
 		button = new HugoButton();
 		button.setScreenToWorldCoordinateMapping(camera2D::screenToWorldCoords);
 		
-		HuGame.getInput().setMouseClickCallback((x, y) -> {
+		slider = new Slider();
+		slider.setScreenToWorldCoordinateMapping(camera2D::screenToWorldCoords);
+		
+		HuGame.getInput().setMousePressCallback((mouseButton) -> {
+			System.out.println("Mouse press");
+			System.out.println(HuGame.getInput().getMousePosition().x);
 			button.mouseDown();
+			slider.mouseDown();
+		});
+		HuGame.getInput().setMouseReleaseCallback((mouseButton) -> {
+			System.out.println("Mouse release");
+			button.mouseUp();
+			slider.mouseUp();
 		});
 	}
 
 	@Override
 	public void onRender() {
-		HuGame.getInput().acceptMousePosition((x, y) -> {
-			System.out.printf("Mouse position: %d, %d%n", x, y);
-			var worldPos = camera2D.screenToWorldCoords(x, y);
-			System.out.printf("Mouse position in world: %d, %d%n", worldPos.x, worldPos.y);
-		});
-		
 		final Renderer renderer = HuGame.getRenderer();
 
 		var camera = renderer.getCamera();
@@ -160,7 +167,9 @@ public class Application extends ApplicationListener {
 //			batch.drawQuad(groundTexture, 600 + i * 100, i * 100, 100, 100);
 //		}
 		button.update();
+		slider.update();
 		button.render(batch);
+		slider.render(batch);
 		
 		batch.end();
 	}

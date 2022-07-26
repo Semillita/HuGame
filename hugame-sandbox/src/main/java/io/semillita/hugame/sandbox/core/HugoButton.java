@@ -20,10 +20,18 @@ public class HugoButton extends Button {
 		if (super.isHovered()) {
 			batch.drawQuad(hover, 0, 0, 300, 100);
 		}
+		if (super.isPressed()) {
+			batch.drawQuad(hover, 0, 0, 300, 100);
+		}
 	}
 	
 	@Override
 	public boolean isInside(int x, int y) {
 		return x >= 0 && x < 300 && y >= 0 && y < 100;
+	}
+	
+	@Override
+	public void onPressed(int x, int y) {
+		System.out.println("Button pressed");
 	}
 }
