@@ -28,7 +28,7 @@ public class ModelBuilder {
 		textures.add(t3);
 		textures.add(t4);
 		textures.add(t5);
-		
+
 		Vector3f[] vertices = { new Vector3f(-0.5f, 0.5f, -0.5f), new Vector3f(0.5f, 0.5f, -0.5f),
 				new Vector3f(0.5f, 0.5f, 0.5f), new Vector3f(-0.5f, 0.5f, 0.5f), new Vector3f(-0.5f, -0.5f, -0.5f),
 				new Vector3f(0.5f, -0.5f, -0.5f), new Vector3f(0.5f, -0.5f, 0.5f), new Vector3f(-0.5f, -0.5f, 0.5f) };
@@ -36,7 +36,7 @@ public class ModelBuilder {
 		// TOP
 		triangle(vertices[0], vertices[1], vertices[2], 0, 0, 1, 0, 1, 1, 0);
 		triangle(vertices[2], vertices[3], vertices[0], 1, 1, 0, 1, 0, 0, 0);
-		
+
 		// BOTTOM
 		triangle(vertices[4], vertices[5], vertices[6], 0, 0, 1, 0, 1, 1, 1);
 		triangle(vertices[6], vertices[7], vertices[4], 1, 1, 0, 1, 0, 0, 1);
@@ -44,7 +44,7 @@ public class ModelBuilder {
 		// FRONT
 		triangle(vertices[3], vertices[2], vertices[6], 0, 0, 1, 0, 1, 1, 2);
 		triangle(vertices[6], vertices[7], vertices[3], 1, 1, 0, 1, 0, 0, 2);
-		
+
 		// BACK
 		triangle(vertices[0], vertices[1], vertices[5], 0, 0, 1, 0, 1, 1, 3);
 		triangle(vertices[5], vertices[4], vertices[0], 1, 1, 0, 1, 0, 0, 3);
@@ -58,8 +58,8 @@ public class ModelBuilder {
 		triangle(vertices[5], vertices[6], vertices[2], 1, 1, 0, 1, 0, 0, 5);
 	}
 
-	public void triangle(Vector3f vert1, Vector3f vert2, Vector3f vert3, float u1, float v1,
-			float u2, float v2, float u3, float v3, int texID) {
+	public void triangle(Vector3f vert1, Vector3f vert2, Vector3f vert3, float u1, float v1, float u2, float v2,
+			float u3, float v3, int texID) {
 
 		vertices.add(vert1.x);
 		vertices.add(vert1.y);
@@ -74,7 +74,7 @@ public class ModelBuilder {
 		vertices.add(v1);
 
 		vertices.add((float) texID);
-		
+
 		vertices.add(vert2.x);
 		vertices.add(vert2.y);
 		vertices.add(vert2.z);
@@ -83,12 +83,12 @@ public class ModelBuilder {
 		vertices.add(1f);
 		vertices.add(1f);
 		vertices.add(1f);
-		
+
 		vertices.add(u2);
 		vertices.add(v2);
 
 		vertices.add((float) texID);
-		
+
 		vertices.add(vert3.x);
 		vertices.add(vert3.y);
 		vertices.add(vert3.z);
@@ -100,16 +100,16 @@ public class ModelBuilder {
 
 		vertices.add(u3);
 		vertices.add(v3);
-		
+
 		vertices.add((float) texID);
-		
+
 		indices.add(idx + 0);
 		indices.add(idx + 1);
 		indices.add(idx + 2);
 
 		idx += 3;
 	}
-	
+
 	public void texture(Texture texture) {
 		textures.add(texture);
 	}

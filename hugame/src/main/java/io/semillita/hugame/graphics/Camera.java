@@ -11,18 +11,18 @@ public abstract sealed class Camera permits OrthographicCamera, PerspectiveCamer
 	public Matrix4f getViewMatrix() {
 		return this.viewMatrix;
 	}
-	
+
 	public Matrix4f getProjectionMatrix() {
 		return projectionMatrix;
 	}
-	
+
 	public abstract void update();
-	
+
 //	public void adjustProjection() {
 //		projectionMatrix.identity();
 //		projectionMatrix.setPerspective(45, 1920 / 1080f, 0.1f, 1000f);
 //	}
-	
+
 //	public void lookInDirection(Vector3f direction) {
 //		lookInDirection(position, direction, new Vector3f(0, 1, 0));
 //	}
@@ -63,5 +63,5 @@ public abstract sealed class Camera permits OrthographicCamera, PerspectiveCamer
 //	public void setPosition(Vector3f position) {
 //		this.position = new Vector3f(position.x, position.y, position.z);
 //	}
-	
+
 }

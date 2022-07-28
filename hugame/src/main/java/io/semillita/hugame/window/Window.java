@@ -125,4 +125,8 @@ public class Window {
 		return (onClose != null) ? onClose.get() : true;
 	}
 	
+	public void setShouldClose(boolean shouldClose) {
+		glfwSetWindowShouldClose(handle, shouldClose);
+	}
+	
 }

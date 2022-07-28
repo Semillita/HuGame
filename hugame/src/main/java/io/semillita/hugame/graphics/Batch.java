@@ -33,9 +33,9 @@ public class Batch {
 	public static Shader getDefaultShader() {
 		return new Shader("/shaders/batch_shader.glsl");
 	}
-	
+
 	private final int textureSlotAmount;
-	
+
 	private int vaoID;
 	private int vboID;
 
@@ -51,7 +51,7 @@ public class Batch {
 		IntBuffer units = BufferUtils.createIntBuffer(1);
 		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, units);
 		textureSlotAmount = units.get(0);
-		
+
 		vertices = new float[maxQuadCount * 4 * VERTEX_SIZE];
 
 		vaoID = createVAO();
@@ -60,31 +60,31 @@ public class Batch {
 
 		setVertexAttribPointers();
 	}
-	
+
 	public int getVaoID() {
 		return vaoID;
 	}
-	
+
 	public int getVboID() {
 		return vboID;
 	}
-	
+
 	public float[] getVertices() {
 		return vertices;
 	}
-	
+
 	public List<Texture> getTextures() {
 		return textures;
 	}
-	
+
 	public Camera getCamera() {
 		return camera;
 	}
-	
+
 	public Shader getShader() {
 		return shader;
 	}
-	
+
 	public void begin() {
 		idx = 0;
 		textures = new ArrayList<>();
@@ -98,10 +98,10 @@ public class Batch {
 		if (idx / 40 >= maxQuadCount || textures.size() >= textureSlotAmount - 1) {
 			flush();
 		}
-		
+
 		final float u1 = 0, v1 = 1, u2 = 1, v2 = 0;
 		final int slot = textures.size();
-		
+
 		textures.add(texture);
 
 		// <Top left>
@@ -124,7 +124,7 @@ public class Batch {
 		// </Top Left>
 
 		idx += 10;
-		
+
 		// <Bottom left>
 
 		// Position
@@ -145,7 +145,7 @@ public class Batch {
 		// </Bottom left>
 
 		idx += 10;
-		
+
 		// <Bottom right>
 
 		// Position
@@ -166,7 +166,7 @@ public class Batch {
 		// </Bottom right>
 
 		idx += 10;
-		
+
 		// <Top right>
 
 		// Position
@@ -185,7 +185,7 @@ public class Batch {
 		vertices[idx + 9] = slot;
 
 		// </Top right>
-		
+
 		idx += 10;
 	}
 
@@ -199,11 +199,11 @@ public class Batch {
 
 	public void flush() {
 		HuGame.getRenderer().renderBatch(this);
-		
+
 		textures.clear();
 		idx = 0;
 	}
-	
+
 	private int createVAO() {
 		var vaoID = glGenVertexArrays();
 		glBindVertexArray(vaoID);
@@ -220,7 +220,7 @@ public class Batch {
 	private void createEBO() {
 		int eboID = glGenBuffers();
 		int[] indices = generateAllQuadIndices();
-		for(int index : indices) {
+		for (int index : indices) {
 		}
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
@@ -233,7 +233,7 @@ public class Batch {
 	private int[] getQuadIndices(int quadOffset) {
 		return Arrays.asList(3, 2, 0, 0, 2, 1).stream().mapToInt(index -> index + quadOffset).toArray();
 	}
-	
+
 	private void setVertexAttribPointers() {
 		glVertexAttribPointer(0, POSITION_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, POSITION_OFFSET);
 		glEnableVertexAttribArray(0);
@@ -247,5 +247,5 @@ public class Batch {
 		glVertexAttribPointer(3, TEX_ID_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_ID_OFFSET);
 		glEnableVertexAttribArray(3);
 	}
-	
+
 }

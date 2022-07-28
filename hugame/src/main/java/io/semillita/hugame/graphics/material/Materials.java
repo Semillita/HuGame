@@ -13,11 +13,11 @@ public class Materials {
 
 	private static Map<MaterialCreateInfo, Material> registry;
 	private static int count;
-	
+
 	static {
-		registry = new HashMap();
+		registry = new HashMap<>();
 	}
-	
+
 	public static Material get(MaterialCreateInfo createInfo) {
 		if (registry.containsKey(createInfo)) {
 			return registry.get(createInfo);
@@ -27,11 +27,10 @@ public class Materials {
 			return mat;
 		}
 	}
-	
+
 	public static List<Material> collect() {
-		System.out.println("Collected materials");
 		registry.values().forEach(mat -> System.out.println(mat));
-			return new ArrayList<Material>(registry.values());
-		}
-	
+		return new ArrayList<Material>(registry.values());
 	}
+
+}

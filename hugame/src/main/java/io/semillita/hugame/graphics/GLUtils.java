@@ -21,38 +21,38 @@ public class GLUtils {
 		glBindVertexArray(vaoID);
 		return vaoID;
 	}
-	
+
 	public static int createVBO(int sizeInBytes) {
 		var vboID = glGenBuffers();
 		glBindBuffer(GL_ARRAY_BUFFER, vboID);
 		glBufferData(GL_ARRAY_BUFFER, sizeInBytes, GL_DYNAMIC_DRAW);
 		return vboID;
 	}
-	
+
 	public static int createStaticVBO(int sizeInBytes, float[] values) {
 		var vboID = glGenBuffers();
 		glBindBuffer(GL_ARRAY_BUFFER, vboID);
 		glBufferData(GL_ARRAY_BUFFER, values, GL_STATIC_DRAW);
 		return vboID;
 	}
-	
+
 	public static void fillVBO(int vboID, List<Float> values) {
 		float[] vertArr = new float[values.size()];
 		for (int i = 0; i < values.size(); i++) {
 			vertArr[i] = values.get(i);
 		}
-		
+
 		fillVBO(vboID, vertArr);
 	}
-	
+
 	public static void fillVBO(int vboID, float[] values) {
 		glBindBuffer(GL_ARRAY_BUFFER, vboID);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, values);
 	}
-	
+
 	public static void uploadMatricesToShader(Camera camera, Shader shader) {
 		shader.uploadMat4f("uProjection", camera.getProjectionMatrix());
 		shader.uploadMat4f("uView", camera.getViewMatrix());
 	}
-	
+
 }

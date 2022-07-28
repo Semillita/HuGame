@@ -24,62 +24,60 @@ public class HuGame {
 	private static Input input;
 	private static Renderer renderer;
 	private static ApplicationListener listener;
-	
+
 	public static void start(ApplicationListener listener, WindowConfiguration config) {
 		create(listener, config);
 		mainloop();
 		destroy();
 	}
-	
+
 	public static Window getWindow() {
 		return window;
 	}
-	
+
 	public static Input getInput() {
 		return input;
 	}
-	
+
 	public static Renderer getRenderer() {
 		return renderer;
 	}
-	
+
 	private static void create(ApplicationListener listener, WindowConfiguration config) {
 		System.out.println("Creating...");
-		
+
 		window = new Window(config);
-		
-		GL43.glEnable(GL43.GL_DEBUG_OUTPUT_SYNCHRONOUS);
-		GLUtil.setupDebugMessageCallback(System.out);
-		
 		input = new Input(window.getHandle());
 		GLFW.glfwMakeContextCurrent(window.getHandle());
 		GL.createCapabilities();
-		
+
 		HuGame.listener = listener;
 		listener.onCreate();
-		
+
 		renderer = new Renderer();
 	}
-	
+
 	private static void mainloop() {
 		System.out.println("Mainloop...");
-		
+
 		while (true) {
-			if (window.shouldClose() && listener.onClose()) {
-				break;
+			if (window.shouldClose()) {
+				if (listener.onClose()) {
+					break;
+				} else {
+					window.setShouldClose(false);
+				}
 			} else {
-//				System.out.println("-- Beginning of frame --");
 				window.pollEvents();
 				window.clear();
-//				System.out.println("Rendering...");
 				listener.onRender();
 				window.swapBuffers();
 			}
 		}
 	}
-	
+
 	private static void destroy() {
 		System.out.println("Destroying...");
 	}
-	
+
 }
