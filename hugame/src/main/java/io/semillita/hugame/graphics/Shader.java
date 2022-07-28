@@ -54,6 +54,7 @@ public class Shader {
 				throw new IOException("Unexpected token: '" + firstPattern + "'");
 			}
 			
+			compile();
 		} catch (IOException e) {
 			e.printStackTrace();
 			assert false : "ERROR: Could not open file for shader: '" + filepath + "'";

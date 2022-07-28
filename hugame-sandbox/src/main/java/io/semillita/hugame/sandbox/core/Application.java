@@ -13,6 +13,7 @@ import io.semillita.hugame.core.ApplicationListener;
 import io.semillita.hugame.core.HuGame;
 import io.semillita.hugame.graphics.Batch;
 import io.semillita.hugame.graphics.Camera;
+import io.semillita.hugame.graphics.Camera2D;
 import io.semillita.hugame.graphics.Model;
 import io.semillita.hugame.graphics.ModelBuilder;
 import io.semillita.hugame.graphics.OrthographicCamera;
@@ -24,6 +25,7 @@ import io.semillita.hugame.graphics.material.Material;
 import io.semillita.hugame.graphics.material.MaterialCreateInfo;
 import io.semillita.hugame.graphics.material.Materials;
 import io.semillita.hugame.input.Key;
+import io.semillita.hugame.ui.Slider;
 import io.semillita.hugame.util.Transform;
 import io.semillita.hugame.window.WindowConfiguration;
 
@@ -44,14 +46,17 @@ public class Application extends ApplicationListener {
 	private Model playerModel;
 	private Transform playerTransform;
 	
-	Material blockMat;
-	Material playerMat;
+	Material blueMat;
+	Material redMat;
 	
 	float playerX = 0, playerZ = 0;
 	
 	private Batch batch;
-	private Camera camera2D;
+	private Camera2D camera2D;
 	private Shader shader;
+	
+	private HugoButton button;
+	private Slider slider;
 	
 	@Override
 	public void onCreate() {
@@ -75,14 +80,31 @@ public class Application extends ApplicationListener {
 		playerModel = builder.generate();
 		playerTransform = new Transform(new Vector3f(playerX, 1, playerZ), new Vector3f(0, 0, 0), new Vector3f(1, 2, 1));
 		
-		blockMat = Materials.get(new MaterialCreateInfo(new Vector4f(0.0f, 0.0f, 1.0f, 1.0f)));
-		playerMat = Materials.get(new MaterialCreateInfo(new Vector4f(1.0f, 0.0f, 0.0f, 1.0f)));
+		blueMat = Materials.get(new MaterialCreateInfo(new Vector4f(0.0f, 0.0f, 1.0f, 1.0f)));
+		redMat = Materials.get(new MaterialCreateInfo(new Vector4f(1.0f, 0.0f, 0.0f, 1.0f)));
 //		renderer = new Renderer();
 		
 		batch = new Batch();
-		camera2D = new OrthographicCamera(new Vector2f(0, 0));
-		shader = new Shader("/shaders/batch_shader.glsl");
-		shader.compile();
+		camera2D = new Camera2D(new Vector2f(0, 0), 1920, 1080);
+		shader = Batch.getDefaultShader();
+		
+		button = new HugoButton();
+		button.setScreenToWorldCoordinateMapping(camera2D::screenToWorldCoords);
+		
+		slider = new Slider();
+		slider.setScreenToWorldCoordinateMapping(camera2D::screenToWorldCoords);
+		
+		HuGame.getInput().setMousePressCallback((mouseButton) -> {
+			System.out.println("Mouse press");
+			System.out.println(HuGame.getInput().getMousePosition().x);
+			button.mouseDown();
+			slider.mouseDown();
+		});
+		HuGame.getInput().setMouseReleaseCallback((mouseButton) -> {
+			System.out.println("Mouse release");
+			button.mouseUp();
+			slider.mouseUp();
+		});
 	}
 
 	@Override
@@ -90,7 +112,6 @@ public class Application extends ApplicationListener {
 		final Renderer renderer = HuGame.getRenderer();
 
 		var camera = renderer.getCamera();
-		camera.position.x += 1;
 		
 		List<Transform> cubeTransforms = new ArrayList<>();
 		
@@ -99,18 +120,18 @@ public class Application extends ApplicationListener {
 				for (int y = -6; y < 1; y++) {
 					var dis = Math.sqrt(Math.pow(x - playerX, 2) + Math.pow(z - playerZ, 2) + Math.pow(y - 0, 2));
 					if (dis <= 9) {
-						cubeTransforms.add(new Transform(new Vector3f(x, y, z), new Vector3f(0, 0, 0), new Vector3f(1, 1, 1)));
+						cubeTransforms.add(new Transform(new Vector3f(x, y, z), new Vector3f(0, 0, 0), new Vector3f(1, 1, 1)));	
 					}
 				}
 			}
 		}
 		
 		for (var transform : cubeTransforms) {
-			renderer.draw(cubeModel, transform);
+			renderer.draw(cubeModel, transform, blueMat);
 		}
 		//renderer.draw(cubeModel, transforms[0]);
 		//renderer.draw(groundModel, groundTransform);
-		renderer.draw(playerModel, playerTransform);
+		renderer.draw(playerModel, playerTransform, redMat);
 		renderer.renderModels();
 		
 		cubeTransforms.clear();
@@ -130,21 +151,25 @@ public class Application extends ApplicationListener {
 		batch.submitShader(shader);
 		batch.begin();
 		
-		for (int i = 0; i < 10; i++) {
-			batch.drawQuad(groundTexture, i * 100, i * 100, 100, 100);
-		}
-		
-		for (int i = 0; i < 10; i++) {
-			batch.drawQuad(groundTexture, 200 + i * 100, i * 100, 100, 100);
-		}
-		
-		for (int i = 0; i < 10; i++) {
-			batch.drawQuad(groundTexture, 400 + i * 100, i * 100, 100, 100);
-		}
-		
-		for (int i = 0; i < 10; i++) {
-			batch.drawQuad(groundTexture, 600 + i * 100, i * 100, 100, 100);
-		}
+//		for (int i = 0; i < 10; i++) {
+//			batch.drawQuad(groundTexture, i * 100, i * 100, 100, 100);
+//		}
+//		
+//		for (int i = 0; i < 10; i++) {
+//			batch.drawQuad(groundTexture, 200 + i * 100, i * 100, 100, 100);
+//		}
+//		
+//		for (int i = 0; i < 10; i++) {
+//			batch.drawQuad(groundTexture, 400 + i * 100, i * 100, 100, 100);
+//		}
+//		
+//		for (int i = 0; i < 10; i++) {
+//			batch.drawQuad(groundTexture, 600 + i * 100, i * 100, 100, 100);
+//		}
+		button.update();
+		slider.update();
+		button.render(batch);
+		slider.render(batch);
 		
 		batch.end();
 	}
