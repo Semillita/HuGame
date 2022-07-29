@@ -155,8 +155,8 @@ public class Application extends ApplicationListener {
 		playerTransform.update();
 		
 		// Render 2D
-		batch.useCamera(camera2D);
-		batch.submitShader(shader);
+		batch.setCamera(camera2D);
+		batch.setShader(shader);
 		batch.begin();
 		
 //		for (int i = 0; i < 10; i++) {

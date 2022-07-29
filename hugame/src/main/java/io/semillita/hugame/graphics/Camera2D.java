@@ -52,9 +52,6 @@ public non-sealed class Camera2D extends Camera {
 
 	@Override
 	public void update() {
-		System.out.println("Updating camera");
-		System.out.println("minViewportSize: " + minViewportSize);
-		System.out.println("viewportSize: " + viewportSize);
 		super.projectionMatrix = new Matrix4f().identity().ortho(-viewportSize.width / 2f, viewportSize.width / 2f,
 				-viewportSize.height / 2f, viewportSize.height / 2f, 0.0f, 100.0f);
 
@@ -63,14 +60,9 @@ public non-sealed class Camera2D extends Camera {
 	}
 	
 	public void updateViewport() {
-		System.out.println("-----------------------------------------------------------------------------------");
 		var windowSize = HuGame.getWindow().getSize();
 		var minViewportSizeRatio = minViewportSize.width / (float) minViewportSize.height;
-		System.out.println("minViewportSizeRation: " + minViewportSizeRatio);
-		System.out.println("Window width: " + windowSize.width);
-		System.out.println("Window height: " + windowSize.height);
 		var windowSizeRatio = windowSize.width / (float) windowSize.height;
-		System.out.println("windowSizeRatio: " + windowSizeRatio);
 		
 		if (minViewportSizeRatio > windowSizeRatio) {
 			viewportSize = new Dimension(minViewportSize.width, (int) (minViewportSize.width / windowSizeRatio));

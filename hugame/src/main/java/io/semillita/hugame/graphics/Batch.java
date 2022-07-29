@@ -48,6 +48,11 @@ public class Batch {
 	private int idx;
 
 	public Batch() {
+		this(getDefaultShader());
+	}
+	
+	public Batch(Shader shader) {
+		this.shader = shader;
 		IntBuffer units = BufferUtils.createIntBuffer(1);
 		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, units);
 		textureSlotAmount = units.get(0);
@@ -189,11 +194,11 @@ public class Batch {
 		idx += 10;
 	}
 
-	public void useCamera(Camera2D camera) {
+	public void setCamera(Camera2D camera) {
 		this.camera = camera;
 	}
 
-	public void submitShader(Shader shader) {
+	public void setShader(Shader shader) {
 		this.shader = (Shader) shader;
 	}
 
