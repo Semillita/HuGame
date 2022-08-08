@@ -4,6 +4,8 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL40.*;
 
 import java.awt.Dimension;
+import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import org.lwjgl.opengl.GL;
@@ -20,6 +22,7 @@ public class Window {
 	private Runnable onRender;
 	private Supplier<Boolean> onClose;
 	private WindowConfiguration config;
+	private Optional<BiConsumer<Integer, Integer>> maybeResizeListener;
 	private Dimension size;
 //	@Deprecated
 //	public Graphics graphics;
@@ -53,12 +56,18 @@ public class Window {
 		GL.createCapabilities();
 		
 		size = new Dimension(config.width, config.height);
+		
+		maybeResizeListener = Optional.empty();
+		glfwSetWindowSizeCallback(handle, this::resizeCallback);
 	}
 	
 	public void setVisible(boolean visible) {
-		
 	}
 
+	public Dimension getSize() {
+		return size;
+	}
+	
 	public int getWidth() {
 		return size.width;
 	}
@@ -75,6 +84,10 @@ public class Window {
 	public int getY() {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+	
+	public void setResizeListener(BiConsumer<Integer, Integer> resizeListener) {
+		maybeResizeListener = Optional.ofNullable(resizeListener);
 	}
 	
 	public void requestAttention() {
@@ -127,6 +140,12 @@ public class Window {
 	
 	public void setShouldClose(boolean shouldClose) {
 		glfwSetWindowShouldClose(handle, shouldClose);
+	}
+	
+	private void resizeCallback(long handle, int width, int height) {
+		size = new Dimension(width, height);
+		glViewport(0, 0, width, height);
+		maybeResizeListener.ifPresent(resizeListener -> resizeListener.accept(width, height));
 	}
 	
 }

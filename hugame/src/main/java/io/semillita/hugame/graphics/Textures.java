@@ -17,7 +17,9 @@ public class Textures {
 		if (loadedTextures.containsKey(filepath)) {
 			return loadedTextures.get(filepath);
 		} else {
-			var texture = new Texture(Files.read(filepath));
+			var maybeSource = Files.read(filepath);
+			if (maybeSource.isEmpty()) return null;
+			var texture = new Texture(maybeSource.get());
 			loadedTextures.put(filepath, texture);
 			return texture;
 		}

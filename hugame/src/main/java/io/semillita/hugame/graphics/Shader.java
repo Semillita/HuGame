@@ -26,7 +26,11 @@ public class Shader {
 		try {
 			//var bytes = this.getClass().getResourceAsStream(filepath).readAllBytes();
 			//String source = new String(bytes, "ISO-8859-1");
-			String source = Files.read(filepath);
+			var maybeSource = Files.read(filepath);
+			if (maybeSource.isEmpty()) {
+				throw new IOException("Failed to load shader file");
+			}
+			var source = maybeSource.get();
 			
 			String[] splitString = source.split("(#type)( )+([a-zA-Z]+)");
 			

@@ -1,5 +1,6 @@
 package io.semillita.hugame.sandbox.core;
 
+import java.awt.Dimension;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.List;
@@ -37,7 +38,6 @@ public class Application extends ApplicationListener {
 		HuGame.start(new Application(), new WindowConfiguration().width(960).height(540).title("Hugo").x(500).y(300).decorated(true));
 	}
 
-//	private Renderer renderer;
 	private Model cubeModel;
 	
 	private Texture[] grassSides;
@@ -85,7 +85,7 @@ public class Application extends ApplicationListener {
 //		renderer = new Renderer();
 		
 		batch = new Batch();
-		camera2D = new Camera2D(new Vector2f(0, 0), 1920, 1080);
+		camera2D = new Camera2D(new Vector2f(960, 540), new Dimension(1920, 1080));
 		shader = Batch.getDefaultShader();
 		
 		button = new HugoButton();
@@ -99,11 +99,19 @@ public class Application extends ApplicationListener {
 			System.out.println(HuGame.getInput().getMousePosition().x);
 			button.mouseDown();
 			slider.mouseDown();
+			
+			camera2D.update();
 		});
 		HuGame.getInput().setMouseReleaseCallback((mouseButton) -> {
 			System.out.println("Mouse release");
 			button.mouseUp();
 			slider.mouseUp();
+		});
+		
+		HuGame.getWindow().setResizeListener((width, height) -> {
+			System.out.println(width + ", " + height);
+			camera2D.updateViewport();
+			camera2D.update();
 		});
 	}
 
@@ -147,8 +155,8 @@ public class Application extends ApplicationListener {
 		playerTransform.update();
 		
 		// Render 2D
-		batch.useCamera(camera2D);
-		batch.submitShader(shader);
+		batch.setCamera(camera2D);
+		batch.setShader(shader);
 		batch.begin();
 		
 //		for (int i = 0; i < 10; i++) {
@@ -170,6 +178,7 @@ public class Application extends ApplicationListener {
 		slider.update();
 		button.render(batch);
 		slider.render(batch);
+		batch.drawQuad(groundTexture, 0, 0, 1920, 1080);
 		
 		batch.end();
 	}
