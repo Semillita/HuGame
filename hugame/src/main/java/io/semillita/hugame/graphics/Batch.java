@@ -14,6 +14,7 @@ import java.util.stream.IntStream;
 import org.lwjgl.BufferUtils;
 
 import io.semillita.hugame.core.HuGame;
+import io.semillita.hugame.util.Files;
 
 public class Batch {
 
@@ -31,7 +32,8 @@ public class Batch {
 	private static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
 
 	public static Shader getDefaultShader() {
-		return new Shader("/shaders/batch_shader.glsl");
+		return Shaders.get(Files.read("/shaders/batch_vertex_shader.glsl").get(),
+				Files.read("/shaders/batch_fragment_shader.glsl").get()).get();
 	}
 
 	private final int textureSlotAmount;
