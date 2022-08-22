@@ -11,6 +11,7 @@ import org.lwjgl.opengl.GLDebugMessageCallbackI;
 
 import io.semillita.hugame.graphics.material.Material;
 import io.semillita.hugame.graphics.material.Materials;
+import io.semillita.hugame.util.Files;
 import io.semillita.hugame.util.Transform;
 import io.semillita.hugame.util.buffer.PointLightBuffer;
 
@@ -43,10 +44,10 @@ public class Renderer {
 		modelInstanceData = new HashMap<>();
 		camera = new PerspectiveCamera(new Vector3f(0, 20, 20));
 		camera.lookAt(new Vector3f(0, 0, 0));
-		instanceShader = new Shader("/shaders/instance_shader.glsl");
-		instanceShader.compile();
-		batchShader = new Shader("/shaders/batch_shader.glsl");
-		batchShader.compile();
+		instanceShader = Shaders.get(Files.read("/shaders/instance_vertex_shader.glsl").get(),
+				Files.read("/shaders/instance_fragment_shader.glsl").get()).get();
+		batchShader = Shaders.get(Files.read("/shaders/batch_vertex_shader.glsl").get(),
+				Files.read("/shaders/batch_fragment_shader.glsl").get()).get();
 
 		var materials = Materials.collect();
 		matBuffer = MaterialBuffer.createFrom(materials);
