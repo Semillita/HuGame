@@ -178,7 +178,7 @@ public class Application extends ApplicationListener {
 		slider.update();
 		button.render(batch);
 		slider.render(batch);
-		batch.drawQuad(groundTexture, 0, 0, 1920, 1080);
+		//batch.drawQuad(groundTexture, 0, 0, 1920, 1080);
 		
 		batch.end();
 	}

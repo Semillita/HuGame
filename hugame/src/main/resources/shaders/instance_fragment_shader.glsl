@@ -9,7 +9,7 @@ layout(std430, binding = 0) readonly buffer materialBuffer
     Material materials[];
 };
 
-in vec4 fColor;
+in vec4 fNormal;
 in vec2 fTexCoords;
 flat in uint fTexID;
 in int fMaterialIndex;
@@ -24,7 +24,6 @@ void main()
 {
 	vec4 ambient = materials[fMaterialIndex].ambientColor;
 	vec4 light = ambientLight * 1.0;
-    color = fColor * texture(uTextures[fTexID], fTexCoords) * light;
-    //color = fColor * texture(uTextures[fTexID], fTexCoords) + ambient;
-    //color = ambient;
+    color = texture(uTextures[fTexID], fTexCoords) * light;
+    //color = fNormal;
 }

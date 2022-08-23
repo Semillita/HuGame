@@ -26,7 +26,7 @@ import io.semillita.hugame.util.Util;
 public class Model {
 	
 	private static final int POSITION_SIZE = 3;
-	private static final int COLOR_SIZE = 4;
+	private static final int NORMAL_SIZE = 3;
 	private static final int TEX_COORDS_SIZE = 2;
 	private static final int TEX_ID_SIZE = 1;
 	
@@ -34,12 +34,11 @@ public class Model {
 	private static final int TRANSFORM_SIZE = 16;
 
 	private static final int POSITION_OFFSET = 0;
-	private static final int COLOR_OFFSET = POSITION_OFFSET + POSITION_SIZE * Float.BYTES;
-	private static final int TEX_COORDS_OFFSET = COLOR_OFFSET + COLOR_SIZE * Float.BYTES;
+	private static final int NORMAL_OFFSET = POSITION_OFFSET + POSITION_SIZE * Float.BYTES;
+	private static final int TEX_COORDS_OFFSET = NORMAL_OFFSET + NORMAL_SIZE * Float.BYTES;
 	private static final int TEX_ID_OFFSET = TEX_COORDS_OFFSET + TEX_COORDS_SIZE * Float.BYTES;
-	private static final int TRANSFORM_OFFSET = 0;
 
-	private static final int VERTEX_SIZE = POSITION_SIZE + COLOR_SIZE + TEX_COORDS_SIZE + TEX_ID_SIZE;
+	private static final int VERTEX_SIZE = POSITION_SIZE + NORMAL_SIZE + TEX_COORDS_SIZE + TEX_ID_SIZE;
 	private static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
 	
 	private static final int INSTANCE_SIZE = TRANSFORM_SIZE + 1;
@@ -64,7 +63,7 @@ public class Model {
 		glVertexAttribPointer(0, POSITION_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, POSITION_OFFSET);
 		glEnableVertexAttribArray(0);
 
-		glVertexAttribPointer(1, COLOR_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, COLOR_OFFSET);
+		glVertexAttribPointer(1, NORMAL_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, NORMAL_OFFSET);
 		glEnableVertexAttribArray(1);
 		
 		glVertexAttribPointer(2, TEX_COORDS_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_COORDS_OFFSET);
