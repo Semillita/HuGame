@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GLDebugMessageCallbackI;
 
+import io.semillita.hugame.environment.Environment;
 import io.semillita.hugame.graphics.material.Material;
 import io.semillita.hugame.graphics.material.Materials;
 import io.semillita.hugame.util.Files;
@@ -39,6 +41,8 @@ public class Renderer {
 
 	private MaterialBuffer matBuffer;
 	private PointLightBuffer lightBuffer;
+	
+	private Optional<Environment> maybeEnvironment;
 
 	public Renderer() {
 		modelInstanceData = new HashMap<>();
@@ -52,6 +56,8 @@ public class Renderer {
 		var materials = Materials.collect();
 		matBuffer = MaterialBuffer.createFrom(materials);
 
+		maybeEnvironment = Optional.empty();
+		
 		glDebugMessageCallback(new GLDebugMessageCallbackI() {
 
 			@Override
@@ -59,8 +65,6 @@ public class Renderer {
 				System.err.println("OpenGL error");
 			}
 		}, 0);
-
-//		fb = new FrameBuffer();
 
 		glEnable(GL_BLEND);
 	}
@@ -124,6 +128,10 @@ public class Renderer {
 		return camera;
 	}
 
+	public void setEnvironment(Environment environment) {
+		this.maybeEnvironment = Optional.ofNullable(environment);
+	}
+	
 	void renderBatch(Batch batch) {
 		glDisable(GL_DEPTH_TEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

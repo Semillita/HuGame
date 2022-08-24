@@ -29,7 +29,6 @@ public class Materials {
 	}
 
 	public static List<Material> collect() {
-		registry.values().forEach(mat -> System.out.println(mat));
 		return new ArrayList<Material>(registry.values());
 	}
 

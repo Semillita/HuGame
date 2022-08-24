@@ -31,10 +31,7 @@ public class Texture {
 		if (data.buffer() != null) {
 			glTexImage2D(GL_TEXTURE_2D, 0, getInternalPixelFormat(data.channels()), data.width(), data.height(), 0, getPixelFormat(data.channels()),
 					GL_UNSIGNED_BYTE, data.buffer());
-		} else {
-			System.out.println("imageBuffer is null");
 		}
-
 		stbi_image_free(data.buffer());
 
 		unbind();

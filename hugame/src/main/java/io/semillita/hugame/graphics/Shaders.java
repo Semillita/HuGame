@@ -17,7 +17,7 @@ public class Shaders {
 			var len = glGetShaderi(vertexShaderID, GL_INFO_LOG_LENGTH);
 			System.err.println("ERROR: Vertex shader compilation failed");
 			System.err.println(glGetShaderInfoLog(vertexShaderID, len));
-			System.out.println(vertexSource);
+			System.err.println(vertexSource);
 			return Optional.empty();
 		}
 		
@@ -30,6 +30,7 @@ public class Shaders {
 			var len = glGetShaderi(fragmentShaderID, GL_INFO_LOG_LENGTH);
 			System.err.println("ERROR: Fragment shader compilation failed");
 			System.err.println(glGetShaderInfoLog(fragmentShaderID, len));
+			System.err.println(fragmentSource);
 			return Optional.empty();
 		}
 		
