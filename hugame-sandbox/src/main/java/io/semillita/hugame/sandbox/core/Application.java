@@ -12,6 +12,8 @@ import org.joml.Vector4f;
 
 import io.semillita.hugame.core.ApplicationListener;
 import io.semillita.hugame.core.HuGame;
+import io.semillita.hugame.environment.DirectionalLight;
+import io.semillita.hugame.environment.Environment;
 import io.semillita.hugame.graphics.Batch;
 import io.semillita.hugame.graphics.Camera;
 import io.semillita.hugame.graphics.Camera2D;
@@ -57,6 +59,8 @@ public class Application extends ApplicationListener {
 	
 	private HugoButton button;
 	private Slider slider;
+	
+	private Environment environment;
 	
 	@Override
 	public void onCreate() {
@@ -113,6 +117,10 @@ public class Application extends ApplicationListener {
 			camera2D.updateViewport();
 			camera2D.update();
 		});
+		
+		environment = new Environment();
+		var dirLight = new DirectionalLight();
+		environment.add(dirLight);
 	}
 
 	@Override
@@ -140,6 +148,7 @@ public class Application extends ApplicationListener {
 		//renderer.draw(cubeModel, transforms[0]);
 		//renderer.draw(groundModel, groundTransform);
 		renderer.draw(playerModel, playerTransform, redMat);
+		renderer.setEnvironment(environment);
 		renderer.renderModels();
 		
 		cubeTransforms.clear();
@@ -159,21 +168,6 @@ public class Application extends ApplicationListener {
 		batch.setShader(shader);
 		batch.begin();
 		
-//		for (int i = 0; i < 10; i++) {
-//			batch.drawQuad(groundTexture, i * 100, i * 100, 100, 100);
-//		}
-//		
-//		for (int i = 0; i < 10; i++) {
-//			batch.drawQuad(groundTexture, 200 + i * 100, i * 100, 100, 100);
-//		}
-//		
-//		for (int i = 0; i < 10; i++) {
-//			batch.drawQuad(groundTexture, 400 + i * 100, i * 100, 100, 100);
-//		}
-//		
-//		for (int i = 0; i < 10; i++) {
-//			batch.drawQuad(groundTexture, 600 + i * 100, i * 100, 100, 100);
-//		}
 		button.update();
 		slider.update();
 		button.render(batch);
