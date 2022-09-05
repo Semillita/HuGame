@@ -14,6 +14,7 @@ import io.semillita.hugame.core.ApplicationListener;
 import io.semillita.hugame.core.HuGame;
 import io.semillita.hugame.environment.DirectionalLight;
 import io.semillita.hugame.environment.Environment;
+import io.semillita.hugame.environment.PointLight;
 import io.semillita.hugame.graphics.Batch;
 import io.semillita.hugame.graphics.Camera;
 import io.semillita.hugame.graphics.Camera2D;
@@ -35,21 +36,20 @@ import io.semillita.hugame.window.WindowConfiguration;
 public class Application extends ApplicationListener {
 
 	public static void main(String[] args) {
-		var app = new Application();
-
 		HuGame.start(new Application(), new WindowConfiguration().width(960).height(540).title("Hugo").x(500).y(300).decorated(true));
 	}
 
 	private Model cubeModel;
 	
 	private Texture[] grassSides;
-	private Texture groundTexture;
 	
 	private Model playerModel;
 	private Transform playerTransform;
 	
 	Material blueMat;
 	Material redMat;
+	Material greenMat;
+	Material whiteMat;
 	
 	float playerX = 0, playerZ = 0;
 	
@@ -61,6 +61,8 @@ public class Application extends ApplicationListener {
 	private Slider slider;
 	
 	private Environment environment;
+	
+	private boolean firstFrame = true;
 	
 	@Override
 	public void onCreate() {
@@ -74,8 +76,6 @@ public class Application extends ApplicationListener {
 		grassSides[4] = Textures.get("/grass_left.png");
 		grassSides[5] = Textures.get("/grass_right.png");
 		
-		groundTexture = Textures.get("/ground.png");
-		
 		builder.cube(grassSides[0], grassSides[1], grassSides[2], grassSides[3], grassSides[4], grassSides[5]);
 		cubeModel = builder.generate();
 		
@@ -84,8 +84,11 @@ public class Application extends ApplicationListener {
 		playerModel = builder.generate();
 		playerTransform = new Transform(new Vector3f(playerX, 1, playerZ), new Vector3f(0, 0, 0), new Vector3f(1, 2, 1));
 		
-		blueMat = Materials.get(new MaterialCreateInfo(new Vector4f(0.0f, 0.0f, 1.0f, 1.0f)));
 		redMat = Materials.get(new MaterialCreateInfo(new Vector4f(1.0f, 0.0f, 0.0f, 1.0f)));
+		blueMat = Materials.get(new MaterialCreateInfo(new Vector4f(0.0f, 0.0f, 1.0f, 1.0f)));
+		greenMat = Materials.get(new MaterialCreateInfo(new Vector4f(0.0f, 1.0f, 0.0f, 1.0f)));
+		whiteMat = Materials.get(new MaterialCreateInfo(new Vector4f(1.0f, 1.0f, 1.0f, 1.0f)));
+		
 //		renderer = new Renderer();
 		
 		batch = new Batch();
@@ -119,16 +122,19 @@ public class Application extends ApplicationListener {
 		});
 		
 		environment = new Environment();
-		var dirLight = new DirectionalLight();
-		environment.add(dirLight);
+		var pointLight1 = new PointLight(new Vector3f(2, 4, 2), new Vector3f(1, 1, 1));
+		environment.add(pointLight1);
 	}
 
 	@Override
 	public void onRender() {
 		final Renderer renderer = HuGame.getRenderer();
-
-		var camera = renderer.getCamera();
 		
+		if (firstFrame) {
+			renderer.updateEnvironment(environment);
+			firstFrame = false;
+		}
+
 		List<Transform> cubeTransforms = new ArrayList<>();
 		
 		for (int x = (int) playerX - 12; x < playerX + 12; x++) {
@@ -143,12 +149,10 @@ public class Application extends ApplicationListener {
 		}
 		
 		for (var transform : cubeTransforms) {
-			renderer.draw(cubeModel, transform, blueMat);
+			renderer.draw(cubeModel, transform, whiteMat);
 		}
-		//renderer.draw(cubeModel, transforms[0]);
-		//renderer.draw(groundModel, groundTransform);
-		renderer.draw(playerModel, playerTransform, redMat);
-		renderer.setEnvironment(environment);
+		renderer.draw(playerModel, playerTransform, whiteMat);
+		
 		renderer.renderModels();
 		
 		cubeTransforms.clear();
@@ -158,6 +162,15 @@ public class Application extends ApplicationListener {
 		if (input.isKeyPressed(Key.D)) playerX += 0.05f;
 		if (input.isKeyPressed(Key.W)) playerZ -= 0.05f;
 		if (input.isKeyPressed(Key.S)) playerZ += 0.05f;
+		
+		var camera = renderer.getCamera();
+		var cameraPos = camera.getPosition();
+		if (input.isKeyPressed(Key.LEFT)) 	cameraPos.x -= 0.05f;
+		if (input.isKeyPressed(Key.RIGHT)) 	cameraPos.x += 0.05f;
+		if (input.isKeyPressed(Key.UP)) 	cameraPos.z -= 0.05f;
+		if (input.isKeyPressed(Key.DOWN)) 	cameraPos.z += 0.05f;
+		camera.setPosition(cameraPos);
+		camera.update();
 		
 		playerTransform.position.x = playerX;
 		playerTransform.position.z = playerZ;

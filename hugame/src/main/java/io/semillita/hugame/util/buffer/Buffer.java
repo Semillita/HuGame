@@ -5,9 +5,9 @@ import static org.lwjgl.opengl.GL43.*;
 
 import java.nio.ByteBuffer;
 
-public class Buffer {
+public abstract class Buffer {
 
-	public static int newBuffer() {
+	public static int generate() {
 		return glGenBuffers();
 	}
 	
@@ -24,10 +24,14 @@ public class Buffer {
 	}
 	
 	public void bind() {
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle);
+		glBindBuffer(target, handle);
 	}
 	
 	public void bufferData(ByteBuffer data) {
 		glBufferData(target, data, GL_DYNAMIC_DRAW);
+	}
+	
+	public void bufferSubData(ByteBuffer data) {
+		glBufferSubData(target, 0, data);
 	}
 }

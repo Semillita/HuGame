@@ -90,7 +90,7 @@ public class Model {
 		glEnableVertexAttribArray(7);
 		glVertexAttribDivisor(7, 1);
 		
-		glVertexAttribPointer(8, 1, 					GL_INT,   false, INSTANCE_SIZE_BYTES, 4 * TRANSFORM_COLUMN_SIZE * Float.BYTES);
+		glVertexAttribPointer(8, 1, 					GL_FLOAT,   false, INSTANCE_SIZE_BYTES, 4 * TRANSFORM_COLUMN_SIZE * Float.BYTES);
 		glEnableVertexAttribArray(8);
 		glVertexAttribDivisor(8, 1);
 		
