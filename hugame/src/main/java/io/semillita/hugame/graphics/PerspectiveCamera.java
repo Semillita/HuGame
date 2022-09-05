@@ -22,6 +22,18 @@ public non-sealed class PerspectiveCamera extends Camera {
 		update();
 	}
 
+	public Vector3f getPosition() {
+		return new Vector3f(position);
+	}
+	
+	public Vector3f getDirection() {
+		return new Vector3f(direction);
+	}
+	
+	public Vector3f getUp() {
+		return new Vector3f(up);
+	}
+	
 	public void setPosition(Vector3f position) {
 		this.position = new Vector3f(position.x, position.y, position.z);
 	}

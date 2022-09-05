@@ -11,10 +11,12 @@ import org.joml.Vector3f;
 import org.lwjgl.opengl.GLDebugMessageCallbackI;
 
 import io.semillita.hugame.environment.Environment;
+import io.semillita.hugame.environment.PointLight;
 import io.semillita.hugame.graphics.material.Material;
 import io.semillita.hugame.graphics.material.Materials;
 import io.semillita.hugame.util.Files;
 import io.semillita.hugame.util.Transform;
+import io.semillita.hugame.util.buffer.MaterialBuffer;
 import io.semillita.hugame.util.buffer.PointLightBuffer;
 
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
@@ -28,25 +30,17 @@ import static org.lwjgl.opengl.GL43.*;
 /** Renderer master class for rendering all different components */
 public class Renderer {
 
-	private static final int MAX_INSTANCES = 1000;
-	private static final int TRANSFORM_SIZE = 16;
-	private static final int TRANSFORM_OFFSET = 0;
-	private static final int INSTANCE_SIZE = TRANSFORM_SIZE;
-	private static final int INSTANCE_SIZE_BYTES = INSTANCE_SIZE * Float.BYTES;
-
 	private Map<Model, List<InstanceData>> modelInstanceData;
 	private PerspectiveCamera camera;
 	private Shader instanceShader;
 	private Shader batchShader;
 
 	private MaterialBuffer matBuffer;
-	private PointLightBuffer lightBuffer;
+	private PointLightBuffer pointLightBuffer;
 	
-	private Optional<Environment> maybeEnvironment;
-
 	public Renderer() {
 		modelInstanceData = new HashMap<>();
-		camera = new PerspectiveCamera(new Vector3f(0, 20, 20));
+		camera = new PerspectiveCamera(new Vector3f(5, 10, 10));
 		camera.lookAt(new Vector3f(0, 0, 0));
 		instanceShader = Shaders.get(Files.read("/shaders/instance_vertex_shader.glsl").get(),
 				Files.read("/shaders/instance_fragment_shader.glsl").get()).get();
@@ -56,7 +50,7 @@ public class Renderer {
 		var materials = Materials.collect();
 		matBuffer = MaterialBuffer.createFrom(materials);
 
-		maybeEnvironment = Optional.empty();
+		pointLightBuffer = PointLightBuffer.allocate(10);
 		
 		glDebugMessageCallback(new GLDebugMessageCallbackI() {
 
@@ -96,9 +90,10 @@ public class Renderer {
 
 			GLUtils.fillVBO(i_vboID, instanceDataArray);
 
-			instanceShader.use();
+			instanceShader.uploadVec3("cameraPosition", camera.position);
 
 			GLUtils.uploadMatricesToShader(camera, instanceShader);
+			
 			activateAndBindTextures(textures);
 			uploadTexturesToShader(getTextureSlotArray(textures.size()), instanceShader);
 
@@ -107,7 +102,8 @@ public class Renderer {
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
 
-			matBuffer.bind();
+			matBuffer.bindBase(0);
+			pointLightBuffer.bindBase(1);
 
 			glDrawElementsInstanced(GL_TRIANGLES, model.getIndexAmount(), GL_UNSIGNED_INT, 0, instanceDataList.size());
 
@@ -128,8 +124,8 @@ public class Renderer {
 		return camera;
 	}
 
-	public void setEnvironment(Environment environment) {
-		this.maybeEnvironment = Optional.ofNullable(environment);
+	public void updateEnvironment(Environment environment) {
+		fillPointLightBuffer(environment.getPointLights());
 	}
 	
 	void renderBatch(Batch batch) {
@@ -141,7 +137,7 @@ public class Renderer {
 		GLUtils.fillVBO(batch.getVboID(), batch.getVertices());
 		batchShader.use();
 		GLUtils.uploadMatricesToShader(batch.getCamera(), batchShader);
-
+		
 		activateAndBindTextures(batch.getTextures());
 		uploadTexturesToShader(getTextureSlotArray(textures.size() + 1), batchShader);
 
@@ -163,6 +159,17 @@ public class Renderer {
 			glActiveTexture(GL_TEXTURE0 + textureIndex);
 			textures.get(textureIndex).bind();
 		}
+	}
+	
+	private void fillPointLightBuffer(List<PointLight> lights) {
+		System.out.println("Filling point light buffer with " + lights.size() + " lights");
+		if (pointLightBuffer.getMaxItems() >= lights.size()) {
+			pointLightBuffer.refill(lights);
+		} else {
+			pointLightBuffer.fill(lights);
+		}
+		
+		instanceShader.uploadInt("pointLightAmount", lights.size());
 	}
 
 	private void uploadTexturesToShader(int[] textureSlots, Shader shader) {

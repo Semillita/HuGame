@@ -29,7 +29,7 @@ public class Materials {
 	}
 
 	public static List<Material> collect() {
-		return new ArrayList<Material>(registry.values());
+		return new ArrayList<>(registry.values());
 	}
 
 }
