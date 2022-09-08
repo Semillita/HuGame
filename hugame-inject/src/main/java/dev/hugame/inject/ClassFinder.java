@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -14,6 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -59,79 +62,38 @@ public class ClassFinder {
 		return null;
 	}
 
-	public static List<Class<?>> getClassesInClasspath() {
-		System.out.println("Calling getClassesInClasspath");
-		System.out.println("Java class path:");
-		var stuffs = Arrays.asList(System.getProperty("java.class.path").split(File.pathSeparator));
-		
-		List<File> files = new ArrayList<>();
-		
-		for (var s : stuffs) {
-			var file = new File(s);
-			System.out.println("---");
-			System.out.println(file.getName());
-			System.out.println(file.isDirectory());
+	public static List<Class<?>> getClassesInClasspath(Predicate<String> classNameCheck) {
+		try {
+			var file = new File(ClassFinder.class.getProtectionDomain().getCodeSource().getLocation().toURI())
+					.getPath();
 			
-			if (file.isDirectory()) {
-				files.addAll(getFilesRecursive(file));
-			} else {
-				files.add(file);
+			var jar = new JarFile(file);
+			var entries = jar.entries();
+			
+			var classes = new ArrayList<Class<?>>();
+			while (entries.hasMoreElements()) {
+				var fileName = entries.nextElement().getName();
+				if (fileName.endsWith(".class") && !fileName.startsWith("META-INF") && classNameCheck.test(fileName)) {
+					var className = fileName
+							.substring(0, fileName.length() - 6)
+							.replace('/', '.');
+					
+					try {
+						var c = Class.forName(className);
+						classes.add(c);
+					} catch (ClassNotFoundException | NoClassDefFoundError e) {
+						// No worries
+					}
+				}
 			}
+			jar.close();
+			
+			return classes;
+		} catch (URISyntaxException | IOException e) {
+			e.printStackTrace();
 		}
-		
-		System.out.println(files);
-		
-		
-		System.out.println(stuffs);
-		System.out.println("Then:");
-		
-		ClassLoader classLoader = ClassFinder.class.getClassLoader();
-		System.out.println(classLoader instanceof URLClassLoader);
-		URLClassLoader myUcl = (URLClassLoader) classLoader;
-		for (URL url : myUcl.getURLs()) {
-		    System.out.println(url.toString());
-		}
-		
-//		try {
-//			var stuff = classLoader.getResources("");
-//			List<URL> urls = new ArrayList<>();
-//			
-//			while(stuff.hasMoreElements()) {
-//				urls.add(stuff.nextElement());
-//			}
-//			
-//			for (var url : urls) {
-//				File root = new File(url.getPath());
-//				System.out.println("Root: " + root.getName());
-//				if (!root.isDirectory()) continue;
-////				System.out.println(getSubPackages(root));
-//				
-//				var classes = getFilesRecursive(root)
-//						.stream()
-//						.filter(f -> f.getName().endsWith(".class"))
-//						.toList();
-//				
-//				System.out.println(classes);
-//			}
-//			
-//			return null;
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-		return null;
+
+		return List.of();
 	}
-	
-	public static List<File> getSubPackages(File dir) {
-		return Arrays.asList(dir.listFiles())
-				.stream()
-				.filter(f -> f.isDirectory())
-				.toList();
-	}
-	
-	private static List<File> getFilesRecursive(File dir) {
-		return Arrays.asList(dir.listFiles())
-				.stream()
-				.flatMap(f -> f.isFile() ? Stream.of(f) :
-					getFilesRecursive(f).stream()).toList();
-	}
+
 }
