@@ -123,7 +123,6 @@
 		</properties>
 	</profile>
 </profiles>
-
 <dependencyManagement>
 	<dependencies>
 		<dependency>
@@ -135,8 +134,12 @@
 		</dependency>
 	</dependencies>
 </dependencyManagement>
-
 <dependencies>
+	<dependency>
+		<groupId>io.semillita.hugame</groupId>
+		<artifactId>hugame-inject</artifactId>
+		<version>0.0.1</version>
+	</dependency>
 	<dependency>
 		<groupId>org.lwjgl</groupId>
 		<artifactId>lwjgl</artifactId>
