@@ -28,6 +28,7 @@ import dev.hugame.graphics.Textures;
 import dev.hugame.graphics.material.Material;
 import dev.hugame.graphics.material.MaterialCreateInfo;
 import dev.hugame.graphics.material.Materials;
+import dev.hugame.inject.Inject;
 import dev.hugame.input.Key;
 import dev.hugame.ui.Slider;
 import dev.hugame.util.Transform;
@@ -63,6 +64,9 @@ public class Application extends ApplicationListener {
 	private Environment environment;
 	
 	private boolean firstFrame = true;
+	
+	@Inject
+	Repository repository;
 	
 	@Override
 	public void onCreate() {
@@ -128,11 +132,13 @@ public class Application extends ApplicationListener {
 
 	@Override
 	public void onRender() {
-		final Renderer renderer = HuGame.getRenderer();
+		System.out.println(repository);
 		
+		final Renderer renderer = HuGame.getRenderer();
 		if (firstFrame) {
 			renderer.updateEnvironment(environment);
 			firstFrame = false;
+			HuGame.inject(this);
 		}
 
 		List<Transform> cubeTransforms = new ArrayList<>();

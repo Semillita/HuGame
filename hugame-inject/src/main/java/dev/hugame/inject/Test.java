@@ -1,8 +1,8 @@
 package dev.hugame.inject;
 
+@Global
 public class Test {
 
-	@Global
 	private String testMethod() {
 		return "";
 	}

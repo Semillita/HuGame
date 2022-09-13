@@ -21,11 +21,23 @@ import static org.lwjgl.opengl.GL20.*;
 
 public class HuGame {
 
+	private static final boolean runningInJar;
+	
 	private static Window window;
 	private static Input input;
 	private static Renderer renderer;
 	private static ApplicationListener listener;
+	private static InjectionEngine inj;
 
+	static {
+		runningInJar = ClassFinder.class
+				.getProtectionDomain()
+				.getCodeSource()
+				.getLocation()
+				.toString()
+				.endsWith(".jar");
+	}
+	
 	public static void start(ApplicationListener listener, WindowConfiguration config) {
 		create(listener, config);
 		mainloop();
@@ -43,10 +55,18 @@ public class HuGame {
 	public static Renderer getRenderer() {
 		return renderer;
 	}
+	
+	public static boolean isRunningInJar() {
+		return runningInJar;
+	}
 
+	public static void inject(Object object) {
+		inj.injectIntoObject(object);
+	}
+	
 	private static void create(ApplicationListener listener, WindowConfiguration config) {
 		System.out.println("Creating...");
-
+		
 		window = new Window(config);
 		input = new Input(window.getHandle());
 		GLFW.glfwMakeContextCurrent(window.getHandle());
@@ -56,7 +76,7 @@ public class HuGame {
 		listener.onCreate();
 
 		// Dependency injection
-		InjectionEngine inj = new InjectionEngine();
+		inj = new InjectionEngine();
 		inj.start();
 		//
 		

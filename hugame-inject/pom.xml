@@ -7,5 +7,12 @@
   <properties>
     <maven.compiler.target>17</maven.compiler.target>
     <maven.compiler.source>17</maven.compiler.source>
-</properties>
+  </properties>
+  <dependencies>
+	<dependency>
+		<groupId>io.semillita.hugame</groupId>
+		<artifactId>hugame-util</artifactId>
+		<version>0.0.1</version>
+	</dependency>
+  </dependencies>
 </project>
