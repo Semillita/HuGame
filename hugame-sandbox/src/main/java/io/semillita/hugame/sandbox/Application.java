@@ -68,6 +68,9 @@ public class Application extends ApplicationListener {
 	@Inject
 	Repository repository;
 	
+	@Inject
+	Service service;
+	
 	@Override
 	public void onCreate() {
 		ModelBuilder builder = new ModelBuilder();
@@ -132,7 +135,11 @@ public class Application extends ApplicationListener {
 
 	@Override
 	public void onRender() {
-		System.out.println(repository);
+//		System.out.println(repository);
+//		System.out.println(service);
+		
+		if (repository != null) repository.something();
+		if (service != null) service.something();
 		
 		final Renderer renderer = HuGame.getRenderer();
 		if (firstFrame) {

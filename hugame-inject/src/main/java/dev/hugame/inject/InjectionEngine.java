@@ -1,8 +1,10 @@
 package dev.hugame.inject;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 
 import dev.hugame.util.reflect.Reflections;
@@ -31,30 +33,27 @@ public class InjectionEngine {
 			maybeInstance.ifPresent(instance -> dependencyObjects.put(globalClass, instance));
 		}
 		
+		dependencyObjects
+			.entrySet()
+			.stream()
+			.map(Entry::getValue)
+			.peek(this::injectIntoObject)
+			.forEach(this::initializeDependency);
+		
 		System.out.println(dependencyObjects);
 	}
 	
 	public void injectIntoObject(Object object) {
-		System.out.println(object);
-		
 		var fields = Arrays.asList(object.getClass().getDeclaredFields());
-		System.out.println("Object fields:");
-		System.out.println(fields);
 		
 		var injectFields = fields
 				.stream()
 				.filter(field -> field.isAnnotationPresent(Inject.class))
 				.toList();
 		
-		System.out.println("Inject fields:");
-		System.out.println(injectFields);
-		
 		for (var field : injectFields) {
 			var c = field.getType();
 			var instance = dependencyObjects.get(c);
-			System.out.println("Instance:");
-			System.out.println(instance);
-			
 			try {
 				field.setAccessible(true);
 				field.set(object, instance);
@@ -64,10 +63,26 @@ public class InjectionEngine {
 		}
 	}
 	
+	private void initializeDependency(Object object) {
+		var maybeInitMethod = Arrays.stream(object.getClass().getDeclaredMethods())
+				.filter(method -> method.getParameters().length == 0)
+				.findFirst();
+		
+		maybeInitMethod.ifPresent(initMethod -> {
+			try {
+				initMethod.setAccessible(true);
+				initMethod.invoke(object);
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+				e.printStackTrace();
+			}
+		});
+	}
+	
 	private <T> Optional<T> instantiate(Class<T> type) {
 		try {
-			return Optional.ofNullable(type.newInstance());
-		} catch (InstantiationException | IllegalAccessException e) {
+			var constructor = type.getDeclaredConstructor();
+			return Optional.ofNullable(constructor.newInstance());
+		} catch (InstantiationException | IllegalAccessException | NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException e) {
 			e.printStackTrace();
 			return Optional.empty();
 		}
