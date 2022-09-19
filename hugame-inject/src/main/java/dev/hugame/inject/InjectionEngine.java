@@ -6,24 +6,41 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import dev.hugame.util.reflect.Reflections;
 
 public class InjectionEngine {
 
 	private final Map<Class<?>, Object> dependencyObjects;
+	private boolean started = false;
 	
 	public InjectionEngine() {
 		dependencyObjects = new HashMap<>();
 	}
 	
+	public void setDefaultInstance(Object instance) {
+		if (instance == null) {
+			throw new IllegalArgumentException("Instance cannot be null");
+		}
+		
+		if (started) {
+			return;
+		}
+		
+		dependencyObjects.put(instance.getClass(), instance);
+		
+	}
+	
 	public void start() {
+		started = true;
 		Reflections reflections = new Reflections();
 		var classes = reflections.getClassesPresent(this::testClassName);
 		
 		var globalClasses = classes
 				.stream()
 				.filter(c -> c.isAnnotationPresent(Global.class))
+				.filter(Predicate.not(dependencyObjects::containsKey))
 				.toList();
 		
 		System.out.println(globalClasses);
