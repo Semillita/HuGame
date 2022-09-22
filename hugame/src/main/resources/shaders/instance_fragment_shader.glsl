@@ -15,7 +15,7 @@ struct PointLight {
     float quadratic;
     
     vec3 specular;
-    float bullshit;
+    float strength;
 };
 
 layout(std430, binding = 0) readonly buffer materialBuffer
@@ -76,5 +76,5 @@ vec3 calculatePointLight(PointLight light) {
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
     vec3 specular = light.specular * spec * specularStrength * attenuation;
     
-    return ambient + diffuse + specular;
+    return (ambient + diffuse + specular) * light.strength;
 }
