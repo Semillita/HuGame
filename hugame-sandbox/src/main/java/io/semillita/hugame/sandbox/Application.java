@@ -126,7 +126,7 @@ public class Application extends ApplicationListener {
 		});
 
 		environment = new Environment();
-		var pointLight1 = new PointLight(new Vector3f(2, 4, 2), new Vector3f(1, 1, 1));
+		var pointLight1 = new PointLight(new Vector3f(2, 4, 2), new Vector3f(1, 1, 1), 10);
 		environment.add(pointLight1);
 		
 		HuGame.getInput().setKeyListener((key, action) -> {
