@@ -19,6 +19,7 @@ public class Input {
 	private Point mousePosition;
 	private Optional<Consumer<Integer>> maybeMousePressListener;
 	private Optional<Consumer<Integer>> maybeMouseReleaseListener;
+	private Optional<BiConsumer<Key, KeyAction>> maybeKeyListener;
 
 	public Input(long windowHandle) {
 		this.windowHandle = windowHandle;
@@ -47,22 +48,39 @@ public class Input {
 	public void setMousePressCallback(Consumer<Integer> listener) {
 		this.maybeMousePressListener = Optional.ofNullable(listener);
 	}
-	
+
 	public void setMouseReleaseCallback(Consumer<Integer> listener) {
 		this.maybeMouseReleaseListener = Optional.ofNullable(listener);
 	}
 
-	private void keyCallback(long window, int key, int scancode, int action, int mods) {
-		switch (action) {
-		case GLFW_PRESS:
-			keyPressed(key);
+	public void setKeyListener(BiConsumer<Key, KeyAction> listener) {
+		this.maybeKeyListener = Optional.ofNullable(listener);
+	}
+
+	private void keyCallback(long window, int keyCode, int scancode, int action, int mods) {
+		var key = getKey(keyCode);
+		var keyAction = getKeyAction(action);
+
+		if (keyAction == null) return;
+		
+		switch (keyAction) {
+		case PRESS:
+			pressedKeys.put(key, true);
 			break;
-		case GLFW_REPEAT:
-			break;
-		case GLFW_RELEASE:
-			keyReleased(key);
+		case RELEASE:
+			pressedKeys.put(key, false);
 			break;
 		}
+		
+		maybeKeyListener.ifPresent(listener -> listener.accept(key, keyAction));
+	}
+
+	private KeyAction getKeyAction(int action) {
+		return switch (action) {
+		case GLFW_PRESS -> KeyAction.PRESS;
+		case GLFW_RELEASE -> KeyAction.RELEASE;
+		default -> null;
+		};
 	}
 
 	private void mouseMoveCallback(long window, double x, double y) {
@@ -80,22 +98,12 @@ public class Input {
 		}
 	}
 
-	private void keyPressed(int glfwKeyCode) {
-		Key jFuryKey = getHuGameKeyCode(glfwKeyCode);
-		pressedKeys.put(jFuryKey, true);
-	}
-
-	private void keyReleased(int key) {
-		Key jFuryKey = getHuGameKeyCode(key);
-		pressedKeys.put(jFuryKey, false);
-	}
-
-	public Key getHuGameKeyCode(int glfwKeyCode) {
+	public Key getKey(int glfwKeyCode) {
 		switch (glfwKeyCode) {
 		case GLFW_KEY_SPACE:
 			return Key.SPACE;
-		// case GLFW_KEY_APOSTROPHE:
-		// return Key.APOSTROPHE;
+//		 case GLFW_KEY_APOSTROPHE:
+//		 return Key.APOSTROPHE;
 		case GLFW_KEY_COMMA:
 			return Key.COMMA;
 		case GLFW_KEY_MINUS:
@@ -334,6 +342,10 @@ public class Input {
 		default:
 			return Key.UNKNOWN;
 		}
+	}
+
+	public static enum KeyAction {
+		PRESS, RELEASE;
 	}
 
 }
