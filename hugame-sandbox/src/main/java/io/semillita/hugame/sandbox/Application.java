@@ -10,13 +10,16 @@ import org.joml.Vector4f;
 
 import dev.hugame.core.ApplicationListener;
 import dev.hugame.core.HuGame;
+import dev.hugame.core.Input;
+import dev.hugame.core.Renderer;
+import dev.hugame.core.Window;
+import dev.hugame.core.graphics.Model;
+import dev.hugame.desktop.gl.DesktopGLContext;
 import dev.hugame.environment.Environment;
 import dev.hugame.environment.PointLight;
-import dev.hugame.graphics.Batch;
+import dev.hugame.graphics.GLBatch;
 import dev.hugame.graphics.Camera2D;
-import dev.hugame.graphics.Model;
 import dev.hugame.graphics.ModelBuilder;
-import dev.hugame.graphics.Renderer;
 import dev.hugame.graphics.Shader;
 import dev.hugame.graphics.Texture;
 import dev.hugame.graphics.Textures;
@@ -32,8 +35,8 @@ import dev.hugame.window.WindowConfiguration;
 public class Application extends ApplicationListener {
 
 	public static void main(String[] args) {
-		HuGame.start(new Application(),
-				new WindowConfiguration().width(960).height(540).title("Hugo").x(500).y(300).decorated(true));
+		HuGame.start(new DesktopGLContext(new WindowConfiguration().width(960).height(540).title("Hugo").x(500).y(300).decorated(true)),
+				new Application());
 	}
 
 	private Model cubeModel;
@@ -50,7 +53,7 @@ public class Application extends ApplicationListener {
 
 	float playerX = 0, playerZ = 0;
 
-	private Batch batch;
+	private GLBatch batch;
 	private Camera2D camera2D;
 	private Shader shader;
 
@@ -59,16 +62,14 @@ public class Application extends ApplicationListener {
 
 	private Environment environment;
 
-	private boolean firstFrame = true;
-
-	@Inject
-	Repository repository;
-
-	@Inject
-	Service service;
-
+	@Inject	Window window;
+	@Inject Input input;
+	@Inject Renderer renderer;
+	
 	@Override
 	public void onCreate() {
+		System.out.println("Sandbox onCreate");
+		HuGame.inject(this);
 		ModelBuilder builder = new ModelBuilder();
 
 		grassSides = new Texture[6];
@@ -93,11 +94,10 @@ public class Application extends ApplicationListener {
 		greenMat = Materials.get(new MaterialCreateInfo(new Vector4f(0.0f, 1.0f, 0.0f, 1.0f)));
 		whiteMat = Materials.get(new MaterialCreateInfo(new Vector4f(1.0f, 1.0f, 1.0f, 1.0f)));
 
-//		renderer = new Renderer();
-
-		batch = new Batch();
+		batch = new GLBatch();
+		HuGame.inject(batch);
 		camera2D = new Camera2D(new Vector2f(960, 540), new Dimension(1920, 1080));
-		shader = Batch.getDefaultShader();
+		shader = GLBatch.getDefaultShader();
 
 		button = new HugoButton();
 		button.setScreenToWorldCoordinateMapping(camera2D::screenToWorldCoords);
@@ -105,21 +105,20 @@ public class Application extends ApplicationListener {
 		slider = new Slider();
 		slider.setScreenToWorldCoordinateMapping(camera2D::screenToWorldCoords);
 
-		HuGame.getInput().setMousePressCallback((mouseButton) -> {
-			System.out.println("Mouse press");
-			System.out.println(HuGame.getInput().getMousePosition().x);
-			button.mouseDown();
-			slider.mouseDown();
-
-			camera2D.update();
+		input.setMouseButtonListener((event) -> {
+			System.out.println("Mouse event");
+			switch(event.action()) {
+			case PRESS:
+				button.mouseDown();
+				slider.mouseDown();
+				break;
+			case RELEASE:
+				button.mouseUp();
+				slider.mouseUp();
+			}
 		});
-		HuGame.getInput().setMouseReleaseCallback((mouseButton) -> {
-			System.out.println("Mouse release");
-			button.mouseUp();
-			slider.mouseUp();
-		});
 
-		HuGame.getWindow().setResizeListener((width, height) -> {
+		window.setResizeListener((width, height) -> {
 			System.out.println(width + ", " + height);
 			camera2D.updateViewport();
 			camera2D.update();
@@ -128,21 +127,15 @@ public class Application extends ApplicationListener {
 		environment = new Environment();
 		var pointLight1 = new PointLight(new Vector3f(2, 4, 2), new Vector3f(1, 1, 1), 10);
 		environment.add(pointLight1);
+		renderer.updateEnvironment(environment);
 		
-		HuGame.getInput().setKeyListener((key, action) -> {
-			System.out.println(key                 );
+		input.setKeyListener((key, action) -> {
+			System.out.println(key);
 		});
 	}
 
 	@Override
 	public void onRender() {
-		final Renderer renderer = HuGame.getRenderer();
-		if (firstFrame) {
-			renderer.updateEnvironment(environment);
-			firstFrame = false;
-			HuGame.inject(this);
-		}
-
 		List<Transform> cubeTransforms = new ArrayList<>();
 
 		for (int x = (int) playerX - 12; x < playerX + 12; x++) {
@@ -162,11 +155,11 @@ public class Application extends ApplicationListener {
 		}
 		renderer.draw(playerModel, playerTransform, whiteMat);
 
-		renderer.renderModels();
+		renderer.flush();
 
 		cubeTransforms.clear();
 
-		var input = HuGame.getInput();
+//		var input = HuGame.getInput();
 		if (input.isKeyPressed(Key.A))
 			playerX -= 0.05f;
 		if (input.isKeyPressed(Key.D))

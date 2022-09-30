@@ -1,4 +1,4 @@
-package dev.hugame.input;
+package dev.hugame.window;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -10,19 +10,24 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import dev.hugame.core.HuGame;
+import dev.hugame.core.Input;
+import dev.hugame.core.Window;
+import dev.hugame.inject.Inject;
+import dev.hugame.input.Key;
 
-public class Input {
+public class DesktopInput implements Input {
 
-	private final long windowHandle;
 	private final Map<Key, Boolean> pressedKeys;
 
 	private Point mousePosition;
+	private Optional<Consumer<MouseEvent>> maybeMouseButtonListener;
 	private Optional<Consumer<Integer>> maybeMousePressListener;
 	private Optional<Consumer<Integer>> maybeMouseReleaseListener;
 	private Optional<BiConsumer<Key, KeyAction>> maybeKeyListener;
 
-	public Input(long windowHandle) {
-		this.windowHandle = windowHandle;
+	@Inject private Window window;
+	
+	public DesktopInput(long windowHandle) {
 		pressedKeys = new HashMap<>();
 		mousePosition = new Point(0, 0);
 		maybeMousePressListener = Optional.empty();
@@ -33,30 +38,32 @@ public class Input {
 		glfwSetMouseButtonCallback(windowHandle, this::mouseButtonCallback);
 	}
 
+	@Override
 	public Point getMousePosition() {
 		return mousePosition;
 	}
 
+	@Override
 	public boolean isKeyPressed(Key key) {
 		return pressedKeys.containsKey(key) ? pressedKeys.get(key) : false;
 	}
 
+	@Override
 	public void acceptMousePosition(BiConsumer<Integer, Integer> consumer) {
 		consumer.accept(mousePosition.x, mousePosition.y);
 	}
 
-	public void setMousePressCallback(Consumer<Integer> listener) {
-		this.maybeMousePressListener = Optional.ofNullable(listener);
+	@Override
+	public void setMouseButtonListener(Consumer<MouseEvent> listener) {
+		
 	}
-
-	public void setMouseReleaseCallback(Consumer<Integer> listener) {
-		this.maybeMouseReleaseListener = Optional.ofNullable(listener);
-	}
-
+	
+	@Override
 	public void setKeyListener(BiConsumer<Key, KeyAction> listener) {
 		this.maybeKeyListener = Optional.ofNullable(listener);
 	}
 
+	
 	private void keyCallback(long window, int keyCode, int scancode, int action, int mods) {
 		var key = getKey(keyCode);
 		var keyAction = getKeyAction(action);
@@ -83,8 +90,8 @@ public class Input {
 		};
 	}
 
-	private void mouseMoveCallback(long window, double x, double y) {
-		mousePosition = new Point((int) x, HuGame.getWindow().getHeight() - 1 - ((int) y));
+	private void mouseMoveCallback(long windowHandle, double x, double y) {
+		mousePosition = new Point((int) x, window.getHeight() - 1 - ((int) y));
 	}
 
 	private void mouseButtonCallback(long window, int button, int action, int mods) {
@@ -98,7 +105,7 @@ public class Input {
 		}
 	}
 
-	public Key getKey(int glfwKeyCode) {
+	private Key getKey(int glfwKeyCode) {
 		switch (glfwKeyCode) {
 		case GLFW_KEY_SPACE:
 			return Key.SPACE;
@@ -343,9 +350,5 @@ public class Input {
 			return Key.UNKNOWN;
 		}
 	}
-
-	public static enum KeyAction {
-		PRESS, RELEASE;
-	}
-
+	
 }

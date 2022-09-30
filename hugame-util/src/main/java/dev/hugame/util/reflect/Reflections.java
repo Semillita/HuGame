@@ -38,7 +38,6 @@ public class Reflections {
 	}
 	
 	public List<Class<?>> getClassesPresent(Predicate<String> classNameFilter) {
-		System.out.println(runningInJar);
 		return runningInJar ? jarInspector.getClassesPresent(getJarPath(), classNameFilter)
 				: getClassesPresentExternal(classNameFilter);
 	}

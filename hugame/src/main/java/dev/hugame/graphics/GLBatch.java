@@ -4,19 +4,17 @@ import static org.lwjgl.opengl.GL43.*;
 
 import java.nio.IntBuffer;
 import java.util.List;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.lwjgl.BufferUtils;
 
-import dev.hugame.core.HuGame;
+import dev.hugame.core.Renderer;
+import dev.hugame.inject.Inject;
 import dev.hugame.util.Files;
 
-public class Batch {
+public class GLBatch {
 
 	private static final int POSITION_SIZE = 3;
 	private static final int COLOR_SIZE = 4;
@@ -48,12 +46,14 @@ public class Batch {
 	private List<Texture> textures;
 
 	private int idx;
+	
+	@Inject private Renderer renderer;
 
-	public Batch() {
+	public GLBatch() {
 		this(getDefaultShader());
 	}
 	
-	public Batch(Shader shader) {
+	public GLBatch(Shader shader) {
 		this.shader = shader;
 		IntBuffer units = BufferUtils.createIntBuffer(1);
 		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, units);
@@ -205,7 +205,7 @@ public class Batch {
 	}
 
 	public void flush() {
-		HuGame.getRenderer().renderBatch(this);
+		renderer.renderBatch(this);
 
 		textures.clear();
 		idx = 0;

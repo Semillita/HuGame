@@ -10,9 +10,9 @@ import java.util.function.Supplier;
 
 import org.lwjgl.opengl.GL;
 
-//import io.semillita.hugame.graphics.Graphics;
+import dev.hugame.core.Window;
 
-public class Window {
+public class DesktopWindow implements Window {
 
 	static {
 		glfwInit();
@@ -21,16 +21,10 @@ public class Window {
 	private final long handle;
 	private Runnable onRender;
 	private Supplier<Boolean> onClose;
-	private WindowConfiguration config;
 	private Optional<BiConsumer<Integer, Integer>> maybeResizeListener;
 	private Dimension size;
-//	@Deprecated
-//	public Graphics graphics;
 	
-	
-	public Window(WindowConfiguration config) {
-		this.config = config;
-		
+	public DesktopWindow(WindowConfiguration config) {
 		glfwWindowHint(GLFW_RESIZABLE, config.resizable ? 1 : 0);
 		glfwWindowHint(GLFW_DECORATED, config.decorated ? 1 : 0);
 		glfwWindowHint(GLFW_FOCUSED, config.focused ? 1 : 0);
@@ -59,46 +53,56 @@ public class Window {
 		
 		maybeResizeListener = Optional.empty();
 		glfwSetWindowSizeCallback(handle, this::resizeCallback);
+		glfwMakeContextCurrent(handle);
 	}
 	
+	@Override
 	public void setVisible(boolean visible) {
 	}
 
+	@Override
 	public Dimension getSize() {
 		return size;
 	}
 	
+	@Override
 	public int getWidth() {
 		return size.width;
 	}
-
+	
+	@Override
 	public int getHeight() {
 		return size.height;
 	}
 
+	@Override
 	public int getX() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
+	@Override
 	public int getY() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 	
+	@Override
 	public void setResizeListener(BiConsumer<Integer, Integer> resizeListener) {
 		maybeResizeListener = Optional.ofNullable(resizeListener);
 	}
 	
+	@Override
 	public void requestAttention() {
 		glfwRequestWindowAttention(handle);
 	}
 
+	@Override
 	public boolean close() {
-		// TODO Auto-generated method stub
-		return false;
+		return (onClose != null) ? onClose.get() : true;
 	}
 
+	@Override
 	public void destroy() {
 		// TODO Auto-generated method stub
 		
@@ -108,36 +112,28 @@ public class Window {
 		return handle;
 	}
 	
-	void onRender() {
-		onRender.run();
-	}
-	
-	@Deprecated
-	public void update() {
-//		graphics.update();
-	}
-	
+	@Override
 	public void pollEvents() {
 		glfwPollEvents();
 	}
 	
-	public void clear() {
-		glClearColor(1, 1, 0.5f, 1);	
+	@Override
+	public void clear(int r, int g, int b) {
+		glClearColor(r, g, b, 1);	
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 	
+	@Override
 	public void swapBuffers() {
 		glfwSwapBuffers(handle);
 	}
 	
+	@Override
 	public boolean shouldClose() {
 		return glfwWindowShouldClose(handle);
 	}
 	
-	public boolean onClose() {
-		return (onClose != null) ? onClose.get() : true;
-	}
-	
+	@Override
 	public void setShouldClose(boolean shouldClose) {
 		glfwSetWindowShouldClose(handle, shouldClose);
 	}
