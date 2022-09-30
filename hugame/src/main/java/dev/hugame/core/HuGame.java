@@ -1,23 +1,9 @@
 package dev.hugame.core;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL40;
-import org.lwjgl.opengl.GL43;
-import org.lwjgl.opengl.GLUtil;
 
-import dev.hugame.graphics.Renderer;
 import dev.hugame.inject.InjectionEngine;
-import dev.hugame.input.Input;
-import dev.hugame.util.ClassFinder;
-import dev.hugame.window.Window;
-import dev.hugame.window.WindowConfiguration;
-
-import static org.lwjgl.opengl.GL20.*;
 
 public class HuGame {
 
@@ -27,10 +13,10 @@ public class HuGame {
 	private static Input input;
 	private static Renderer renderer;
 	private static ApplicationListener listener;
-	private static InjectionEngine inj;
+	private static InjectionEngine injectionEngine;
 
 	static {
-		runningInJar = ClassFinder.class
+		runningInJar = HuGame.class
 				.getProtectionDomain()
 				.getCodeSource()
 				.getLocation()
@@ -38,8 +24,8 @@ public class HuGame {
 				.endsWith(".jar");
 	}
 	
-	public static void start(ApplicationListener listener, WindowConfiguration config) {
-		create(listener, config);
+	public static void start(HuGameContext context, ApplicationListener listener) {
+		create(context, listener);
 		mainloop();
 		destroy();
 	}
@@ -61,28 +47,28 @@ public class HuGame {
 	}
 
 	public static void inject(Object object) {
-		inj.injectIntoObject(object);
+		injectionEngine.injectIntoObject(object);
 	}
 	
-	private static void create(ApplicationListener listener, WindowConfiguration config) {
+	private static void create(HuGameContext context, ApplicationListener listener) {
 		System.out.println("Creating...");
-		
-		window = new Window(config);
-		input = new Input(window.getHandle());
-		GLFW.glfwMakeContextCurrent(window.getHandle());
-		GL.createCapabilities();
-
 		HuGame.listener = listener;
+		var graphics = context.getGraphics();
+		HuGame.renderer = graphics.getRenderer();
+		HuGame.window = context.getWindow();
+		HuGame.input = context.getInput();
+		
+		injectionEngine = new InjectionEngine();
+		injectionEngine.setDefaultInstance(window, Window.class);
+		injectionEngine.setDefaultInstance(input, Input.class);
+		injectionEngine.setDefaultInstance(renderer, Renderer.class);
+		injectionEngine.start();
+		
 		listener.onCreate();
 
-		// Dependency injection
-		inj = new InjectionEngine();
-		inj.start();
-		//
-		
-		renderer = new Renderer();
+		renderer.create();
 	}
-
+	
 	private static void mainloop() {
 		System.out.println("Mainloop...");
 
@@ -95,7 +81,7 @@ public class HuGame {
 				}
 			} else {
 				window.pollEvents();
-				window.clear();
+				window.clear(1, 1, 1);
 				listener.onRender();
 				window.swapBuffers();
 			}
@@ -104,6 +90,8 @@ public class HuGame {
 
 	private static void destroy() {
 		System.out.println("Destroying...");
+		
+		window.destroy();
 	}
 
 }

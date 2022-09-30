@@ -1,7 +1,7 @@
 package dev.hugame.ui;
 
 import dev.hugame.core.HuGame;
-import dev.hugame.graphics.Batch;
+import dev.hugame.graphics.GLBatch;
 import dev.hugame.graphics.Texture;
 import dev.hugame.graphics.Textures;
 
@@ -15,7 +15,7 @@ public class Slider extends Button {
 		thumb = Textures.get("/slider_thumb.png");
 	}
 	
-	public void render(Batch batch) {
+	public void render(GLBatch batch) {
 		batch.drawQuad(background, 0, -200, 400, 100);
 		batch.drawQuad(thumb, (int) (value * 400) - 20, -210, 40, 120);
 	}

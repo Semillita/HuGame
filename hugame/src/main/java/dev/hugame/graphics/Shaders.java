@@ -8,6 +8,10 @@ import static org.lwjgl.opengl.GL40.*;
 public class Shaders {
 
 	public static Optional<Shader> get(String vertexSource, String fragmentSource) {
+//		System.out.println("Vertex:");
+//		System.out.println(vertexSource);
+//		System.out.println("Fragment:");
+//		System.out.println(fragmentSource);
 		var vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(vertexShaderID, vertexSource);
 		glCompileShader(vertexShaderID);

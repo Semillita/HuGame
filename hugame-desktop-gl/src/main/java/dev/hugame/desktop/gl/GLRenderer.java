@@ -1,4 +1,4 @@
-package dev.hugame.graphics;
+package dev.hugame.desktop.gl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,8 +10,18 @@ import java.util.stream.IntStream;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GLDebugMessageCallbackI;
 
+import dev.hugame.core.Renderer;
+import dev.hugame.core.graphics.Model;
 import dev.hugame.environment.Environment;
 import dev.hugame.environment.PointLight;
+import dev.hugame.graphics.Camera;
+import dev.hugame.graphics.GLBatch;
+import dev.hugame.graphics.GLUtils;
+import dev.hugame.graphics.InstanceData;
+import dev.hugame.graphics.PerspectiveCamera;
+import dev.hugame.graphics.Shader;
+import dev.hugame.graphics.Shaders;
+import dev.hugame.graphics.Texture;
 import dev.hugame.graphics.material.Material;
 import dev.hugame.graphics.material.Materials;
 import dev.hugame.util.Files;
@@ -28,7 +38,7 @@ import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL43.*;
 
 /** Renderer master class for rendering all different components */
-public class Renderer {
+public class GLRenderer implements Renderer {
 
 	private Map<Model, List<InstanceData>> modelInstanceData;
 	private PerspectiveCamera camera;
@@ -38,7 +48,9 @@ public class Renderer {
 	private MaterialBuffer matBuffer;
 	private PointLightBuffer pointLightBuffer;
 	
-	public Renderer() {
+	private boolean initialized = false;
+	
+	public GLRenderer() {
 		modelInstanceData = new HashMap<>();
 		camera = new PerspectiveCamera(new Vector3f(5, 10, 10));
 		camera.lookAt(new Vector3f(0, 0, 0));
@@ -46,9 +58,6 @@ public class Renderer {
 				Files.read("/shaders/instance_fragment_shader.glsl").get()).get();
 		batchShader = Shaders.get(Files.read("/shaders/batch_vertex_shader.glsl").get(),
 				Files.read("/shaders/batch_fragment_shader.glsl").get()).get();
-
-		var materials = Materials.collect();
-		matBuffer = MaterialBuffer.createFrom(materials);
 
 		pointLightBuffer = PointLightBuffer.allocate(10);
 		
@@ -62,7 +71,20 @@ public class Renderer {
 
 		glEnable(GL_BLEND);
 	}
+	
+	@Override
+	public void create() {
+		if (initialized) {
+			return;	
+		}
+		
+		initialized = true;
+		
+		var materials = Materials.collect();
+		matBuffer = MaterialBuffer.createFrom(materials);
+	}
 
+	@Override
 	public void draw(Model model, Transform transform, Material material) {
 		var instanceData = new InstanceData(transform, material);
 
@@ -74,7 +96,8 @@ public class Renderer {
 		instanceDataList.add(instanceData);
 	}
 
-	public void renderModels() {
+	@Override
+	public void flush() {
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_MULTISAMPLE);
 
@@ -120,15 +143,18 @@ public class Renderer {
 
 	}
 
+	@Override
 	public PerspectiveCamera getCamera() {
 		return camera;
 	}
 
+	@Override
 	public void updateEnvironment(Environment environment) {
 		fillPointLightBuffer(environment.getPointLights());
 	}
 	
-	void renderBatch(Batch batch) {
+	@Override
+	public void renderBatch(GLBatch batch) {
 		glDisable(GL_DEPTH_TEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -162,7 +188,6 @@ public class Renderer {
 	}
 	
 	private void fillPointLightBuffer(List<PointLight> lights) {
-		System.out.println("Filling point light buffer with " + lights.size() + " lights");
 		if (pointLightBuffer.getMaxItems() >= lights.size()) {
 			pointLightBuffer.refill(lights);
 		} else {

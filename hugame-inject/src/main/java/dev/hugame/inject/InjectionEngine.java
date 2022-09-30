@@ -20,6 +20,10 @@ public class InjectionEngine {
 	}
 	
 	public void setDefaultInstance(Object instance) {
+		setDefaultInstance(instance, instance.getClass());
+	}
+	
+	public void setDefaultInstance(Object instance, Class<?> clazz) {
 		if (instance == null) {
 			throw new IllegalArgumentException("Instance cannot be null");
 		}
@@ -28,8 +32,7 @@ public class InjectionEngine {
 			return;
 		}
 		
-		dependencyObjects.put(instance.getClass(), instance);
-		
+		dependencyObjects.put(clazz, instance);
 	}
 	
 	public void start() {
@@ -43,8 +46,6 @@ public class InjectionEngine {
 				.filter(Predicate.not(dependencyObjects::containsKey))
 				.toList();
 		
-		System.out.println(globalClasses);
-		
 		for (var globalClass : globalClasses) {
 			var maybeInstance = instantiate(globalClass);
 			maybeInstance.ifPresent(instance -> dependencyObjects.put(globalClass, instance));
@@ -56,8 +57,6 @@ public class InjectionEngine {
 			.map(Entry::getValue)
 			.peek(this::injectIntoObject)
 			.forEach(this::initializeDependency);
-		
-		System.out.println(dependencyObjects);
 	}
 	
 	public void injectIntoObject(Object object) {
@@ -82,6 +81,7 @@ public class InjectionEngine {
 	
 	private void initializeDependency(Object object) {
 		var maybeInitMethod = Arrays.stream(object.getClass().getDeclaredMethods())
+				.filter(method -> method.isAnnotationPresent(Init.class))
 				.filter(method -> method.getParameters().length == 0)
 				.findFirst();
 		

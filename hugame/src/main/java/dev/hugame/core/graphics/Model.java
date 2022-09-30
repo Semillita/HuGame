@@ -1,4 +1,4 @@
-package dev.hugame.graphics;
+package dev.hugame.core.graphics;
 
 import static org.lwjgl.opengl.GL11.GL_FLOAT;
 import static org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER;
@@ -18,8 +18,12 @@ import static org.lwjgl.opengl.GL40.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
+import dev.hugame.graphics.GLUtils;
+import dev.hugame.graphics.Texture;
+import dev.hugame.graphics.material.Material;
 import dev.hugame.util.Transform;
 import dev.hugame.util.Util;
 
@@ -49,6 +53,9 @@ public class Model {
 	private final int vertexAmount, indexAmount;
 	private int vaoID, vboID, i_vboID, eboID;
 	private List<Texture> textures;
+	
+	// TODO: Implement default material from model loading
+	private final Optional<Material> defaultMaterial;
 	
 	public Model(List<Float> vertices, List<Integer> indices, List<Texture> textures) {
 		vertexAmount = vertices.size() / VERTEX_SIZE;
@@ -97,6 +104,8 @@ public class Model {
 		eboID = createEBO(indices);
 		
 		glBindVertexArray(0);
+		
+		defaultMaterial = Optional.empty();
 	}
 	
 	public int getVAO() {

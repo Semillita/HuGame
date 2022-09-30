@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.joml.Vector3f;
 
+import dev.hugame.core.graphics.Model;
+
 public class ModelBuilder {
 
 	private List<Texture> textures;

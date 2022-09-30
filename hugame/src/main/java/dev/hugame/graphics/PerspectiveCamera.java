@@ -1,15 +1,13 @@
 package dev.hugame.graphics;
 
-import java.awt.Dimension;
-
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 public non-sealed class PerspectiveCamera extends Camera {
 
-	protected Vector3f position;
-	protected Vector3f direction;
-	protected Vector3f up;
+	public Vector3f position;
+	public Vector3f direction;
+	public Vector3f up;
 
 	public PerspectiveCamera(Vector3f position) {
 		this(position, new Vector3f(0, 0, -1), new Vector3f(0, 1, 0));
