@@ -4,6 +4,7 @@ import static org.lwjgl.opengl.GL43.*;
 
 import java.nio.ByteBuffer;
 
+/** Wrapper class of an OpenGL frame buffer. */
 public class FrameBuffer {
 
 	private final int handle;
@@ -41,6 +42,7 @@ public class FrameBuffer {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
+	/** Binds this frame buffer as the render target. */
 	public void bind() {
 		glBindFramebuffer(GL_FRAMEBUFFER, handle);
 	}

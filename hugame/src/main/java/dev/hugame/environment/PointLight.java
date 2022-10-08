@@ -6,6 +6,7 @@ import org.joml.Vector3f;
 
 import dev.hugame.util.ByteSerializer;
 
+/** A light source that shines in all directions. */
 public non-sealed class PointLight extends Light {
 
 	public static final int SIZE_IN_BYTES = 15 * Float.BYTES;
@@ -35,6 +36,7 @@ public non-sealed class PointLight extends Light {
 		this.quadratic = 0.092f;
 	}
 
+	/** Returns the position of this light. */
 	public Vector3f getPosition() {
 		return position;
 	}

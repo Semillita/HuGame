@@ -17,24 +17,29 @@ import org.lwjgl.BufferUtils;
 
 import dev.hugame.util.Files;
 
+/** Wrapper class for a gl shader */
 public class Shader {
 
 	private int id;
 	private String vertexShaderSource;
 	private String fragmentShaderSource;
 
+	/** Creates a shader wrapper object of the given shader program ID. */
 	public Shader(int id) {
 		this.id = id;
 	}
 	
+	/** Returns the ID of this shader. */
 	public int getID() {
 		return id;
 	}
 	
+	/** Sets this shader as the shader to be used. */
 	public void use() {
 		glUseProgram(id);
 	}
 	
+	/** Detaches this shader from being used. */
 	public void detach() {
 		glUseProgram(0);
 	}

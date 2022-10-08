@@ -14,6 +14,7 @@ import dev.hugame.core.Renderer;
 import dev.hugame.inject.Inject;
 import dev.hugame.util.Files;
 
+/** OpenGL implementation of batched 2D render calls. */
 public class GLBatch {
 
 	private static final int POSITION_SIZE = 3;
@@ -46,13 +47,14 @@ public class GLBatch {
 	private List<Texture> textures;
 
 	private int idx;
-	
-	@Inject private Renderer renderer;
+
+	@Inject
+	private Renderer renderer;
 
 	public GLBatch() {
 		this(getDefaultShader());
 	}
-	
+
 	public GLBatch(Shader shader) {
 		this.shader = shader;
 		IntBuffer units = BufferUtils.createIntBuffer(1);
@@ -68,40 +70,61 @@ public class GLBatch {
 		setVertexAttribPointers();
 	}
 
+	/** Returns the ID of this batch's vao. */
 	public int getVaoID() {
 		return vaoID;
 	}
 
+	/** Returns the ID of this batch's vbo. */
 	public int getVboID() {
 		return vboID;
 	}
 
+	/** Returns the array containg the vertex data in this batch. */
 	public float[] getVertices() {
 		return vertices;
 	}
 
+	/** Returns the texture list used in this batch. */
 	public List<Texture> getTextures() {
 		return textures;
 	}
 
+	/** Returns the camera used to draw this batch. */
 	public Camera getCamera() {
 		return camera;
 	}
 
+	/** Returns the shader used to draw this batch. */
 	public Shader getShader() {
 		return shader;
 	}
 
+	/** Prepares this batch for accepting draw calls. */
 	public void begin() {
 		idx = 0;
 		textures = new ArrayList<>();
 	}
 
+	/**
+	 * Flushes this batch to the renderer.
+	 * 
+	 * @see GLBatch#flush()
+	 */
 	public void end() {
 		flush();
 	}
 
-	public void drawQuad(Texture texture, int x, int y, int width, int height) {
+	/**
+	 * Adds a texture to this batch's draw queue.
+	 * 
+	 * @param texture the texutre to use
+	 * @param x       the x-coordinate of the bottom-left corner
+	 * @param y       the y-coordinate of the bottom-left corner
+	 * @param width   the distance between left and right edge
+	 * @param height  the distance between bottom and top edge
+	 */
+	public void draw(Texture texture, int x, int y, int width, int height) {
 		if (idx / 40 >= maxQuadCount || textures.size() >= textureSlotAmount - 1) {
 			flush();
 		}
@@ -196,14 +219,17 @@ public class GLBatch {
 		idx += 10;
 	}
 
+	/** Sets the camera to be used to draw this batch. */
 	public void setCamera(Camera2D camera) {
 		this.camera = camera;
 	}
 
+	/** Sets the shader to be used to draw this batch. */
 	public void setShader(Shader shader) {
 		this.shader = (Shader) shader;
 	}
 
+	/** Flushes this batch to the renderer. */
 	public void flush() {
 		renderer.renderBatch(this);
 
@@ -211,12 +237,22 @@ public class GLBatch {
 		idx = 0;
 	}
 
+	/**
+	 * Creates a gl vertex array object.
+	 * 
+	 * @return a pointer to the gl object
+	 */
 	private int createVAO() {
 		var vaoID = glGenVertexArrays();
 		glBindVertexArray(vaoID);
 		return vaoID;
 	}
 
+	/**
+	 * Creates a gl vertex buffer object.
+	 * 
+	 * @return a pointer to the gl object
+	 */
 	private int createVBO() {
 		var vboID = glGenBuffers();
 		glBindBuffer(GL_ARRAY_BUFFER, vboID);
@@ -224,6 +260,9 @@ public class GLBatch {
 		return vboID;
 	}
 
+	/**
+	 * Creates and binds a new gl element buffer object, and fills it with indices.
+	 */
 	private void createEBO() {
 		int eboID = glGenBuffers();
 		int[] indices = generateAllQuadIndices();
@@ -233,6 +272,11 @@ public class GLBatch {
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
 	}
 
+	/**
+	 * Creates an array of quad indices matching the max quad count in this batch.
+	 * 
+	 * @return the index array
+	 */
 	private int[] generateAllQuadIndices() {
 		return IntStream.range(0, maxQuadCount).flatMap(offset -> Arrays.stream(getQuadIndices(offset * 4))).toArray();
 	}

@@ -4,6 +4,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
+/** A camera used to show a certain viewport onto the screen. */
 public abstract sealed class Camera permits OrthographicCamera, PerspectiveCamera, Camera2D {
 
 	protected Matrix4f projectionMatrix, viewMatrix;

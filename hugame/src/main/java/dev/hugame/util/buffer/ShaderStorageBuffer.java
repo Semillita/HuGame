@@ -37,9 +37,7 @@ public abstract class ShaderStorageBuffer<T extends Bufferable> extends Buffer {
 		final var bufferSize = Integer.BYTES + maxItems * bytesPerItem;
 		final var nativeBuffer = MemoryUtil.memAlloc(bufferSize);
 		for (var item : items) {
-			for (var b : item.getBytes()) {
-				nativeBuffer.put(b);
-			}
+			nativeBuffer.put(item.getBytes());
 		}
 		nativeBuffer.flip();
 		super.bind();

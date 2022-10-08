@@ -6,6 +6,7 @@ import org.joml.Vector4f;
 
 import dev.hugame.util.Bufferable;
 
+/** A render material that describes different lighting effects. */
 public class Material implements Bufferable {
 
 	public static final int SIZE_IN_BYTES = 4 * Float.BYTES;
@@ -19,14 +20,17 @@ public class Material implements Bufferable {
 		this.ambientColor = createInfo.ambientColor();
 	}
 
+	/** Returns the index of this material among all materials. */
 	public int getIndex() {
 		return index;
 	}
 
+	/** Returns the ambient color of this material. */
 	public Vector4f getAmbientColor() {
 		return ambientColor;
 	}
 
+	@Override
 	public byte[] getBytes() {
 		byte[] bytes = new byte[SIZE_IN_BYTES];
 
@@ -58,6 +62,12 @@ public class Material implements Bufferable {
 		return bytes;
 	}
 
+	/**
+	 * Puts the bytes of this material into a buffer.
+	 * 
+	 * @param buffer the buffer to insert into
+	 * @param index  the index to put the bytes at
+	 */
 	public void putIntoBuffer(ByteBuffer buffer, int index) {
 		for (var val : new float[] { ambientColor.x, ambientColor.y, ambientColor.z, ambientColor.w }) {
 			buffer.putFloat(index, val);

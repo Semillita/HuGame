@@ -2,6 +2,7 @@ package dev.hugame.graphics;
 
 import org.joml.Vector3f;
 
+/** Utility class to represent an RGB color value. */
 public final record Color(float x, float y, float z) {
 
 	public static final Color BLACK = new Color(0, 0, 0);

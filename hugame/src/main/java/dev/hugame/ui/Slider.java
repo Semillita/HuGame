@@ -16,8 +16,8 @@ public class Slider extends Button {
 	}
 	
 	public void render(GLBatch batch) {
-		batch.drawQuad(background, 0, -200, 400, 100);
-		batch.drawQuad(thumb, (int) (value * 400) - 20, -210, 40, 120);
+		batch.draw(background, 0, -200, 400, 100);
+		batch.draw(thumb, (int) (value * 400) - 20, -210, 40, 120);
 	}
 	
 	@Override

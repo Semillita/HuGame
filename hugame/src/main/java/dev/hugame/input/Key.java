@@ -1,5 +1,6 @@
 package dev.hugame.input;
 
+/** Enum values representing keyboard keys. */
 public enum Key {
 
 	NUM_0("0"),
