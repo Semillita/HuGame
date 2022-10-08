@@ -1,4 +1,4 @@
-package dev.hugame.util.buffer;
+package dev.hugame.desktop.gl.buffer;
 
 import static org.lwjgl.opengl.GL43.*;
 

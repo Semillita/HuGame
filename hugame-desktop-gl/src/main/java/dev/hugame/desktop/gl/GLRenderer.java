@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.IntStream;
 
 import org.joml.Vector3f;
@@ -12,9 +11,14 @@ import org.lwjgl.opengl.GLDebugMessageCallbackI;
 
 import dev.hugame.core.Renderer;
 import dev.hugame.core.graphics.Model;
+import dev.hugame.desktop.gl.buffer.DirectionalLightBuffer;
+import dev.hugame.desktop.gl.buffer.MaterialBuffer;
+import dev.hugame.desktop.gl.buffer.PointLightBuffer;
+import dev.hugame.desktop.gl.buffer.SpotLightBuffer;
+import dev.hugame.environment.DirectionalLight;
 import dev.hugame.environment.Environment;
 import dev.hugame.environment.PointLight;
-import dev.hugame.graphics.Camera;
+import dev.hugame.environment.SpotLight;
 import dev.hugame.graphics.GLBatch;
 import dev.hugame.graphics.GLUtils;
 import dev.hugame.graphics.InstanceData;
@@ -26,8 +30,6 @@ import dev.hugame.graphics.material.Material;
 import dev.hugame.graphics.material.Materials;
 import dev.hugame.util.Files;
 import dev.hugame.util.Transform;
-import dev.hugame.util.buffer.MaterialBuffer;
-import dev.hugame.util.buffer.PointLightBuffer;
 
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_INT;
@@ -47,6 +49,8 @@ public class GLRenderer implements Renderer {
 
 	private MaterialBuffer matBuffer;
 	private PointLightBuffer pointLightBuffer;
+	private SpotLightBuffer spotLightBuffer;
+	private DirectionalLightBuffer directionalLightBuffer;
 	
 	private boolean initialized = false;
 	
@@ -60,6 +64,8 @@ public class GLRenderer implements Renderer {
 				Files.read("/shaders/batch_fragment_shader.glsl").get()).get();
 
 		pointLightBuffer = PointLightBuffer.allocate(10);
+		spotLightBuffer = SpotLightBuffer.allocate(10);
+		directionalLightBuffer = DirectionalLightBuffer.allocate(1);
 		
 		glDebugMessageCallback(new GLDebugMessageCallbackI() {
 
@@ -127,6 +133,8 @@ public class GLRenderer implements Renderer {
 
 			matBuffer.bindBase(0);
 			pointLightBuffer.bindBase(1);
+			spotLightBuffer.bindBase(2);
+			directionalLightBuffer.bindBase(3);
 
 			glDrawElementsInstanced(GL_TRIANGLES, model.getIndexAmount(), GL_UNSIGNED_INT, 0, instanceDataList.size());
 
@@ -151,6 +159,8 @@ public class GLRenderer implements Renderer {
 	@Override
 	public void updateEnvironment(Environment environment) {
 		fillPointLightBuffer(environment.getPointLights());
+		fillSpotLightBuffer(environment.getSpotLights());
+		fillDirectionalLightBuffer(environment.getDirectionalLights());
 	}
 	
 	@Override
@@ -195,6 +205,26 @@ public class GLRenderer implements Renderer {
 		}
 		
 		instanceShader.uploadInt("pointLightAmount", lights.size());
+	}
+	
+	private void fillSpotLightBuffer(List<SpotLight> lights) {
+		if (spotLightBuffer.getMaxItems() >= lights.size()) {
+			spotLightBuffer.refill(lights);
+		} else {
+			spotLightBuffer.fill(lights);
+		}
+		
+		instanceShader.uploadInt("spotLightAmount", lights.size());
+	}
+	
+	private void fillDirectionalLightBuffer(List<DirectionalLight> lights) {
+		if (directionalLightBuffer.getMaxItems() >= lights.size()) {
+			directionalLightBuffer.refill(lights);
+		} else {
+			directionalLightBuffer.fill(lights);
+		}
+		
+		instanceShader.uploadInt("directionalLightAmount", lights.size());
 	}
 
 	private void uploadTexturesToShader(int[] textureSlots, Shader shader) {
