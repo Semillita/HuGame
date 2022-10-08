@@ -7,6 +7,7 @@ import org.joml.Vector3f;
 
 import dev.hugame.core.graphics.Model;
 
+/** Utility class for defining models through code. */
 public class ModelBuilder {
 
 	private List<Texture> textures;
@@ -21,6 +22,17 @@ public class ModelBuilder {
 		indices = new ArrayList<>();
 	}
 
+	/**
+	 * Generates a cube model centered at (0, 0, 0) with the dimensions (1, 1, 1)
+	 * units, with the given textures.
+	 * 
+	 * @param t0 the top side texture
+	 * @param t1 the bottom side texture
+	 * @param t2 the front side texture
+	 * @param t3 the back side texture
+	 * @param t4 the left side texture
+	 * @param t5 the right side texture
+	 */
 	public void cube(Texture t0, Texture t1, Texture t2, Texture t3, Texture t4, Texture t5) {
 
 		textures.add(t0);
@@ -59,13 +71,28 @@ public class ModelBuilder {
 		triangle(vertices[5], vertices[6], vertices[2], 1, 1, 0, 1, 0, 0, 5);
 	}
 
+	/**
+	 * Generates a triangle at the given position with the given texture
+	 * coordinates.
+	 * 
+	 * @param vert1 the position of the first vertex
+	 * @param vert2 the position of the second vertex
+	 * @param vert3 the position of the third vertex
+	 * @param u1    the u-coordiate of the first vertex
+	 * @param v1    the v-coordinate of the first vertex
+	 * @param u2    the u-coordinate of the second vertex
+	 * @param v2    the v-coordinate of the second vertex
+	 * @param u3    the u-coordinate of the third vertex
+	 * @param v3    the v-coordinate the third vertex
+	 * @param texID the index of the texture in this builder's texture list
+	 */
 	public void triangle(Vector3f vert1, Vector3f vert2, Vector3f vert3, float u1, float v1, float u2, float v2,
 			float u3, float v3, int texID) {
 
 		var a = new Vector3f(vert1).sub(vert2);
 		var b = new Vector3f(vert3).sub(vert2);
 		var normal = a.cross(b);
-		
+
 		// Position 0
 		vertices.add(vert1.x);
 		vertices.add(vert1.y);
@@ -124,10 +151,19 @@ public class ModelBuilder {
 		idx += 3;
 	}
 
+	/**
+	 * Adds a texture to this builder's texture list such that it can be used by its
+	 * index as texID in {@link ModelBuilder#triangle}.
+	 */
 	public void texture(Texture texture) {
 		textures.add(texture);
 	}
 
+	/**
+	 * Generates a model out of the supplied vertices and textures.
+	 * 
+	 * @return the model
+	 */
 	public Model generate() {
 		Model model = new Model(vertices, indices, textures);
 		vertices.clear();

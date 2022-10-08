@@ -16,12 +16,12 @@ public class HugoButton extends Button {
 	}
 	
 	public void render(GLBatch batch) {
-		batch.drawQuad(texture, 0, 0, 300, 100);
+		batch.draw(texture, 0, 0, 300, 100);
 		if (super.isHovered()) {
-			batch.drawQuad(hover, 0, 0, 300, 100);
+			batch.draw(hover, 0, 0, 300, 100);
 		}
 		if (super.isPressed()) {
-			batch.drawQuad(hover, 0, 0, 300, 100);
+			batch.draw(hover, 0, 0, 300, 100);
 		}
 	}
 	

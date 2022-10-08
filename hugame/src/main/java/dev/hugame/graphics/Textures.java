@@ -5,6 +5,7 @@ import java.util.Map;
 
 import dev.hugame.util.Files;
 
+/** Utility class for loading and caching texture file content. */
 public class Textures {
 
 	private static Map<String, Texture> loadedTextures;

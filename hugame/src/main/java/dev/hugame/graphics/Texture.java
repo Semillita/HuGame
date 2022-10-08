@@ -18,10 +18,15 @@ import dev.hugame.util.ImageLoader;
 
 import static org.lwjgl.stb.STBImage.*;
 
+/** Wrapper class for a gl texture */
 public class Texture {
 
 	private int handle;
 
+	/** Creates a texture with the given file content. 
+	 * 
+	 * Should be replaces by a gl texture initialization outside of the constructor.*/
+	@Deprecated
 	public Texture(String content) {
 		bindHandle();
 		setTextureParameters();
@@ -37,14 +42,17 @@ public class Texture {
 		unbind();
 	}
 
+	/** Returns the gl handle of this texture. */
 	int getHandle() {
 		return handle;
 	}
 
+	/** Binds this texture to be used. */
 	public void bind() {
 		glBindTexture(GL_TEXTURE_2D, handle);
 	}
 
+	/** Unbinds this texture from being used. */
 	public void unbind() {
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
