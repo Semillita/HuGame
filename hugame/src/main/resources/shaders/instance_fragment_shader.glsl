@@ -25,28 +25,21 @@ struct SpotLight {
     vec3 direction;
     float linear;
     
-    vec3 ambient;
+    vec3 color;
     float quadratic;
     
-    vec3 diffuse;
     float strength;
-    
-    vec3 specular;
-    float angle;
+    float cutOff;
+    float outerCutOff;
+    float bullshit;
 };
 
 struct DirectionalLight {
     vec3 direction;
     float strength;
   
-    vec3 ambient;
+    vec3 color;
     float bullshit1;
-    
-    vec3 diffuse;
-    float bullshit2;
-    
-    vec3 specular;
-    float bullshit3;
 };
 
 layout(std430, binding = 0) readonly buffer materialBuffer
@@ -83,35 +76,38 @@ uniform int directionalLightAmount;
 
 out vec4 color;
 
-const float ambientStrength = 1.0;
-const float diffuseStrength = 1.0;
+const float ambientStrength = 0.5;
+const float diffuseStrength = 0.5;
 const float specularStrength = 0.3;
 
 vec3 calculatePointLight(PointLight light);
 vec3 calculateSpotLight(SpotLight light);
 vec3 calculateDirectionalLight(DirectionalLight light);
 
+float getAttenuation(vec3 lightPos, vec3 fragPos, float constant, float linear, float quadratic);
+
 void main()
 {
 
-	//vec3 light = vec3(0.0, 0.0, 0.0);
+	vec3 light = vec3(0.0, 0.0, 0.0);
 	
-	//for (int i = 0; i < pointLightAmount; i++) {
-	//	light += calculatePointLight(pointLights[i]);
-	//}
+	for (int i = 0; i < pointLightAmount; i++) {
+		light += calculatePointLight(pointLights[i]);
+	}
 	
-	//for (int i = 0; i < spotLightAmount; i++) {
-	//	light += calculateSpotLight(spotLights[i]);
-	//}
+	for (int i = 0; i < spotLightAmount; i++) {
+		light += calculateSpotLight(spotLights[i]);
+	}
 	
-	//for (int i = 0; i < directionalLightAmount; i++) {
-	//	light += calculateDirectionalLight(directionalLights[i]);
-	//}
+	for (int i = 0; i < directionalLightAmount; i++) {
+		light += calculateDirectionalLight(directionalLights[i]);
+	}
 	
-	//vec4 ambient = materials[fMaterialIndex].ambientColor;
+	vec4 ambient = materials[fMaterialIndex].ambientColor;
     //color = texture(uTextures[fTexID], fTexCoords) * vec4(light.xyz, 1.0) * ambient;
-    //color = vec4(light, 1.0);
-    color = vec4(calculateSpotLight(spotLights[0]), 1.0);
+    //color = ambient;
+    color = vec4(light, 1.0);
+    //color = vec4(calculateSpotLight(spotLights[0]), 1.0);
 }
 
 vec3 calculatePointLight(PointLight light) {
@@ -135,54 +131,36 @@ vec3 calculatePointLight(PointLight light) {
 }
 
 vec3 calculateSpotLight(SpotLight light) {
-    vec3 lightDir = normalize(light.direction);
-    float theta = dot(lightDir, normalize(-light.direction));
-    
-    if (theta < 0) {
-    	return vec3(0, 1, 0);
-    } else {
-    	return vec3(theta * 100);
-    }
-    
-    return vec3(1);
-    
-    //return vec3(theta);
-    
-    /*if (theta < light.angle) {
-    	return vec3(0);
-    }
-    		    
-    vec3 ambient = light.ambient * ambientStrength;
-    
-    vec3 norm = normalize(fNormal);
-    float diffFactor = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * diffFactor * diffuseStrength;
-    
+    vec3 lightDir = normalize(light.position - fPosition); // Frag to light
     vec3 viewDir = normalize(cameraPosition - fPosition);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float specFactor = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-    vec3 specular = light.specular * specFactor * specularStrength;
+    vec3 norm = normalize(fNormal);
+    float distance = length(light.position - fPosition);
+	float attenuation = light.strength / 
+		(light.constant + light.linear * distance + light.quadratic * (distance * distance));
+		
+    float theta = dot(lightDir, normalize(-light.direction)); // Cosine of angle between spot dir and light dir
     
-    //return (ambient + diffuse + specular) * light.strength;
-    return vec3(0.5, 0.5, 0.5);*/
+    float epsilon = light.cutOff - light.outerCutOff;
+    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+    		    
+    vec3 diffuse = max(dot(norm, lightDir), 0.0) * light.color * intensity;
+    
+    vec3 reflectDir = reflect(-lightDir, norm);
+    vec3 specular = pow(max(dot(viewDir, reflectDir), 0.0), 32) * light.color * intensity;
+    
+    return (diffuse + specular) * attenuation;
 }
 
 vec3 calculateDirectionalLight(DirectionalLight light) {
-	//float distance = length(light.position - fPosition);
-	//float attenuation = 1.0 / (light.constant + light.linear * distance + 
-    //		    light.quadratic * (distance * distance));
-    		    
-    vec3 ambient = light.ambient * ambientStrength;
-    
+    vec3 ambient = light.color * 0.05;
     vec3 norm = normalize(fNormal);
-    vec3 lightDir = normalize(light.direction);
-    float diffFactor = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * diffFactor * diffuseStrength;
+    vec3 lightDir = normalize(-light.direction); // Frag to light
     
-    vec3 viewDir = normalize(cameraPosition - fPosition);
+    vec3 diffuse = max(dot(norm, lightDir), 0.0) * light.color;
+    
+    vec3 viewDir = normalize(cameraPosition - fPosition); // Frag to camera
     vec3 reflectDir = reflect(-lightDir, norm);
-    float specFactor = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-    vec3 specular = light.specular * specFactor * specularStrength;
+    vec3 specular = pow(max(dot(viewDir, reflectDir), 0.0), 32) * light.color;
     
     return (ambient + diffuse + specular) * light.strength;
 }

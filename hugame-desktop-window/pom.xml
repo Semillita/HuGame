@@ -4,6 +4,10 @@
 	<artifactId>hugame-desktop-window</artifactId>
 	<version>0.0.1</version>
 	<name>HuGame Desktop Window</name>
+	<properties>
+		<maven.compiler.target>17</maven.compiler.target>
+		<maven.compiler.source>17</maven.compiler.source>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>io.semillita.hugame</groupId>

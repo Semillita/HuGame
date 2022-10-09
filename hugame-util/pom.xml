@@ -4,6 +4,10 @@
   <artifactId>hugame-util</artifactId>
   <version>0.0.1</version>
   <name>HuGame Util</name>
+  <properties>
+		<maven.compiler.target>17</maven.compiler.target>
+		<maven.compiler.source>17</maven.compiler.source>
+	</properties>
   <dependencies>
   		<dependency>
 			<groupId>org.joml</groupId>

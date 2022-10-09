@@ -15,6 +15,7 @@ import dev.hugame.core.Renderer;
 import dev.hugame.core.Window;
 import dev.hugame.core.graphics.Model;
 import dev.hugame.desktop.gl.DesktopGLContext;
+import dev.hugame.environment.DirectionalLight;
 import dev.hugame.environment.Environment;
 import dev.hugame.environment.PointLight;
 import dev.hugame.environment.SpotLight;
@@ -126,10 +127,12 @@ public class Application extends ApplicationListener {
 		});
 
 		environment = new Environment();
-		var pointLight1 = new PointLight(new Vector3f(2, 4, 2), new Vector3f(1, 1, 1), 10);
-		var spotLight1 = new SpotLight(new Vector3f(0, 2, 0), new Vector3f(-1, -1, 0), new Vector3f(1, 1, 1), 5, 2);
-		//environment.add(pointLight1);
+		var pointLight1 = new PointLight(new Vector3f(2, 4, 2), new Vector3f(1, 1, 1), 1);
+		var spotLight1 = new SpotLight(new Vector3f(0, 4, 0), new Vector3f(-1f, -1, 0), new Vector3f(1, 0, 0), 2, 0.5f);
+		var directionalLight1 = new DirectionalLight(new Vector3f(-1f, -1f, -1f), new Vector3f(1, 1, 0), 0.5f);
+		environment.add(pointLight1);
 		environment.add(spotLight1);
+//		environment.add(directionalLight1);
 		renderer.updateEnvironment(environment);
 		
 		input.setKeyListener((key, action) -> {
@@ -196,7 +199,7 @@ public class Application extends ApplicationListener {
 
 		button.update();
 		slider.update();
-		button.render(batch);
+		//button.render(batch);
 		slider.render(batch);
 		// batch.drawQuad(groundTexture, 0, 0, 1920, 1080);
 
