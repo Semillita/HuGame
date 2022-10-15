@@ -91,10 +91,22 @@ public class Application extends ApplicationListener {
 		playerTransform = new Transform(new Vector3f(playerX, 1, playerZ), new Vector3f(0, 0, 0),
 				new Vector3f(1, 2, 1));
 
-		redMat = Materials.get(new MaterialCreateInfo(new Vector4f(1.0f, 0.0f, 0.0f, 1.0f)));
-		blueMat = Materials.get(new MaterialCreateInfo(new Vector4f(0.0f, 0.0f, 1.0f, 1.0f)));
-		greenMat = Materials.get(new MaterialCreateInfo(new Vector4f(0.0f, 1.0f, 0.0f, 1.0f)));
-		whiteMat = Materials.get(new MaterialCreateInfo(new Vector4f(1.0f, 1.0f, 1.0f, 1.0f)));
+		redMat = Materials.get(new MaterialCreateInfo(new Vector3f(1.0f, 0.0f, 0.0f),
+				new Vector3f(1.0f, 0.0f, 0.0f),
+				new Vector3f(1.0f, 0.0f, 0.0f),
+				32));
+		blueMat = Materials.get(new MaterialCreateInfo(new Vector3f(0.0f, 0.0f, 1.0f),
+				new Vector3f(0.0f, 0.0f, 1.0f),
+				new Vector3f(0.0f, 0.0f, 1.0f),
+				32));
+		greenMat = Materials.get(new MaterialCreateInfo(new Vector3f(0.0f, 1.0f, 0.0f),
+				new Vector3f(0.0f, 1.0f, 0.0f),
+				new Vector3f(0.0f, 1.0f, 0.0f),
+				32));
+		whiteMat = Materials.get(new MaterialCreateInfo(new Vector3f(1.0f, 1.0f, 1.0f),
+				new Vector3f(1.0f, 1.0f, 1.0f),
+				new Vector3f(1.0f, 1.0f, 1.0f),
+				64));
 
 		batch = new GLBatch();
 		HuGame.inject(batch);
@@ -129,10 +141,10 @@ public class Application extends ApplicationListener {
 		environment = new Environment();
 		var pointLight1 = new PointLight(new Vector3f(2, 4, 2), new Vector3f(1, 1, 1), 1);
 		var spotLight1 = new SpotLight(new Vector3f(0, 4, 0), new Vector3f(-1f, -1, 0), new Vector3f(1, 0, 0), 2, 0.5f);
-		var directionalLight1 = new DirectionalLight(new Vector3f(-1f, -1f, -1f), new Vector3f(1, 1, 0), 0.5f);
+		var directionalLight1 = new DirectionalLight(new Vector3f(-1f, -1f, -1f), new Vector3f(1, 1, 0), 0.2f);
 		environment.add(pointLight1);
 		environment.add(spotLight1);
-//		environment.add(directionalLight1);
+		environment.add(directionalLight1);
 		renderer.updateEnvironment(environment);
 		
 		input.setKeyListener((key, action) -> {
