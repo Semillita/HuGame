@@ -1,11 +1,11 @@
-package dev.hugame.graphics;
+package dev.hugame.graphics.model;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.joml.Vector3f;
 
-import dev.hugame.core.graphics.Model;
+import dev.hugame.graphics.Texture;
 
 /** Utility class for defining models through code. */
 public class ModelBuilder {

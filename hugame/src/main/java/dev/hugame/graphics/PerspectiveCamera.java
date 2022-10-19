@@ -60,7 +60,7 @@ public non-sealed class PerspectiveCamera extends Camera {
 
 	@Override
 	public void update() {
-		projectionMatrix = new Matrix4f().identity().setPerspective(45, 1920 / 1080f, 0.1f, 1000f);
+		projectionMatrix = new Matrix4f().identity().setPerspective(45, 1920 / 1080f, 0.1f, 10000f);
 		viewMatrix = new Matrix4f().identity().lookAt(position, new Vector3f(position).add(direction.normalize()), up);
 	}
 

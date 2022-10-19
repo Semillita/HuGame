@@ -2,25 +2,31 @@
 
 struct Material {
 	vec3 ambient;
-	float shininess;
+	int albedoMapID;
+	
 	vec3 diffuse;
-	float bullshit1;
+	int normalMapID;
+	
 	vec3 specular;
-	float bullshit2;
+	int specularMapID;
+	
+	float shininess;
+	int albedoMapSlice;
+	int normalMapSlice;
+	int specularMapSlice;
 };
 
 struct PointLight {
     vec3 position;
     float constant;
   
-    vec3 ambient;
+    vec3 color;
     float linear;
-    
-    vec3 diffuse;
+
     float quadratic;
-    
-    vec3 specular;
     float strength;
+    float bullshit0;
+    float bullshit1;
 };
 
 struct SpotLight {
@@ -44,7 +50,7 @@ struct DirectionalLight {
     float strength;
   
     vec3 color;
-    float bullshit1;
+    float bullshit;
 };
 
 layout(std430, binding = 0) readonly buffer materialBuffer
@@ -70,11 +76,10 @@ layout(std430, binding = 3) readonly buffer directionalLightBuffer
 in vec3 fPosition;
 in vec3 fNormal;
 in vec2 fTexCoords;
-flat in uint fTexID;
-flat in uint fMaterialIndex;
+flat in int fMatID;
 
 uniform vec3 cameraPosition;
-uniform sampler2D uTextures[32];
+uniform sampler2DArray uTextures[32];
 uniform int pointLightAmount;
 uniform int spotLightAmount;
 uniform int directionalLightAmount;
@@ -94,22 +99,33 @@ float getAttenuation(vec3 lightPos, vec3 fragPos, float constant, float linear, 
 void main()
 {
 
+	Material material = materials[fMatID];
 	vec3 light = vec3(0.0, 0.0, 0.0);
 	
 	for (int i = 0; i < pointLightAmount; i++) {
-		light += calculatePointLight(pointLights[i], materials[fMaterialIndex]);
+		light += calculatePointLight(pointLights[i], material);
 	}
 	
 	for (int i = 0; i < spotLightAmount; i++) {
-		light += calculateSpotLight(spotLights[i], materials[fMaterialIndex]);
+		light += calculateSpotLight(spotLights[i], material);
 	}
 	
 	for (int i = 0; i < directionalLightAmount; i++) {
-		light += calculateDirectionalLight(directionalLights[i], materials[fMaterialIndex]);
+		light += calculateDirectionalLight(directionalLights[i], material);
 	}
 	
-    color = texture(uTextures[fTexID], fTexCoords) * vec4(light, 1.0);
-    //color = vec4(light, 1.0);
+	vec4 textureSample;
+	int albedoID = material.albedoMapID;
+	if (albedoID >= 0) {
+		textureSample = texture(uTextures[albedoID], vec3(fTexCoords, material.albedoMapSlice));
+	} else {
+		textureSample = vec4(1, 1, 1, 1);
+	}
+
+    color = textureSample * vec4(light, 1.0);
+    //color = textureSample * 0.2 + textureSample * vec4(light, 1.0);
+    float c = albedoID / 5f;
+    //color = vec4(c, c, c, 1);
 }
 
 vec3 calculatePointLight(PointLight light, Material material) {
@@ -117,18 +133,18 @@ vec3 calculatePointLight(PointLight light, Material material) {
 	float attenuation = 1.0 / (light.constant + light.linear * distance + 
     		    light.quadratic * (distance * distance));
     		    
-    vec3 ambient = light.ambient * attenuation * material.ambient;
+    vec3 ambient = light.color * attenuation * material.ambient;
     
     vec3 norm = normalize(fNormal);
     vec3 lightDir = normalize(light.position - fPosition);
     
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * diff * attenuation * material.diffuse;
+    vec3 diffuse = light.color * diff * attenuation * material.diffuse;
     
     vec3 viewDir = normalize(cameraPosition - fPosition);
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    vec3 specular = light.specular * spec * specularStrength * attenuation * material.specular;
+    vec3 specular = light.color * spec * specularStrength * attenuation * material.specular;
 
     return (ambient + diffuse + specular) * light.strength;
 }

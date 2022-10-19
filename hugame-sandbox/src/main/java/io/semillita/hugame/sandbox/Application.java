@@ -13,31 +13,34 @@ import dev.hugame.core.HuGame;
 import dev.hugame.core.Input;
 import dev.hugame.core.Renderer;
 import dev.hugame.core.Window;
-import dev.hugame.core.graphics.Model;
 import dev.hugame.desktop.gl.DesktopGLContext;
+import dev.hugame.desktop.gl.GLBatch;
+import dev.hugame.desktop.gl.GLTexture;
 import dev.hugame.environment.DirectionalLight;
 import dev.hugame.environment.Environment;
 import dev.hugame.environment.PointLight;
 import dev.hugame.environment.SpotLight;
-import dev.hugame.graphics.GLBatch;
 import dev.hugame.graphics.Camera2D;
-import dev.hugame.graphics.ModelBuilder;
 import dev.hugame.graphics.Shader;
 import dev.hugame.graphics.Texture;
 import dev.hugame.graphics.Textures;
 import dev.hugame.graphics.material.Material;
 import dev.hugame.graphics.material.MaterialCreateInfo;
 import dev.hugame.graphics.material.Materials;
+import dev.hugame.graphics.model.AssimpModelLoader;
+import dev.hugame.graphics.model.Model;
+import dev.hugame.graphics.model.ModelBuilder;
 import dev.hugame.inject.Inject;
 import dev.hugame.input.Key;
 import dev.hugame.ui.Slider;
+import dev.hugame.util.Files;
 import dev.hugame.util.Transform;
 import dev.hugame.window.WindowConfiguration;
 
 public class Application extends ApplicationListener {
 
 	public static void main(String[] args) {
-		HuGame.start(new DesktopGLContext(new WindowConfiguration().width(960).height(540).title("Hugo").x(500).y(300).decorated(true)),
+		HuGame.start(new DesktopGLContext(new WindowConfiguration().width(960).height(540).title("App").x(500).y(300).decorated(true)),
 				new Application());
 	}
 
@@ -52,8 +55,9 @@ public class Application extends ApplicationListener {
 	Material redMat;
 	Material greenMat;
 	Material whiteMat;
+	Material donutMat;
 
-	float playerX = 0, playerZ = 0;
+	float playerX = 0, playerY = 0, playerZ = 0;
 
 	private GLBatch batch;
 	private Camera2D camera2D;
@@ -64,49 +68,22 @@ public class Application extends ApplicationListener {
 
 	private Environment environment;
 
+	private Model model;
+	
 	@Inject	Window window;
 	@Inject Input input;
 	@Inject Renderer renderer;
+	
+	private long lastNano;
+	
+	private Texture groundTexture;
 	
 	@Override
 	public void onCreate() {
 		System.out.println("Sandbox onCreate");
 		HuGame.inject(this);
-		ModelBuilder builder = new ModelBuilder();
-
-		grassSides = new Texture[6];
-		grassSides[0] = Textures.get("/grass_top.png");
-		grassSides[1] = Textures.get("/grass_bottom.png");
-		grassSides[2] = Textures.get("/grass_front.png");
-		grassSides[3] = Textures.get("/grass_back.png");
-		grassSides[4] = Textures.get("/grass_left.png");
-		grassSides[5] = Textures.get("/grass_right.png");
-
-		builder.cube(grassSides[0], grassSides[1], grassSides[2], grassSides[3], grassSides[4], grassSides[5]);
-		cubeModel = builder.generate();
-
-		Texture side = Textures.get("/grass_bottom.png");
-		builder.cube(side, side, side, side, side, side);
-		playerModel = builder.generate();
-		playerTransform = new Transform(new Vector3f(playerX, 1, playerZ), new Vector3f(0, 0, 0),
-				new Vector3f(1, 2, 1));
-
-		redMat = Materials.get(new MaterialCreateInfo(new Vector3f(1.0f, 0.0f, 0.0f),
-				new Vector3f(1.0f, 0.0f, 0.0f),
-				new Vector3f(1.0f, 0.0f, 0.0f),
-				32));
-		blueMat = Materials.get(new MaterialCreateInfo(new Vector3f(0.0f, 0.0f, 1.0f),
-				new Vector3f(0.0f, 0.0f, 1.0f),
-				new Vector3f(0.0f, 0.0f, 1.0f),
-				32));
-		greenMat = Materials.get(new MaterialCreateInfo(new Vector3f(0.0f, 1.0f, 0.0f),
-				new Vector3f(0.0f, 1.0f, 0.0f),
-				new Vector3f(0.0f, 1.0f, 0.0f),
-				32));
-		whiteMat = Materials.get(new MaterialCreateInfo(new Vector3f(1.0f, 1.0f, 1.0f),
-				new Vector3f(1.0f, 1.0f, 1.0f),
-				new Vector3f(1.0f, 1.0f, 1.0f),
-				64));
+		playerTransform = new Transform(new Vector3f(playerX, playerY, playerZ), new Vector3f(0, 0, 0),
+				new Vector3f(1f, 1f, 1f));
 
 		batch = new GLBatch();
 		HuGame.inject(batch);
@@ -120,7 +97,7 @@ public class Application extends ApplicationListener {
 		slider.setScreenToWorldCoordinateMapping(camera2D::screenToWorldCoords);
 
 		input.setMouseButtonListener((event) -> {
-			System.out.println("Mouse event");
+//			System.out.println("Mouse event");
 			switch(event.action()) {
 			case PRESS:
 				button.mouseDown();
@@ -133,7 +110,7 @@ public class Application extends ApplicationListener {
 		});
 
 		window.setResizeListener((width, height) -> {
-			System.out.println(width + ", " + height);
+//			System.out.println(width + ", " + height);
 			camera2D.updateViewport();
 			camera2D.update();
 		});
@@ -141,62 +118,87 @@ public class Application extends ApplicationListener {
 		environment = new Environment();
 		var pointLight1 = new PointLight(new Vector3f(2, 4, 2), new Vector3f(1, 1, 1), 1);
 		var spotLight1 = new SpotLight(new Vector3f(0, 4, 0), new Vector3f(-1f, -1, 0), new Vector3f(1, 0, 0), 2, 0.5f);
-		var directionalLight1 = new DirectionalLight(new Vector3f(-1f, -1f, -1f), new Vector3f(1, 1, 0), 0.2f);
+		var directionalLight1 = new DirectionalLight(new Vector3f(-1f, -1f, -1f), new Vector3f(1, 1, 0), 0.5f);
 		environment.add(pointLight1);
 		environment.add(spotLight1);
-		environment.add(directionalLight1);
+//		environment.add(directionalLight1);
 		renderer.updateEnvironment(environment);
 		
 		input.setKeyListener((key, action) -> {
-			System.out.println(key);
+//			System.out.println(key);
 		});
+
+		blueMat = Materials.get(new Vector3f(0, 0, 1), new Vector3f(1, 1, 1), new Vector3f(1, 1, 1), 0.5f, -1, -1, -1, -1, -1, -1);
+				
+		System.out.println("LOADING MODEL");
+//		var assimpModel = new AssimpModelLoader().load("deccer_cubes_tex.fbx");
+//		model = new Model(assimpModel.meshes(), assimpModel.materials());
+		var assimpModel = new AssimpModelLoader().loadExternal("deccer_cubes_binary.glb");
+		model = new Model(assimpModel.meshes(), assimpModel.materials());
+		System.out.println("Model has " + assimpModel.meshes().size() + " meshes and " + assimpModel.materials().size() + " materials");
+		System.out.println("FINISHED LOADING MODEL");
+		
+		groundTexture = Textures.get("/ground.png");
 	}
 
 	@Override
 	public void onRender() {
-		List<Transform> cubeTransforms = new ArrayList<>();
-
-		for (int x = (int) playerX - 12; x < playerX + 12; x++) {
-			for (int z = (int) playerZ - 12; z < playerZ + 12; z++) {
-				for (int y = -6; y < 1; y++) {
-					var dis = Math.sqrt(Math.pow(x - playerX, 2) + Math.pow(z - playerZ, 2) + Math.pow(y - 0, 2));
-					if (dis <= 9) {
-						cubeTransforms.add(
-								new Transform(new Vector3f(x, y, z), new Vector3f(0, 0, 0), new Vector3f(1, 1, 1)));
-					}
-				}
-			}
-		}
-
-		for (var transform : cubeTransforms) {
-			renderer.draw(cubeModel, transform, whiteMat);
-		}
-		renderer.draw(playerModel, playerTransform, whiteMat);
+		var currentNano = System.nanoTime();
+		var elapsed = (currentNano - lastNano) / 1_000_000_000d;
+		lastNano = currentNano;
+		
+//<<<<<<< HEAD
+//		List<Transform> cubeTransforms = new ArrayList<>();
+//
+//		for (int x = (int) playerX - 12; x < playerX + 12; x++) {
+//			for (int z = (int) playerZ - 12; z < playerZ + 12; z++) {
+//				for (int y = -6; y < 1; y++) {
+//					var dis = Math.sqrt(Math.pow(x - playerX, 2) + Math.pow(z - playerZ, 2) + Math.pow(y - 0, 2));
+//					if (dis <= 9) {
+//						cubeTransforms.add(
+//								new Transform(new Vector3f(x, y, z), new Vector3f(0, 0, 0), new Vector3f(1, 1, 1)));
+//					}
+//				}
+//			}
+//		}
+//
+//		for (var transform : cubeTransforms) {
+////			renderer.draw(donut, transform, whiteMat);
+//		}
+////		renderer.draw(playerModel, playerTransform, whiteMat);
+//=======
+		renderer.draw(model, playerTransform, whiteMat);
+		
+		//renderer.draw(model, playerTransform);
 
 		renderer.flush();
 
-		cubeTransforms.clear();
+		//cubeTransforms.clear();
 
 //		var input = HuGame.getInput();
 		if (input.isKeyPressed(Key.A))
-			playerX -= 0.05f;
+			playerX -= 1f;
 		if (input.isKeyPressed(Key.D))
-			playerX += 0.05f;
+			playerX += 1f;
 		if (input.isKeyPressed(Key.W))
-			playerZ -= 0.05f;
+			playerZ -= 1f;
 		if (input.isKeyPressed(Key.S))
-			playerZ += 0.05f;
+			playerZ += 1f;
 
 		var camera = renderer.getCamera();
 		var cameraPos = camera.getPosition();
 		if (input.isKeyPressed(Key.LEFT))
-			cameraPos.x -= 0.05f;
+			cameraPos.x -= 1f;
 		if (input.isKeyPressed(Key.RIGHT))
-			cameraPos.x += 0.05f;
+			cameraPos.x += 1f;
 		if (input.isKeyPressed(Key.UP))
-			cameraPos.z -= 0.05f;
+			cameraPos.z -= 1f;
 		if (input.isKeyPressed(Key.DOWN))
-			cameraPos.z += 0.05f;
+			cameraPos.z += 1f;
+		if (input.isKeyPressed(Key.SPACE))
+			cameraPos.y += 1f;
+		if (input.isKeyPressed(Key.ENTER))
+			cameraPos.y -= 1f;
 		camera.setPosition(cameraPos);
 		camera.update();
 
@@ -209,11 +211,11 @@ public class Application extends ApplicationListener {
 		batch.setShader(shader);
 		batch.begin();
 
-		button.update();
-		slider.update();
-		//button.render(batch);
-		slider.render(batch);
-		// batch.drawQuad(groundTexture, 0, 0, 1920, 1080);
+//		button.update();
+//		slider.update();
+//		button.render(batch);
+//		slider.render(batch);
+		//batch.draw(groundTexture, 0, 0, 100, 100);
 
 		batch.end();
 	}

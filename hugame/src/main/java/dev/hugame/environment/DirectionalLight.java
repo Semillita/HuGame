@@ -8,19 +8,18 @@ import dev.hugame.util.ByteSerializer;
 
 /** A sun-like light without a given position. */
 public non-sealed class DirectionalLight extends Light {
-	
 	public static final int SIZE_IN_BYTES = 8 * Float.BYTES;
-
-	public DirectionalLight(Vector3f direction, Vector3f color, float strength) {
-		this.direction = direction;
-		this.color = color;
-		this.strength = strength;
-	}
 	
 	private Vector3f direction;
 	private Vector3f color;
 	
 	private float strength;
+	
+	public DirectionalLight(Vector3f direction, Vector3f color, float strength) {
+		this.direction = direction;
+		this.color = color;
+		this.strength = strength;
+	}
 
 	@Override
 	public byte[] getBytes() {
