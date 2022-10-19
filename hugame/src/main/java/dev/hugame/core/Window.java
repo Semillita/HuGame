@@ -50,7 +50,7 @@ public interface Window {
 	public void pollEvents();
 
 	/** Clears the window's framebuffer with the given RGB value. */
-	public void clear(int r, int g, int b);
+	public void clear(float r, float g, float b);
 
 	/** Swaps the buffers of the window. */
 	public void swapBuffers();

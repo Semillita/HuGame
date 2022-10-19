@@ -63,8 +63,38 @@ public non-sealed class SpotLight extends Light {
 		var outerCutOffBytes = ByteSerializer.toBytes((float) Math.cos(outerAngle));
 		var bullshitBytes = new byte[] {0, 0, 0, 0};
 		
-		return ByteSerializer.squash(Arrays.asList(positionBytes, constantBytes, directionBytes, linearBytes, 
+		return ByteSerializer.squash(Arrays.asList(positionBytes, constantBytes, directionBytes, linearBytes,
 				colorBytes, quadraticBytes, strengthBytes, cutOffBytes, outerCutOffBytes, bullshitBytes));
+	}
+
+	/**
+	 * Returns a byte array containing the bytes of a {@link Vector3f}.
+	 * 
+	 * @return the bytes of the vector, in order
+	 */
+	private byte[] vec3Bytes(Vector3f source) {
+		byte[] bytes = new byte[3 * Float.BYTES];
+
+		int xBits = Float.floatToIntBits(source.x);
+		int yBits = Float.floatToIntBits(source.y);
+		int zBits = Float.floatToIntBits(source.z);
+
+		bytes[0] = (byte) (xBits >> 0);
+		bytes[1] = (byte) (xBits >> 8);
+		bytes[2] = (byte) (xBits >> 16);
+		bytes[3] = (byte) (xBits >> 24);
+
+		bytes[4] = (byte) (yBits >> 0);
+		bytes[5] = (byte) (yBits >> 8);
+		bytes[6] = (byte) (yBits >> 16);
+		bytes[7] = (byte) (yBits >> 24);
+
+		bytes[8] = (byte) (zBits >> 0);
+		bytes[9] = (byte) (zBits >> 8);
+		bytes[10] = (byte) (zBits >> 16);
+		bytes[11] = (byte) (zBits >> 24);
+
+		return bytes;
 	}
 
 }

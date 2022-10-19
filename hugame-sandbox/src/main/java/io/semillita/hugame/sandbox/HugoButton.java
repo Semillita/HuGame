@@ -1,6 +1,7 @@
 package io.semillita.hugame.sandbox;
 
-import dev.hugame.graphics.GLBatch;
+import dev.hugame.desktop.gl.GLBatch;
+import dev.hugame.desktop.gl.GLTexture;
 import dev.hugame.graphics.Texture;
 import dev.hugame.graphics.Textures;
 import dev.hugame.ui.Button;
@@ -16,18 +17,18 @@ public class HugoButton extends Button {
 	}
 	
 	public void render(GLBatch batch) {
-		batch.draw(texture, 0, 0, 300, 100);
+		batch.draw(texture, 0, 200, 300, 100);
 		if (super.isHovered()) {
-			batch.draw(hover, 0, 0, 300, 100);
+			batch.draw(hover, 0, 200, 300, 100);
 		}
 		if (super.isPressed()) {
-			batch.draw(hover, 0, 0, 300, 100);
+			batch.draw(hover, 0, 200, 300, 100);
 		}
 	}
 	
 	@Override
 	public boolean isInside(int x, int y) {
-		return x >= 0 && x < 300 && y >= 0 && y < 100;
+		return x >= 0 && x < 300 && y >= 200 && y < 300;
 	}
 	
 	@Override

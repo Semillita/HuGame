@@ -3,13 +3,16 @@ package dev.hugame.core;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 
+import dev.hugame.graphics.Textures;
 import dev.hugame.inject.Inject;
 import dev.hugame.inject.InjectionEngine;
 
 public class HuGame {
+	// TODO: Add some System class with utils like injection and jar state check.
 
 	private static final boolean runningInJar;
 
+	private static Graphics graphics;
 	private static Window window;
 	private static Input input;
 	private static Renderer renderer;
@@ -32,6 +35,10 @@ public class HuGame {
 		destroy();
 	}
 
+	public static Graphics getGraphics() {
+		return graphics;
+	}
+	
 	public static Window getWindow() {
 		return window;
 	}
@@ -53,6 +60,10 @@ public class HuGame {
 	public static void inject(Object object) {
 		injectionEngine.injectIntoObject(object);
 	}
+	
+	public static void injectStatic(Class<?> c) {
+		injectionEngine.injectIntoClass(c);
+	}
 
 	/**
 	 * Creates a HuGame application
@@ -64,18 +75,22 @@ public class HuGame {
 		System.out.println("Creating...");
 		HuGame.listener = listener;
 		var graphics = context.getGraphics();
+		HuGame.graphics = graphics;
 		HuGame.renderer = graphics.getRenderer();
 		HuGame.window = context.getWindow();
 		HuGame.input = context.getInput();
 
 		injectionEngine = new InjectionEngine();
+		injectionEngine.setDefaultInstance(graphics, Graphics.class);
 		injectionEngine.setDefaultInstance(window, Window.class);
 		injectionEngine.setDefaultInstance(input, Input.class);
 		injectionEngine.setDefaultInstance(renderer, Renderer.class);
 		injectionEngine.start();
 
 		listener.onCreate();
-
+		
+		graphics.create();
+		
 		renderer.create();
 	}
 
@@ -92,7 +107,7 @@ public class HuGame {
 				}
 			} else {
 				window.pollEvents();
-				window.clear(1, 1, 1);
+				window.clear(1f, 1f, 0.3f);
 				listener.onRender();
 				window.swapBuffers();
 			}

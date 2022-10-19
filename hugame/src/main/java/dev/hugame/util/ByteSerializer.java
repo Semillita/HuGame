@@ -17,7 +17,11 @@ public class ByteSerializer {
 	
 	public static byte[] toBytes(float val) {
 		int i = Float.floatToIntBits(val);
-		return new byte[] {(byte) (i >> 0), (byte) (i), (byte) (i >> 16), (byte) (i >> 24)};
+		return toBytes(i);
+	}
+	
+	public static byte[] toBytes(int val) {
+		return new byte[] {(byte) (val >> 0), (byte) (val >> 8), (byte) (val >> 16), (byte) (val >> 24)};
 	}
 	
 	public static byte[] squash(List<byte[]> byteArrays) {

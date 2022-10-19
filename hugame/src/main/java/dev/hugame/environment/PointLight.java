@@ -13,9 +13,7 @@ public non-sealed class PointLight extends Light {
 
 	private Vector3f position;
 
-	private Vector3f ambient;
-	private Vector3f diffuse;
-	private Vector3f specular;
+	private Vector3f color;
 	
 	private float strength;
 
@@ -26,9 +24,7 @@ public non-sealed class PointLight extends Light {
 
 	public PointLight(Vector3f position, Vector3f color, float strength) {
 		this.position = position;
-		this.ambient = color;
-		this.diffuse = color;
-		this.specular = color;
+		this.color = color;
 
 		this.strength = strength;
 
@@ -45,15 +41,14 @@ public non-sealed class PointLight extends Light {
 	@Override
 	public byte[] getBytes() {
 		var positionBytes = ByteSerializer.toBytes(position);
-		var ambientBytes = ByteSerializer.toBytes(ambient);
-		var diffuseBytes = ByteSerializer.toBytes(diffuse);
-		var specularBytes = ByteSerializer.toBytes(specular);
+		var colorBytes = ByteSerializer.toBytes(color);
 		var constantBytes = ByteSerializer.toBytes(constant);
 		var linearBytes = ByteSerializer.toBytes(linear);
 		var quadraticBytes = ByteSerializer.toBytes(quadratic);
 		var strengthBytes = ByteSerializer.toBytes(strength);
-		return ByteSerializer.squash(Arrays.asList(positionBytes, constantBytes, ambientBytes, linearBytes,
-				diffuseBytes, quadraticBytes, specularBytes, strengthBytes));
+		var bullshitBytes = new byte[] {0, 0, 0, 0};
+		return ByteSerializer.squash(Arrays.asList(positionBytes, constantBytes, colorBytes, linearBytes,
+				quadraticBytes, strengthBytes, bullshitBytes, bullshitBytes));
 	}
 
 }

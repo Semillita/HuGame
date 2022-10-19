@@ -1,4 +1,4 @@
-package dev.hugame.graphics;
+package dev.hugame.desktop.gl;
 
 import static org.lwjgl.opengl.GL43.*;
 
@@ -10,24 +10,35 @@ import java.util.stream.IntStream;
 
 import org.lwjgl.BufferUtils;
 
+import dev.hugame.core.HuGame;
 import dev.hugame.core.Renderer;
+import dev.hugame.graphics.Batch;
+import dev.hugame.graphics.Camera;
+import dev.hugame.graphics.Camera2D;
+import dev.hugame.graphics.Shader;
+import dev.hugame.graphics.Shaders;
+import dev.hugame.graphics.Texture;
 import dev.hugame.inject.Inject;
 import dev.hugame.util.Files;
+import dev.hugame.util.IntList;
 
 /** OpenGL implementation of batched 2D render calls. */
-public class GLBatch {
+public class GLBatch implements Batch {
 
 	private static final int POSITION_SIZE = 3;
 	private static final int COLOR_SIZE = 4;
 	private static final int TEX_COORDS_SIZE = 2;
-	private static final int TEX_ID_SIZE = 1;
+	private static final int TEX_ARRAY_ID_SIZE = 1;
+	private static final int TEX_ARRAY_INDEX_SIZE = 1;
 
 	private static final int POSITION_OFFSET = 0;
 	private static final int COLOR_OFFSET = POSITION_OFFSET + POSITION_SIZE * Float.BYTES;
 	private static final int TEX_COORDS_OFFSET = COLOR_OFFSET + COLOR_SIZE * Float.BYTES;
-	private static final int TEX_ID_OFFSET = TEX_COORDS_OFFSET + TEX_COORDS_SIZE * Float.BYTES;
+	private static final int TEX_ARRAY_ID_OFFSET = TEX_COORDS_OFFSET + TEX_COORDS_SIZE * Float.BYTES;
+	private static final int TEX_ARRAY_INDEX_OFFSET = TEX_ARRAY_ID_OFFSET + TEX_ARRAY_ID_SIZE * Float.BYTES;
 
-	private static final int VERTEX_SIZE = POSITION_SIZE + COLOR_SIZE + TEX_COORDS_SIZE + TEX_ID_SIZE;
+	private static final int VERTEX_SIZE = POSITION_SIZE + COLOR_SIZE + TEX_COORDS_SIZE + TEX_ARRAY_ID_SIZE
+			+ TEX_ARRAY_INDEX_SIZE;
 	private static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
 
 	public static Shader getDefaultShader() {
@@ -44,12 +55,12 @@ public class GLBatch {
 	private float[] vertices;
 	private Camera2D camera;
 	private Shader shader;
-	private List<Texture> textures;
+	
+	private List<GLTextureArray> textureArrays;
 
 	private int idx;
 
-	@Inject
-	private Renderer renderer;
+	private GLRenderer renderer;
 
 	public GLBatch() {
 		this(getDefaultShader());
@@ -68,6 +79,11 @@ public class GLBatch {
 		createEBO();
 
 		setVertexAttribPointers();
+
+		renderer = (GLRenderer) HuGame.getRenderer();
+		
+//		textureArrays = new IntList(textureSlotAmount);
+		textureArrays = new ArrayList<>();
 	}
 
 	/** Returns the ID of this batch's vao. */
@@ -86,8 +102,8 @@ public class GLBatch {
 	}
 
 	/** Returns the texture list used in this batch. */
-	public List<Texture> getTextures() {
-		return textures;
+	public List<GLTextureArray> getTextures() {
+		return textureArrays;
 	}
 
 	/** Returns the camera used to draw this batch. */
@@ -100,40 +116,36 @@ public class GLBatch {
 		return shader;
 	}
 
-	/** Prepares this batch for accepting draw calls. */
 	public void begin() {
 		idx = 0;
-		textures = new ArrayList<>();
+		textureArrays.clear();
 	}
 
-	/**
-	 * Flushes this batch to the renderer.
-	 * 
-	 * @see GLBatch#flush()
-	 */
 	public void end() {
 		flush();
 	}
 
-	/**
-	 * Adds a texture to this batch's draw queue.
-	 * 
-	 * @param texture the texutre to use
-	 * @param x       the x-coordinate of the bottom-left corner
-	 * @param y       the y-coordinate of the bottom-left corner
-	 * @param width   the distance between left and right edge
-	 * @param height  the distance between bottom and top edge
-	 */
 	public void draw(Texture texture, int x, int y, int width, int height) {
-		if (idx / 40 >= maxQuadCount || textures.size() >= textureSlotAmount - 1) {
+		if (idx / 40 >= maxQuadCount || textureArrays.size() >= textureSlotAmount - 1) {
 			flush();
 		}
-
+		
+		if (!(texture instanceof GLTexture)) {
+			throw new RuntimeException("Wrong API implementation of Texture used for GLBatch");
+		}
+		
+		var glTexture = (GLTexture) texture;
+		var textureArray = glTexture.getTextureArray();
+		var textureArrayIndex = glTexture.getArrayIndex();
+		
 		final float u1 = 0, v1 = 1, u2 = 1, v2 = 0;
-		final int slot = textures.size();
 
-		textures.add(texture);
-
+		var textureSlot = textureArrays.indexOf(textureArray);
+		if (textureSlot == -1) {
+			textureArrays.add(textureArray);
+			textureSlot = textureArrays.size() - 1;
+		}
+		
 		// <Top left>
 
 		// Position
@@ -149,11 +161,13 @@ public class GLBatch {
 		vertices[idx + 7] = u1;
 		vertices[idx + 8] = v1;
 		// Tex ID
-		vertices[idx + 9] = slot;
+		vertices[idx + 9] = textureSlot;
+		// Tex index
+		vertices[idx + 10] = glTexture.getArrayIndex();
 
 		// </Top Left>
 
-		idx += 10;
+		idx += VERTEX_SIZE;
 
 		// <Bottom left>
 
@@ -170,11 +184,13 @@ public class GLBatch {
 		vertices[idx + 7] = u1;
 		vertices[idx + 8] = v2;
 		// Tex ID
-		vertices[idx + 9] = slot;
+		vertices[idx + 9] = textureSlot;
+		// Tex index
+		vertices[idx + 10] = glTexture.getArrayIndex();
 
 		// </Bottom left>
 
-		idx += 10;
+		idx += VERTEX_SIZE;
 
 		// <Bottom right>
 
@@ -191,11 +207,13 @@ public class GLBatch {
 		vertices[idx + 7] = u2;
 		vertices[idx + 8] = v2;
 		// Tex ID
-		vertices[idx + 9] = slot;
+		vertices[idx + 9] = textureSlot;
+		// Tex index
+		vertices[idx + 10] = glTexture.getArrayIndex();
 
 		// </Bottom right>
 
-		idx += 10;
+		idx += VERTEX_SIZE;
 
 		// <Top right>
 
@@ -212,28 +230,27 @@ public class GLBatch {
 		vertices[idx + 7] = u2;
 		vertices[idx + 8] = v1;
 		// Tex ID
-		vertices[idx + 9] = slot;
+		vertices[idx + 9] = textureSlot;
+		// Tex index
+		vertices[idx + 10] = glTexture.getArrayIndex();
 
 		// </Top right>
 
-		idx += 10;
+		idx += VERTEX_SIZE;
 	}
 
-	/** Sets the camera to be used to draw this batch. */
 	public void setCamera(Camera2D camera) {
 		this.camera = camera;
 	}
 
-	/** Sets the shader to be used to draw this batch. */
 	public void setShader(Shader shader) {
 		this.shader = (Shader) shader;
 	}
 
-	/** Flushes this batch to the renderer. */
 	public void flush() {
 		renderer.renderBatch(this);
 
-		textures.clear();
+		textureArrays.clear();
 		idx = 0;
 	}
 
@@ -295,8 +312,11 @@ public class GLBatch {
 		glVertexAttribPointer(2, TEX_COORDS_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_COORDS_OFFSET);
 		glEnableVertexAttribArray(2);
 
-		glVertexAttribPointer(3, TEX_ID_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_ID_OFFSET);
+		glVertexAttribPointer(3, TEX_ARRAY_ID_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_ARRAY_ID_OFFSET);
 		glEnableVertexAttribArray(3);
+		
+		glVertexAttribPointer(4, TEX_ARRAY_INDEX_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_ARRAY_INDEX_OFFSET);
+		glEnableVertexAttribArray(4);
 	}
 
 }

@@ -10,7 +10,6 @@ import org.joml.Vector3f;
 import org.lwjgl.opengl.GLDebugMessageCallbackI;
 
 import dev.hugame.core.Renderer;
-import dev.hugame.core.graphics.Model;
 import dev.hugame.desktop.gl.buffer.DirectionalLightBuffer;
 import dev.hugame.desktop.gl.buffer.MaterialBuffer;
 import dev.hugame.desktop.gl.buffer.PointLightBuffer;
@@ -19,16 +18,16 @@ import dev.hugame.environment.DirectionalLight;
 import dev.hugame.environment.Environment;
 import dev.hugame.environment.PointLight;
 import dev.hugame.environment.SpotLight;
-import dev.hugame.graphics.GLBatch;
 import dev.hugame.graphics.GLUtils;
 import dev.hugame.graphics.InstanceData;
 import dev.hugame.graphics.PerspectiveCamera;
 import dev.hugame.graphics.Shader;
 import dev.hugame.graphics.Shaders;
-import dev.hugame.graphics.Texture;
 import dev.hugame.graphics.material.Material;
 import dev.hugame.graphics.material.Materials;
+import dev.hugame.graphics.model.Model;
 import dev.hugame.util.Files;
+import dev.hugame.util.IntList;
 import dev.hugame.util.Transform;
 
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
@@ -56,7 +55,7 @@ public class GLRenderer implements Renderer {
 	
 	public GLRenderer() {
 		modelInstanceData = new HashMap<>();
-		camera = new PerspectiveCamera(new Vector3f(5, 10, 10));
+		camera = new PerspectiveCamera(new Vector3f(100f, 100f, 100f));
 		camera.lookAt(new Vector3f(0, 0, 0));
 		instanceShader = Shaders.get(Files.read("/shaders/instance_vertex_shader.glsl").get(),
 				Files.read("/shaders/instance_fragment_shader.glsl").get()).get();
@@ -87,12 +86,22 @@ public class GLRenderer implements Renderer {
 		initialized = true;
 		
 		var materials = Materials.collect();
+		System.out.println("Collected " + materials.size() + " materials");
 		matBuffer = MaterialBuffer.createFrom(materials);
 	}
 
 	@Override
+	@Deprecated
 	public void draw(Model model, Transform transform, Material material) {
-		var instanceData = new InstanceData(transform, material);
+//		var instanceData = new InstanceData(transform, material);
+		draw(model, transform);
+	}
+	
+	// We should actually support drawing a model with some random material, like wood
+	@Override
+	public void draw(Model model, Transform transform) {
+//		var instanceData = new InstanceData(transform, null);
+		var instanceData = new InstanceData(transform);
 
 		var instanceDataList = modelInstanceData.get(model);
 		if (instanceDataList == null) {
@@ -115,7 +124,12 @@ public class GLRenderer implements Renderer {
 			var vaoID = model.getVAO();
 			var i_vboID = model.getInstaceVBO();
 			var eboID = model.getEBO();
-			var textures = model.getTextures();
+			// TODO: Add casting to model::getTextures<T>
+			var textures = model.getTextures()
+					.stream()
+					.map(tex -> (GLTexture) tex)
+					.map(GLTexture::getTextureArray)
+					.toList();
 
 			GLUtils.fillVBO(i_vboID, instanceDataArray);
 
@@ -140,7 +154,7 @@ public class GLRenderer implements Renderer {
 
 			disableVertexAttribArrays(0, 1, 2, 3, 4, 5, 6, 7, 8);
 			glBindVertexArray(0);
-			unbindTextures(model.getTextures());
+			unbindTextureArrays();
 
 			instanceShader.detach();
 
@@ -163,13 +177,12 @@ public class GLRenderer implements Renderer {
 		fillDirectionalLightBuffer(environment.getDirectionalLights());
 	}
 	
-	@Override
 	public void renderBatch(GLBatch batch) {
 		glDisable(GL_DEPTH_TEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		var textures = batch.getTextures();
-
+		
 		GLUtils.fillVBO(batch.getVboID(), batch.getVertices());
 		batchShader.use();
 		GLUtils.uploadMatricesToShader(batch.getCamera(), batchShader);
@@ -186,11 +199,12 @@ public class GLRenderer implements Renderer {
 
 		glBindVertexArray(0);
 
-		unbindTextures(textures);
+		unbindTextureArrays();
 		batchShader.detach();
 	}
 
-	private void activateAndBindTextures(List<Texture> textures) {
+	private void activateAndBindTextures(List<GLTextureArray> textures) {
+		// TODO: Should this change based on switching to texture arrays?
 		for (int textureIndex = 0; textureIndex < textures.size(); textureIndex++) {
 			glActiveTexture(GL_TEXTURE0 + textureIndex);
 			textures.get(textureIndex).bind();
@@ -231,10 +245,8 @@ public class GLRenderer implements Renderer {
 		shader.uploadTextureArray("uTextures", textureSlots);
 	}
 
-	private void unbindTextures(List<Texture> textures) {
-		for (var texture : textures) {
-			texture.unbind();
-		}
+	private void unbindTextureArrays() {
+		glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 	}
 
 	private void enableVertexAttribArrays(int... arrays) {
@@ -254,11 +266,10 @@ public class GLRenderer implements Renderer {
 	}
 
 	private float[] createInstanceDataArray(List<InstanceData> instanceData) {
-		var instanceDataArray = new float[instanceData.size() * 17];
+		var instanceDataArray = new float[instanceData.size() * 16];
 		for (int i = 0; i < instanceData.size(); i++) {
 			var instance = instanceData.get(i);
-			instance.transform().getMatrix().get(instanceDataArray, i * 17);
-			instanceDataArray[i * 17 + 16] = (float) instance.material().getIndex();
+			instance.transform().getMatrix().get(instanceDataArray, i * 16);
 		}
 		return instanceDataArray;
 	}

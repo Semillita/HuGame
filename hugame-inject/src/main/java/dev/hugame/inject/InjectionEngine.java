@@ -57,6 +57,8 @@ public class InjectionEngine {
 			.map(Entry::getValue)
 			.peek(this::injectIntoObject)
 			.forEach(this::initializeDependency);
+		
+		// TODO: Find static injection field and inject into them
 	}
 	
 	public void injectIntoObject(Object object) {
@@ -73,6 +75,26 @@ public class InjectionEngine {
 			try {
 				field.setAccessible(true);
 				field.set(object, instance);
+			} catch (IllegalArgumentException | IllegalAccessException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void injectIntoClass(Class<?> c) {
+		var fields = Arrays.asList(c.getDeclaredFields());
+		
+		var injectFields = fields
+				.stream()
+				.filter(field -> field.isAnnotationPresent(Inject.class))
+				.toList();
+		
+		for (var field : injectFields) {
+			var type = field.getType();
+			var instance = dependencyObjects.get(type);
+			try {
+				field.setAccessible(true);
+				field.set(c, instance);
 			} catch (IllegalArgumentException | IllegalAccessException e) {
 				e.printStackTrace();
 			}
