@@ -1,0 +1,170 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.semillita.hugame",
+    "module": "hugame",
+    "version": "0.0.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.7"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "io.semillita.hugame",
+          "module": "hugame-util",
+          "version": {
+            "requires": "0.0.1"
+          }
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl"
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-spvc"
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-stb"
+        },
+        {
+          "group": "org.joml",
+          "module": "joml",
+          "version": {
+            "requires": "1.10.8"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "hugame-0.0.1.jar",
+          "url": "hugame-0.0.1.jar",
+          "size": 476407,
+          "sha512": "aa905248d48d4e9eb5f77d8835c65806ec9b3d6ff5d704a90c63361fdf42f379aaad437eb1d1e8bad8debb40cc9b36de252e92bc1da3649088f80fe7764cd7ff",
+          "sha256": "b80d5a8f253ebfa71cb2f9de7864f03a6f38ac57e54bd9d049435a5e6aff5a54",
+          "sha1": "92e5157e64f1c41abf7a05d792429d6ee98c2eed",
+          "md5": "1008859ab86eb2a1681020822e130e8b"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 21,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-bom",
+          "version": {
+            "requires": "3.3.5"
+          },
+          "attributes": {
+            "org.gradle.category": "platform"
+          },
+          "endorseStrictVersions": true
+        },
+        {
+          "group": "io.semillita.hugame",
+          "module": "hugame-inject",
+          "version": {
+            "requires": "0.0.1"
+          }
+        },
+        {
+          "group": "io.semillita.hugame",
+          "module": "hugame-util",
+          "version": {
+            "requires": "0.0.1"
+          }
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl"
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-spvc"
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-stb"
+        },
+        {
+          "group": "org.joml",
+          "module": "joml",
+          "version": {
+            "requires": "1.10.8"
+          }
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl",
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "lwjgl",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "natives-windows"
+            }
+          }
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-spvc",
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "lwjgl-spvc",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "natives-windows"
+            }
+          }
+        },
+        {
+          "group": "org.lwjgl",
+          "module": "lwjgl-stb",
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "lwjgl-stb",
+              "type": "jar",
+              "extension": "jar",
+              "classifier": "natives-windows"
+            }
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "hugame-0.0.1.jar",
+          "url": "hugame-0.0.1.jar",
+          "size": 476407,
+          "sha512": "aa905248d48d4e9eb5f77d8835c65806ec9b3d6ff5d704a90c63361fdf42f379aaad437eb1d1e8bad8debb40cc9b36de252e92bc1da3649088f80fe7764cd7ff",
+          "sha256": "b80d5a8f253ebfa71cb2f9de7864f03a6f38ac57e54bd9d049435a5e6aff5a54",
+          "sha1": "92e5157e64f1c41abf7a05d792429d6ee98c2eed",
+          "md5": "1008859ab86eb2a1681020822e130e8b"
+        }
+      ]
+    }
+  ]
+}

@@ -2,7 +2,6 @@ package dev.hugame.vulkan.buffer;
 
 import static org.lwjgl.vulkan.VK10.*;
 
-import dev.hugame.util.Logger;
 import dev.hugame.vulkan.core.*;
 import java.nio.ByteBuffer;
 

@@ -1,13 +1,12 @@
 package dev.hugame.vulkan.core;
 
-import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.VK10.*;
 
-import dev.hugame.util.Logger;
 import dev.hugame.vulkan.image.DepthBuffer;
+import dev.hugame.vulkan.surface.VulkanSurfaceContext;
 import dev.hugame.vulkan.types.ImageViewType;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,14 +19,15 @@ public class VulkanSwapChain {
   private static final int UNSIGNED_INTEGER_MAX_VALUE = 0xFFFFFFFF;
 
   // TODO: Introduce some VulkanSwapChainFactory class
-  public static VulkanSwapChain create(VulkanGraphics graphics, long windowHandle) {
+  public static VulkanSwapChain create(
+      VulkanGraphics graphics, VulkanSurfaceContext surfaceContext) {
     var device = graphics.getDevice();
     var swapChainSupport = device.getSupport().getSwapChainSupport();
     var surfaceCapabilities = swapChainSupport.getSurfaceCapabilities();
 
     var surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.getFormats());
     var presentMode = chooseSwapPresentMode(swapChainSupport.getPresentModes());
-    var extent = chooseSwapExtent(surfaceCapabilities, windowHandle);
+    var extent = chooseSwapExtent(surfaceCapabilities, surfaceContext);
 
     var imageCount = pickImageCount(surfaceCapabilities);
 
@@ -168,28 +168,20 @@ public class VulkanSwapChain {
    *  editor window, in other to support in-editor vulkan rendering.
    * */
   private static VkExtent2D chooseSwapExtent(
-      VkSurfaceCapabilitiesKHR capabilities, long windowHandle) {
+      VkSurfaceCapabilitiesKHR capabilities, VulkanSurfaceContext surfaceContext) {
     if (capabilities.currentExtent().width() != UNSIGNED_INTEGER_MAX_VALUE) {
       return capabilities.currentExtent();
     }
 
-    try (var memoryStack = stackPush()) {
-      var windowWidthBuffer = memoryStack.callocInt(1);
-      var windowHeightBuffer = memoryStack.callocInt(1);
+    var surfaceSize = surfaceContext.getSize();
 
-      glfwGetFramebufferSize(windowHandle, windowWidthBuffer, windowHeightBuffer);
+    var minExtent = capabilities.minImageExtent();
+    var maxExtent = capabilities.maxImageExtent();
 
-      var width = windowWidthBuffer.get(0);
-      var height = windowHeightBuffer.get(0);
+    var actualWidth = clamp(minExtent.width(), maxExtent.width(), surfaceSize.width());
+    var actualHeight = clamp(minExtent.height(), maxExtent.height(), surfaceSize.height());
 
-      var minExtent = capabilities.minImageExtent();
-      var maxExtent = capabilities.maxImageExtent();
-
-      var actualWidth = clamp(minExtent.width(), maxExtent.width(), width);
-      var actualHeight = clamp(minExtent.height(), maxExtent.height(), height);
-
-      return VkExtent2D.malloc().set(actualWidth, actualHeight);
-    }
+    return VkExtent2D.malloc().set(actualWidth, actualHeight);
   }
 
   private static int clamp(int min, int max, int value) {

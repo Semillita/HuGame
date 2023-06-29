@@ -1,0 +1,72 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'com.diffplug.spotless' version '8.1.0'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url '/Users/hugob/.m2/repository'
+    }
+    maven {
+        url = uri('https://repo.maven.apache.org/maven2/')
+    }
+}
+
+ext {
+    lwjglVersion = '3.3.5'
+    lwjglNatives = 'natives-windows'
+}
+
+dependencies {
+    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+
+    api "io.semillita.hugame:hugame:0.0.1"
+
+    api "io.semillita.hugame:hugame-desktop-window:0.0.1"
+
+    api "org.lwjgl:lwjgl"
+    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
+
+    api "org.lwjgl:lwjgl-vma"
+    runtimeOnly "org.lwjgl:lwjgl-vma::$lwjglNatives"
+
+    api "org.lwjgl:lwjgl-vulkan"
+
+    api "org.lwjgl:lwjgl-shaderc"
+    runtimeOnly "org.lwjgl:lwjgl-shaderc::$lwjglNatives"
+
+    api "org.joml:joml:1.10.8"
+
+    compileOnly "org.projectlombok:lombok:1.18.42"
+    annotationProcessor "org.projectlombok:lombok:1.18.42"
+}
+
+spotless {
+    java {
+        googleJavaFormat("1.25.2")
+        trimTrailingWhitespace()
+        endWithNewline()
+        leadingTabsToSpaces(4)
+    }
+}
+
+group = 'io.semillita.hugame'
+version = '0.0.1'
+description = 'Hugame Desktop Vulkan'
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from(components.java)
+        }
+    }
+}

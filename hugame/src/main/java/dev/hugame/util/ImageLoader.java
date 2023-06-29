@@ -9,6 +9,7 @@ import org.lwjgl.BufferUtils;
 import dev.hugame.graphics.ResolvedTexture;
 import org.lwjgl.system.MemoryStack;
 
+import static org.lwjgl.stb.STBImage.stbi_image_free;
 import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -44,6 +45,10 @@ public class ImageLoader {
 
 		return new ResolvedTexture(imageBuffer, widthBuffer.get(0), heightBuffer.get(0), forcedChannels);
 	}
+
+    public static void free(ResolvedTexture resolvedTexture) {
+        stbi_image_free(resolvedTexture.buffer());
+    }
 
 	private static ByteBuffer getContentBuffer(String content, MemoryStack memoryStack) {
 		var contentBytes = content.getBytes(StandardCharsets.ISO_8859_1);

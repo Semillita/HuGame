@@ -32,16 +32,14 @@ import dev.hugame.model.spec.ModelLoader;
 import dev.hugame.ui.Slider;
 import dev.hugame.util.TextureLoader;
 import dev.hugame.util.Transform;
+import dev.hugame.vulkan.surface.GlfwSurfaceContext;
 import dev.hugame.window.DesktopInput;
 import dev.hugame.window.DesktopWindow;
 import dev.hugame.window.WindowConfiguration;
-import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import java.awt.Dimension;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -69,7 +67,7 @@ public class Application implements SimpleApplicationListener {
 				graphics = new GLGraphics(window);
 			} else {
 				window = new DesktopWindow(windowConfig, (width, height) -> System.out.println("Resizing viewport"), false);
-				graphics = new VulkanGraphics(window);
+				graphics = new VulkanGraphics(new GlfwSurfaceContext(window));
 			}
 			var input = new DesktopInput(window);
 
@@ -183,20 +181,11 @@ public class Application implements SimpleApplicationListener {
 		camera.lookAt(new Vector3f(0, 0, 0));
 		camera.update();
 
-		graphics.setClearColor(0, 0, 0, 0);
+		graphics.setClearColor(0, 0, 1, 1);
 	}
 
 	@Override
 	public void onRender() {
-		var point = new Vector4f(0, 0, 0, 1);
-		var viewM = camera2D.getViewMatrix();
-		var projectionM = camera2D.getProjectionMatrix();
-
-		var multipliedByView = point.mul(viewM);
-		var multipliedByProjection = point.mul(projectionM);
-		var multipliedByViewProjection = multipliedByView.mul(projectionM);
-		var multipliedByProjectionView = multipliedByProjection.mul(viewM);
-
 		if (input.isKeyPressed(Key.A))
 			playerX -= 0.1f;
 		if (input.isKeyPressed(Key.D))

@@ -1,0 +1,49 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'com.gradleup.shadow' version '8.3.0'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+shadowJar {
+    archiveClassifier.set('all')
+    manifest {
+        attributes 'Main-Class': 'io.semillita.hugame.sandbox.Application'
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+ext {
+    lwjglVersion = '3.3.5'
+    lwjglNatives = 'natives-windows'
+}
+
+dependencies {
+    //implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+
+    api "io.semillita.hugame:hugame:0.0.1"
+    api "io.semillita.hugame:hugame-desktop-gl:0.0.1"
+    api "io.semillita.hugame:hugame-desktop-vulkan:0.0.1"
+    api "io.semillita.hugame:hugame-assimp:0.0.1"
+}
+
+group = 'io.semillita.hugame'
+version = '0.0.1'
+description = 'HuGame Sandbox'
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from(components.java)
+        }
+    }
+}

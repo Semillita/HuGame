@@ -6,7 +6,6 @@ import dev.hugame.graphics.material.Materials;
 import dev.hugame.model.spec.ResolvedMaterial;
 import dev.hugame.model.spec.ResolvedMesh;
 import dev.hugame.model.spec.ResolvedModel;
-import dev.hugame.util.Logger;
 import dev.hugame.vulkan.buffer.VulkanIndexBuffer;
 import dev.hugame.vulkan.buffer.VulkanVertexBuffer;
 import dev.hugame.vulkan.core.VulkanGraphics;

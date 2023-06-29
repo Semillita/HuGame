@@ -9,10 +9,8 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import dev.hugame.core.HuGame;
 import dev.hugame.core.Input;
 import dev.hugame.core.Window;
-import dev.hugame.inject.Inject;
 import dev.hugame.input.Key;
 
 // TODO: Make the window implementation create the input implementation.

@@ -6,8 +6,6 @@ import dev.hugame.graphics.ResolvedTexture;
 import dev.hugame.graphics.Texture;
 import dev.hugame.util.ImageLoader;
 
-import static org.lwjgl.stb.STBImage.*;
-
 /** Wrapper class for a gl texture */
 public class GLTexture implements Texture {
 
@@ -44,7 +42,7 @@ public class GLTexture implements Texture {
 		width = data.width();
 		height = data.height();
 		
-		stbi_image_free(data.buffer());
+		ImageLoader.free(data);
 
 		unbind();
 		
@@ -64,7 +62,7 @@ public class GLTexture implements Texture {
 		width = resolvedTexture.width();
 		height = resolvedTexture.height();
 		
-		stbi_image_free(resolvedTexture.buffer());
+		ImageLoader.free(resolvedTexture);
 
 		unbind();
 		

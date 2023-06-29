@@ -27,14 +27,14 @@ public class BeginRenderPassCommand extends VulkanCommand {
       // TODO: Uncomment and remove!
       /*// Color attachment
       clearValueBuffer.get(0)
-      		.color(VkClearColorValue.calloc(memoryStack)
-      				.float32(
-      						memoryStack.floats(clearColor.x, clearColor.y, clearColor.z, clearColor.w)));
+              .color(VkClearColorValue.calloc(memoryStack)
+                      .float32(
+                              memoryStack.floats(clearColor.x, clearColor.y, clearColor.z, clearColor.w)));
 
       // Depth attachment
       clearValueBuffer.get(1)
-      		.depthStencil(VkClearDepthStencilValue.calloc(memoryStack)
-      				.set(1.0f, 0));*/
+              .depthStencil(VkClearDepthStencilValue.calloc(memoryStack)
+                      .set(1.0f, 0));*/
 
       var renderPassBeginInfo =
           VkRenderPassBeginInfo.calloc(memoryStack)

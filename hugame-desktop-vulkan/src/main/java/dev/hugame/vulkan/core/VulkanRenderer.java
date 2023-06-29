@@ -75,8 +75,10 @@ public class VulkanRenderer implements Renderer {
 
   @Override
   public void create() {
+    Logger.pushScope("VulkanRenderer#create");
     var materials = Materials.collect();
     materialBuffer.fill(materials);
+    Logger.popScope();
   }
 
   // TODO: Make beginFrame accept an int frame which is kept track of by the engine, not the
@@ -156,13 +158,7 @@ public class VulkanRenderer implements Renderer {
   public void renderBatch(VulkanBatch batch) {
     var device = graphics.getDevice();
 
-    var swapChain = graphics.getSwapChain();
-
     var frameBuffer = graphics.getFrameBuffers().get(currentImageIndex);
-
-    var swapChainColorImageHandle = swapChain.getImageHandles().get(currentImageIndex);
-
-    var depthBufferImage = swapChain.getDepthBuffer().getImage();
 
     var currentFrameUniformBuffer = graphics.getQuadPipelineUniformBuffers().get(currentImageIndex);
 
@@ -194,24 +190,7 @@ public class VulkanRenderer implements Renderer {
         new ArrayList<VulkanCommand>() {
           {
             if (!hasDrawnDuringCurrentFrame) {
-              add(
-                  new PipelineBarrierCommand(
-                      swapChainColorImageHandle,
-                      VK_IMAGE_LAYOUT_UNDEFINED,
-                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                      VK_IMAGE_ASPECT_COLOR_BIT,
-                      0,
-                      1));
-              add(
-                  new PipelineBarrierCommand(
-                      depthBufferImage.getHandle(),
-                      VK_IMAGE_LAYOUT_UNDEFINED,
-                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                      VK_IMAGE_ASPECT_DEPTH_BIT,
-                      0,
-                      1));
-              add(new ClearColorImageCommand(swapChainColorImageHandle, graphics.getClearColor()));
-              add(new ClearDepthStencilImageCommand(depthBufferImage.getHandle()));
+              addAll(getClearBufferCommands());
             }
 
             addAll(
@@ -370,50 +349,14 @@ public class VulkanRenderer implements Renderer {
         DescriptorSource.fromShaderStorageBuffer(directionalLightBuffer));
 
     var device = graphics.getDevice();
-    var swapChain = graphics.getSwapChain();
     var frameBuffer = graphics.getFrameBuffers().get(currentImageIndex);
-    var swapChainColorImageHandle = swapChain.getImageHandles().get(currentImageIndex);
-    var depthBufferImage = swapChain.getDepthBuffer().getImage();
     var pipeline = graphics.getModelPipeline();
 
     var commands =
         new ArrayList<VulkanCommand>() {
           {
             if (!hasDrawnDuringCurrentFrame) {
-              add(
-                  new PipelineBarrierCommand(
-                      swapChainColorImageHandle,
-                      VK_IMAGE_LAYOUT_UNDEFINED,
-                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                      VK_IMAGE_ASPECT_COLOR_BIT,
-                      0,
-                      1));
-              add(
-                  new PipelineBarrierCommand(
-                      depthBufferImage.getHandle(),
-                      VK_IMAGE_LAYOUT_UNDEFINED,
-                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                      VK_IMAGE_ASPECT_DEPTH_BIT,
-                      0,
-                      1));
-              add(new ClearColorImageCommand(swapChainColorImageHandle, graphics.getClearColor()));
-              add(new ClearDepthStencilImageCommand(depthBufferImage.getHandle()));
-              add(
-                  new PipelineBarrierCommand(
-                      swapChainColorImageHandle,
-                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                      VK_IMAGE_ASPECT_COLOR_BIT,
-                      0,
-                      1));
-              add(
-                  new PipelineBarrierCommand(
-                      depthBufferImage.getHandle(),
-                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                      VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                      VK_IMAGE_ASPECT_DEPTH_BIT,
-                      0,
-                      1));
+              addAll(getClearBufferCommands());
             }
 
             addAll(
@@ -495,6 +438,44 @@ public class VulkanRenderer implements Renderer {
       usedCommandBuffer.commandBuffer.free(graphics);
       usedCommandBuffers.remove(0);
     }
+  }
+
+  private List<VulkanCommand> getClearBufferCommands() {
+    var swapChain = graphics.getSwapChain();
+    var swapChainColorImageHandle = swapChain.getImageHandles().get(currentImageIndex);
+    var depthBufferImage = swapChain.getDepthBuffer().getImage();
+
+    return List.of(
+        new PipelineBarrierCommand(
+            swapChainColorImageHandle,
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            0,
+            1),
+        new PipelineBarrierCommand(
+            depthBufferImage.getHandle(),
+            VK_IMAGE_LAYOUT_UNDEFINED,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_ASPECT_DEPTH_BIT,
+            0,
+            1),
+        new ClearColorImageCommand(swapChainColorImageHandle, graphics.getClearColor()),
+        new ClearDepthStencilImageCommand(depthBufferImage.getHandle()),
+        new PipelineBarrierCommand(
+            swapChainColorImageHandle,
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            0,
+            1),
+        new PipelineBarrierCommand(
+            depthBufferImage.getHandle(),
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            VK_IMAGE_ASPECT_DEPTH_BIT,
+            0,
+            1));
   }
 
   private record UsedCommandBuffer(VulkanCommandBuffer commandBuffer, int frame) {}

@@ -10,12 +10,9 @@ import dev.hugame.graphics.ResolvedTexture;
 import dev.hugame.graphics.Shader;
 import dev.hugame.graphics.Texture;
 import dev.hugame.graphics.model.Model;
-import dev.hugame.graphics.spec.buffer.ShaderStorageBuffer;
 import dev.hugame.model.spec.ResolvedModel;
-import dev.hugame.util.Bufferable;
 import dev.hugame.util.Files;
 import dev.hugame.util.ImageLoader;
-import dev.hugame.util.Logger;
 import dev.hugame.vulkan.buffer.VulkanUniformBuffer;
 import dev.hugame.vulkan.layout.VulkanDescriptorPool;
 import dev.hugame.vulkan.layout.VulkanDescriptorSet;
@@ -25,12 +22,15 @@ import dev.hugame.vulkan.layout.implementation.DefaultQuadPipelineDescriptors;
 import dev.hugame.vulkan.model.ModelFactory;
 import dev.hugame.vulkan.pipeline.VulkanPipeline;
 import dev.hugame.vulkan.pipeline.shader.VulkanShader;
+import dev.hugame.vulkan.surface.VulkanSurface;
+import dev.hugame.vulkan.surface.VulkanSurfaceContext;
 import dev.hugame.vulkan.sync.*;
 import dev.hugame.vulkan.texture.TextureCollector;
 import dev.hugame.vulkan.texture.VulkanTexture;
-import dev.hugame.window.DesktopWindow;
 import java.util.List;
 import java.util.stream.IntStream;
+import lombok.Getter;
+import lombok.Setter;
 import org.joml.Vector4f;
 
 // TODO: Move internal vulkan stuff into a new VulkanContext class and let
@@ -45,54 +45,58 @@ public class VulkanGraphics implements Graphics {
   private static final int MODEL_PIPELINE_FRAGMENT_SHADER_UNIFORM_BUFFER_SIZE = 6 * Float.BYTES;
   private static final int QUAD_PIPELINE_UNIFORM_BUFFER_SIZE = 2 * 16 * Float.BYTES;
 
-  private final DesktopWindow window; // TODO: Maybe use some identity interface instead
+  private final VulkanSurfaceContext
+      surfaceContext; // TODO: Maybe use some identity interface instead
 
-  private final VulkanInstance instance;
+  @Getter private final VulkanInstance instance;
   private final VulkanDebugMessenger debugMessenger;
-  private final VulkanSurface surface;
-  private final VulkanDevice device;
-  private VulkanSwapChain swapChain;
+  @Getter private final VulkanSurface surface;
+  @Getter private final VulkanDevice device;
+  @Getter private VulkanSwapChain swapChain;
   private final VulkanDescriptorSetLayout modelPipelineDescriptorSetLayout;
   private final VulkanDescriptorSetLayout quadPipelineDescriptorSetLayout;
-  private final VulkanPipeline modelPipeline;
-  private final VulkanPipeline quadPipeline;
-  private final VulkanCommandPool commandPool;
+  @Getter private final VulkanPipeline modelPipeline;
+  @Getter private final VulkanPipeline quadPipeline;
+  @Getter private final VulkanCommandPool commandPool;
+
+  @Getter
   private List<VulkanFrameBuffer> frameBuffers; // TODO: Maybe make these belong to the swap chain
-  private final VulkanCommandBuffer commandBuffer;
-  private final List<InFlightFrame> framesInFlight;
+
+  @Getter private final VulkanCommandBuffer commandBuffer;
+  @Getter private final List<InFlightFrame> framesInFlight;
   private final VulkanRenderer renderer;
-  private final List<VulkanUniformBuffer> modelPipelineVertexShaderUniformBuffers;
-  private final List<VulkanUniformBuffer> modelPipelineFragmentShaderUniformBuffers;
+  @Getter private final List<VulkanUniformBuffer> modelPipelineVertexShaderUniformBuffers;
+  @Getter private final List<VulkanUniformBuffer> modelPipelineFragmentShaderUniformBuffers;
 
   // TODO: Move these to some SwapChainFrame structure
-  private final List<VulkanUniformBuffer> quadPipelineUniformBuffers;
+  @Getter private final List<VulkanUniformBuffer> quadPipelineUniformBuffers;
 
   // TODO: Try to put along other pipeline-specific stuff
   private final VulkanDescriptorPool modelPipelineDescriptorPool;
   private final VulkanDescriptorPool quadPipelineDescriptorPool;
-  private final List<VulkanDescriptorSet> modelPipelineDescriptorSets;
-  private final List<VulkanDescriptorSet> quadPipelineDescriptorSets;
+  @Getter private final List<VulkanDescriptorSet> modelPipelineDescriptorSets;
+  @Getter private final List<VulkanDescriptorSet> quadPipelineDescriptorSets;
 
   private final ModelFactory modelFactory;
   private final TextureCollector textureCollector;
-  private final VulkanTexture defaultTexture;
+  @Getter private final VulkanTexture defaultTexture;
 
-  private boolean frameBufferResized = false;
+  @Setter private boolean frameBufferResized = false;
 
-  private Vector4f clearColor;
+  @Getter private Vector4f clearColor;
 
-  public VulkanGraphics(DesktopWindow window) {
+  public VulkanGraphics(VulkanSurfaceContext surfaceContext) {
     if (VALIDATION_LAYERS_ENABLED) {
       VulkanValidations.assertValidationLayersSupported();
     }
 
-    this.window = window;
+    this.surfaceContext = surfaceContext;
 
-    this.instance = VulkanInstance.create(VALIDATION_LAYERS_ENABLED);
+    this.instance = VulkanInstance.create(surfaceContext, VALIDATION_LAYERS_ENABLED);
     this.debugMessenger = VALIDATION_LAYERS_ENABLED ? VulkanDebugMessenger.create(instance) : null;
-    this.surface = VulkanSurface.create(this, window.getHandle());
+    this.surface = surfaceContext.createSurface(instance);
     this.device = VulkanDevice.create(this);
-    this.swapChain = VulkanSwapChain.create(this, window.getHandle());
+    this.swapChain = VulkanSwapChain.create(this, surfaceContext);
 
     var modelPipelineDescriptors = new DefaultModelPipelineDescriptors();
     var modelPipelineVertexShaderSource =
@@ -181,7 +185,7 @@ public class VulkanGraphics implements Graphics {
 
     // Don't have the graphics instance communicate with the window. Instead, have the engine call
     // VulkanGraphics#frameBufferResizeCallback, and listen to window updates.
-    window.addResizeListener(this::frameBufferResizeCallback);
+    this.surfaceContext.addResizeListener(this::frameBufferResizeCallback);
 
     clearColor = new Vector4f(0, 0, 0, 1);
   }
@@ -237,91 +241,8 @@ public class VulkanGraphics implements Graphics {
     return VALIDATION_LAYERS_ENABLED;
   }
 
-  public VulkanInstance getInstance() {
-    return instance;
-  }
-
-  public VulkanSurface getSurface() {
-    return surface;
-  }
-
-  public VulkanDevice getDevice() {
-    return device;
-  }
-
-  public VulkanSwapChain getSwapChain() {
-    return swapChain;
-  }
-
-  // TODO: Probably unused?
-  public VulkanDescriptorSetLayout getModelPipelineDescriptorSetLayout() {
-    return modelPipelineDescriptorSetLayout;
-  }
-  ;
-
-  // TODO: Probably unused?
-  public VulkanDescriptorSetLayout getQuadPipelineDescriptorSetLayout() {
-    return quadPipelineDescriptorSetLayout;
-  }
-
-  public VulkanPipeline getModelPipeline() {
-    return modelPipeline;
-  }
-
-  public VulkanPipeline getQuadPipeline() {
-    return quadPipeline;
-  }
-
-  public List<VulkanFrameBuffer> getFrameBuffers() {
-    return frameBuffers;
-  }
-
-  public VulkanCommandPool getCommandPool() {
-    return commandPool;
-  }
-
-  public VulkanCommandBuffer getCommandBuffer() {
-    return commandBuffer;
-  }
-
-  public List<InFlightFrame> getFramesInFlight() {
-    return framesInFlight;
-  }
-
-  public List<VulkanUniformBuffer> getModelPipelineVertexShaderUniformBuffers() {
-    return modelPipelineVertexShaderUniformBuffers;
-  }
-
-  public List<VulkanUniformBuffer> getModelPipelineFragmentShaderUniformBuffers() {
-    return modelPipelineFragmentShaderUniformBuffers;
-  }
-
-  public List<VulkanUniformBuffer> getQuadPipelineUniformBuffers() {
-    return quadPipelineUniformBuffers;
-  }
-
-  public List<VulkanDescriptorSet> getModelPipelineDescriptorSets() {
-    return modelPipelineDescriptorSets;
-  }
-
-  public List<VulkanDescriptorSet> getQuadPipelineDescriptorSets() {
-    return quadPipelineDescriptorSets;
-  }
-
   public int getFramesInFlightCount() {
     return swapChain.getImageViewHandles().size();
-  }
-
-  public VulkanTexture getDefaultTexture() {
-    return defaultTexture;
-  }
-
-  public Vector4f getClearColor() {
-    return clearColor;
-  }
-
-  public void setFrameBufferResized(boolean resized) {
-    this.frameBufferResized = resized;
   }
 
   public boolean frameBufferResized() {
@@ -347,7 +268,7 @@ public class VulkanGraphics implements Graphics {
   }
 
   public void recreateSwapChain() {
-    window.waitUntilNotMinimized();
+    surfaceContext.waitUntilNotMinimized();
 
     var logicalDevice = device.getLogical();
 
@@ -355,7 +276,7 @@ public class VulkanGraphics implements Graphics {
 
     cleanupSwapChain();
 
-    swapChain = VulkanSwapChain.create(this, window.getHandle());
+    swapChain = VulkanSwapChain.create(this, surfaceContext);
     frameBuffers = VulkanFrameBuffer.createAll(this);
   }
 

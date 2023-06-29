@@ -4,13 +4,15 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSurface.*;
 import static org.lwjgl.vulkan.VK13.*;
 
+import dev.hugame.vulkan.surface.VulkanSurface;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 import org.lwjgl.vulkan.*;
 
 public class VulkanDevice {
-  private static final Set<String> EXTENSION_NAMES = Set.of("VK_KHR_swapchain", "VK_EXT_descriptor_indexing");
+  private static final Set<String> EXTENSION_NAMES =
+      Set.of("VK_KHR_swapchain", "VK_EXT_descriptor_indexing");
 
   public static VulkanDevice create(VulkanGraphics graphics) {
     var vkInstance = graphics.getInstance().get();
@@ -49,9 +51,7 @@ public class VulkanDevice {
               .sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
               .pQueueCreateInfos(deviceQueueCreateInfos)
               .pEnabledFeatures(physicalDeviceFeatures)
-              .ppEnabledExtensionNames(
-                  VulkanUtils.asPointerBuffer(
-                      memoryStack, EXTENSION_NAMES))
+              .ppEnabledExtensionNames(VulkanUtils.asPointerBuffer(memoryStack, EXTENSION_NAMES))
               .pNext(
                   VkPhysicalDeviceVulkan12Features.calloc(memoryStack)
                       .sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES)

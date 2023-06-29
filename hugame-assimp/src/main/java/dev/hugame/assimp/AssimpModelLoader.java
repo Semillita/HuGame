@@ -7,6 +7,7 @@ import dev.hugame.io.FileLocation;
 import dev.hugame.model.spec.*;
 import dev.hugame.util.Files;
 import dev.hugame.util.ImageLoader;
+import dev.hugame.util.Logger;
 import dev.hugame.util.TextureLoader;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -21,7 +22,6 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.*;
-import java.util.stream.IntStream;
 
 import static org.lwjgl.assimp.Assimp.*;
 
@@ -37,9 +37,7 @@ public class AssimpModelLoader extends ModelLoader {
 		this.textureLoader = textureLoader;
 		this.fileContentByName = new HashMap<>();
 		this.fileStack = new Stack<>();
-		var start = System.nanoTime();
 		this.fileSystem = createFileSystem();
-		var elapsed = System.nanoTime() - start;
 	}
 
 	@Override
@@ -69,7 +67,7 @@ public class AssimpModelLoader extends ModelLoader {
 	}
 	
 	private ResolvedModel load(SceneLoader sceneLoader, String filePath) {
-		var scene = sceneLoader.load(filePath);
+        var scene = sceneLoader.load(filePath);
 
 		if (scene == null) {
 			System.err.println("Failed to load scene");
@@ -83,8 +81,7 @@ public class AssimpModelLoader extends ModelLoader {
 		var embeddedTextures = getEmbeddedTextures(scene);
 		var texturesInScene = new ArrayList<Texture>();
 		var materials = getMaterialsInScene(scene, embeddedTextures, texturesInScene);
-//		var meshesInScene = getMeshesInScene(scene);
-		
+
 		return new ResolvedModel(meshes, materials);
 	}
 	
@@ -387,7 +384,7 @@ public class AssimpModelLoader extends ModelLoader {
 	}
 
 	private Optional<AIScene> loadScene(String fileName, AIFileIO fileSystem) {
-		var scene = aiImportFileEx(fileName, aiProcess_Triangulate | aiProcess_FlipUVs, fileSystem);
+        var scene = aiImportFileEx(fileName, aiProcess_Triangulate | aiProcess_FlipUVs, fileSystem);
 
 		fileContentByName.values().forEach(MemoryUtil::memFree);
 		fileContentByName.clear();

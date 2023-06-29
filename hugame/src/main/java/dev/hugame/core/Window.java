@@ -1,10 +1,13 @@
 package dev.hugame.core;
 
+import dev.hugame.graphics.RenderingSurface;
+import dev.hugame.util.Dimensions;
+
 import java.awt.Dimension;
 import java.util.function.BiConsumer;
 
 /** Interface for interacting with a window. */
-public interface Window {
+public interface Window extends RenderingSurface {
 
 	/** Sets the visibility of the window */
 	public void setVisible(boolean visible);
@@ -14,7 +17,7 @@ public interface Window {
 	 * 
 	 * @return the size in pixels
 	 */
-	public Dimension getSize();
+	public Dimensions getSize();
 
 	/** Returns the width of the window. */
 	public int getWidth();
