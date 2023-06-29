@@ -1,16 +1,19 @@
 package dev.hugame.vulkan.core;
 
-import static org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.EXTDebugUtils.*;
 import static org.lwjgl.vulkan.VK13.*;
 
+import dev.hugame.vulkan.surface.VulkanSurfaceContext;
+import java.util.stream.IntStream;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
 public class VulkanInstance {
-  public static VulkanInstance create(boolean validationLayersEnabled) {
+  public static VulkanInstance create(
+      VulkanSurfaceContext surfaceContext, boolean validationLayersEnabled) {
     try (var memoryStack = stackPush()) {
       var applicationInfo =
           VkApplicationInfo.calloc(memoryStack)
@@ -26,7 +29,8 @@ public class VulkanInstance {
               .sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
               .pApplicationInfo(applicationInfo)
               .ppEnabledExtensionNames(
-                  getRequiredExtensionsBuffer(memoryStack, validationLayersEnabled));
+                  getRequiredExtensionsBuffer(
+                      memoryStack, surfaceContext, validationLayersEnabled));
 
       if (validationLayersEnabled) {
         instanceCreateInfo
@@ -47,8 +51,16 @@ public class VulkanInstance {
   }
 
   private static PointerBuffer getRequiredExtensionsBuffer(
-      MemoryStack memoryStack, boolean enableValidationLayers) {
-    var glfwExtensionsBuffer = glfwGetRequiredInstanceExtensions();
+      MemoryStack memoryStack,
+      VulkanSurfaceContext surfaceContext,
+      boolean enableValidationLayers) {
+    var glfwExtensionsBuffer = surfaceContext.getRequiredInstanceExtensions();
+    System.out.println(
+        "Required extensions: "
+            + IntStream.range(0, glfwExtensionsBuffer.capacity())
+                .mapToObj(glfwExtensionsBuffer::get)
+                .map(MemoryUtil::memUTF8)
+                .toList());
 
     if (enableValidationLayers) {
       return memoryStack

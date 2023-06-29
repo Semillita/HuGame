@@ -4,7 +4,6 @@ import static org.lwjgl.vulkan.VK10.VK_FORMAT_R8G8B8A8_SRGB;
 import static org.lwjgl.vulkan.VK10.VK_IMAGE_ASPECT_COLOR_BIT;
 
 import dev.hugame.graphics.ResolvedTexture;
-import dev.hugame.util.Logger;
 import dev.hugame.vulkan.core.VulkanGraphics;
 import dev.hugame.vulkan.image.ImageUtils;
 import dev.hugame.vulkan.image.VulkanImage;

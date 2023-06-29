@@ -3,7 +3,6 @@ package dev.hugame.vulkan.core;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
-import dev.hugame.util.Logger;
 import dev.hugame.vulkan.commands.VulkanCommand;
 import java.util.List;
 import org.lwjgl.vulkan.VkCommandBuffer;

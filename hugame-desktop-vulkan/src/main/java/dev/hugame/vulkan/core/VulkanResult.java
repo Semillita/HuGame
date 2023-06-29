@@ -1,9 +1,8 @@
 package dev.hugame.vulkan.core;
 
-import dev.hugame.util.Logger;
-
 import static org.lwjgl.vulkan.VK10.*;
 
+import dev.hugame.util.Logger;
 import java.util.Arrays;
 
 public enum VulkanResult {

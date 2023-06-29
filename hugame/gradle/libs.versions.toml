@@ -1,0 +1,12 @@
+[versions]
+lwjgl-version = "3.3.1"
+
+[libraries]
+hugame-inject = { module = "io.semillita.hugame:hugame-inject", version = "0.0.1" }
+hugame-util = { module = "io.semillita.hugame:hugame-util", version = "0.0.1" }
+
+lwjgl = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl-version" }
+lwjgl-shaderc = { module = "org.lwjgl:lwjgl-shaderc", version.ref = "lwjgl-version" }
+lwjgl-spvc = { module = "org.lwjgl:lwjgl-spvc", version.ref = "lwjgl-version" }
+lwjgl-stb = { module = "org.lwjgl:lwjgl-stb", version.ref = "lwjgl-version" }
+lombok = { module = "org.projectlombok:lombok", version = "1.18.42" }

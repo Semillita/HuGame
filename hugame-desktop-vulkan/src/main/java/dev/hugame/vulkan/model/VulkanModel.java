@@ -38,8 +38,4 @@ public class VulkanModel implements Model {
   public int getIndexCount() {
     return indexBuffer.getIndexCount();
   }
-
-  public VulkanIndexBuffer getIndexBuffer() {
-    return indexBuffer;
-  }
 }

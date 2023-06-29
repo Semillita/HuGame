@@ -3,7 +3,6 @@ package dev.hugame.vulkan.core;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK13.*;
 
-import dev.hugame.util.Logger;
 import dev.hugame.vulkan.sync.VulkanFence;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkDevice;

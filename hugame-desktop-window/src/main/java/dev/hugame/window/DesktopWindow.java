@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import dev.hugame.core.Window;
+import dev.hugame.util.Dimensions;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryUtil;
 
@@ -79,8 +80,8 @@ public class DesktopWindow implements Window {
 	}
 
 	@Override
-	public Dimension getSize() {
-		return size;
+	public Dimensions getSize() {
+		return new Dimensions(size.width, size.height);
 	}
 	
 	@Override

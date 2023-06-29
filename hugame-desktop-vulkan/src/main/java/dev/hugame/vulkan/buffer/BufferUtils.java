@@ -4,7 +4,6 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 import static org.lwjgl.vulkan.VK10.vkBindBufferMemory;
 
-import dev.hugame.util.Logger;
 import dev.hugame.vulkan.commands.CopyBufferCommand;
 import dev.hugame.vulkan.core.VulkanCommandBuffer;
 import dev.hugame.vulkan.core.VulkanDevice;
@@ -230,6 +229,9 @@ public class BufferUtils {
       int propertyFlags,
       LongBuffer bufferHandleBuffer,
       LongBuffer bufferMemoryHandleBuffer) {
+    if (bufferSize <= 0) {
+      throw new RuntimeException("[HuGame] bufferSize cannot be less than 1");
+    }
     var device = graphics.getDevice();
     var logicalDevice = device.getLogical();
 

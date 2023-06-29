@@ -71,25 +71,29 @@ public class VulkanShaderStorageBuffer<T extends Bufferable> implements ShaderSt
   public void allocate(int maxItems) {
     BufferUtils.destroyBuffer(graphics, buffer);
 
+    Logger.pushScope("Creating SSBO");
     this.buffer =
         BufferUtils.createDynamicBuffer(
             graphics,
             bytesPerItem * maxItems,
             SHADER_STORAGE_BUFFER_USAGE_FLAGS,
             SHADER_STORAGE_BUFFER_PROPERTIES_FLAGS);
+    Logger.popScope();
 
     this.maxItems = maxItems;
   }
 
   @Override
   public void fill(List<T> items, int maxItems) {
-    allocate(maxItems);
+    Logger.pushScope("VulkanShaderStorageBuffer#fill");
+    allocate(Math.max(maxItems, 1));
     refill(items);
+    Logger.popScope();
   }
 
   @Override
   public void refill(List<T> items) {
-    var data = MemoryUtil.memCalloc(items.size() * bytesPerItem);
+    var data = MemoryUtil.memCalloc(Math.max(items.size(), 1) * bytesPerItem);
     for (var item : items) {
       data.put(item.getBytes());
     }

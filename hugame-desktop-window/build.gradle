@@ -1,0 +1,46 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url '/Users/hugob/.m2/repository'
+    }
+    maven {
+        url = uri('https://repo.maven.apache.org/maven2/')
+    }
+}
+
+ext {
+    lwjglVersion = '3.3.5'
+    lwjglNatives = 'natives-windows'
+}
+
+dependencies {
+    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+
+    api "io.semillita.hugame:hugame:0.0.1"
+
+    api "org.lwjgl:lwjgl-glfw"
+    runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
+}
+
+group = 'io.semillita.hugame'
+version = '0.0.1'
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from(components.java)
+        }
+    }
+}

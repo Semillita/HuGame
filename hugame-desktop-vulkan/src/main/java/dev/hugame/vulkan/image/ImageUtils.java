@@ -4,7 +4,6 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
 import dev.hugame.graphics.ResolvedTexture;
-import dev.hugame.util.Logger;
 import dev.hugame.vulkan.buffer.BufferUtils;
 import dev.hugame.vulkan.buffer.VulkanBuffer;
 import dev.hugame.vulkan.commands.CopyBufferToImageCommand;
@@ -13,10 +12,8 @@ import dev.hugame.vulkan.core.QueueSubmitInfoBuilder;
 import dev.hugame.vulkan.core.VulkanCommandBuffer;
 import dev.hugame.vulkan.core.VulkanDevice;
 import dev.hugame.vulkan.core.VulkanGraphics;
-import dev.hugame.vulkan.core.VulkanObject;
 import dev.hugame.vulkan.sync.Semaphore;
 import dev.hugame.vulkan.types.ImageAspect;
-import dev.hugame.vulkan.types.ImageFormat;
 import dev.hugame.vulkan.types.ImageLayout;
 import dev.hugame.vulkan.types.ImageType;
 import java.util.List;
@@ -202,13 +199,13 @@ public class ImageUtils {
   }
 
   public static void transitionImageLayout(
-          VulkanGraphics graphics,
-          VulkanImage image,
-          ImageAspect aspectMask,
-          ImageLayout oldLayout,
-          ImageLayout newLayout,
-          int baseLayer,
-          int layerCount) {
+      VulkanGraphics graphics,
+      VulkanImage image,
+      ImageAspect aspectMask,
+      ImageLayout oldLayout,
+      ImageLayout newLayout,
+      int baseLayer,
+      int layerCount) {
     var commandBuffer = VulkanCommandBuffer.create(graphics);
     var pipelineBarrierCommand =
         new PipelineBarrierCommand(image, oldLayout, newLayout, aspectMask, baseLayer, layerCount);
