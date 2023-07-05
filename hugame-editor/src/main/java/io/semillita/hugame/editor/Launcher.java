@@ -13,12 +13,14 @@ public class Launcher {
 
 	public static void main(String... args) {
 		setupUI();
-		var window = new Window("Hugo", 960, 540);
-
-		window.setTitleBarColor(Colors.GRADIENT_1, Colors.WHITE);
-		window.setBackgroundColor(Color.MAGENTA);
-
-		window.repaint();
+//		var editorWindow = new EditorWindow("Hugo", 960, 540);
+		var startupWindow = new StartupWindow(Launcher::onProjectOpen);
+		startupWindow.repaint();
+	}
+	
+	private static void onProjectOpen(String path) {
+		var projectName = "name_of_directory"; // Get this from the path
+		var editorWindow = new EditorWindow(projectName, 960, 540);
 	}
 
 	private static void setupUI() {
@@ -35,6 +37,7 @@ public class Launcher {
 	private static void setupTitlePaneUI() {
 		UIManager.put("TitlePane.buttonSize", new Dimension(50, 26));
 		UIManager.put("TitlePane.buttonPressedBackground", Colors.BRIGHT_FOREGROUND_2);
+		UIManager.put("TitlePane.centerTitle", true);
 		UIManager.put("TitlePane.closePressedBackground", Colors.BRIGHT_FOREGROUND_2);
 		UIManager.put("TitlePane.borderColor", Color.WHITE);
 		UIManager.put("TitlePane.titleMargins", new Insets(0, 0, 0, 0));
@@ -54,8 +57,8 @@ public class Launcher {
 	private static void setupTabbedPaneUI() {
 		UIManager.put("TabbedPane.selectedBackground", Colors.GRADIENT_3);
 		UIManager.put("TabbedPane.height", 15);
-		UIManager.put("TabbedPane.focusColor", Color.RED);
-		UIManager.put("TabbedPane.focus", new Color(0, true));
+		UIManager.put("TabbedPane.focusColor", Colors.GRADIENT_1);
+//		UIManager.put("TabbedPane.focus", new Color(0, true));
 
 		UIManager.put("TabbedPane.cardTabSelectionHeight", 0);
 
@@ -63,7 +66,7 @@ public class Launcher {
 		UIManager.put("TabbedPane.contentSeparatorHeight", 1);
 		UIManager.put("TabbedPane.tabSeparatorColor", Color.BLACK);
 		UIManager.put("TabbedPane.contentAreaColor", Color.BLACK);
-		UIManager.put("TabbedPane.focus", new Color(0, 0, 0, 0));
+//		UIManager.put("TabbedPane.focus", new Color(0, 0, 0, 0));
 		UIManager.put("TabbedPane.hoverColor", Colors.GRADIENT_3);
 	}
 
