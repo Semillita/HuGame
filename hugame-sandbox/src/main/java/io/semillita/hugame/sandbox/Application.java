@@ -40,7 +40,9 @@ import dev.hugame.window.WindowConfiguration;
 public class Application extends ApplicationListener {
 
 	public static void main(String[] args) {
-		HuGame.start(new DesktopGLContext(new WindowConfiguration().width(960).height(540).title("App").x(500).y(300).decorated(true)),
+		HuGame.start(
+				new DesktopGLContext(
+						new WindowConfiguration().width(960).height(540).title("App").x(500).y(300).decorated(true)),
 				new Application());
 	}
 
@@ -69,21 +71,24 @@ public class Application extends ApplicationListener {
 	private Environment environment;
 
 	private Model model;
-	
-	@Inject	Window window;
-	@Inject Input input;
-	@Inject Renderer renderer;
-	
+
+	@Inject
+	Window window;
+	@Inject
+	Input input;
+	@Inject
+	Renderer renderer;
+
 	private long lastNano;
-	
+
 	private Texture groundTexture;
-	
+
 	@Override
 	public void onCreate() {
 		System.out.println("Sandbox onCreate");
 		HuGame.inject(this);
 		playerTransform = new Transform(new Vector3f(playerX, playerY, playerZ), new Vector3f(0, 0, 0),
-				new Vector3f(1f, 1f, 1f));
+				new Vector3f(10f, 10f, 10f));
 
 		batch = new GLBatch();
 		HuGame.inject(batch);
@@ -98,7 +103,7 @@ public class Application extends ApplicationListener {
 
 		input.setMouseButtonListener((event) -> {
 //			System.out.println("Mouse event");
-			switch(event.action()) {
+			switch (event.action()) {
 			case PRESS:
 				button.mouseDown();
 				slider.mouseDown();
@@ -123,21 +128,23 @@ public class Application extends ApplicationListener {
 		environment.add(spotLight1);
 //		environment.add(directionalLight1);
 		renderer.updateEnvironment(environment);
-		
+
 		input.setKeyListener((key, action) -> {
 //			System.out.println(key);
 		});
 
-		blueMat = Materials.get(new Vector3f(0, 0, 1), new Vector3f(1, 1, 1), new Vector3f(1, 1, 1), 0.5f, -1, -1, -1, -1, -1, -1);
-				
+		blueMat = Materials.get(new Vector3f(0, 0, 1), new Vector3f(1, 1, 1), new Vector3f(1, 1, 1), 0.5f, -1, -1, -1,
+				-1, -1, -1);
+
 		System.out.println("LOADING MODEL");
 //		var assimpModel = new AssimpModelLoader().load("deccer_cubes_tex.fbx");
 //		model = new Model(assimpModel.meshes(), assimpModel.materials());
-		var assimpModel = new AssimpModelLoader().loadExternal("deccer_cubes_binary.glb");
+		var assimpModel = new AssimpModelLoader().loadExternal("deccer_cubes_tex.gltf");
 		model = new Model(assimpModel.meshes(), assimpModel.materials());
-		System.out.println("Model has " + assimpModel.meshes().size() + " meshes and " + assimpModel.materials().size() + " materials");
+		System.out.println("Model has " + assimpModel.meshes().size() + " meshes and " + assimpModel.materials().size()
+				+ " materials");
 		System.out.println("FINISHED LOADING MODEL");
-		
+
 		groundTexture = Textures.get("/ground.png");
 	}
 
@@ -146,7 +153,7 @@ public class Application extends ApplicationListener {
 		var currentNano = System.nanoTime();
 		var elapsed = (currentNano - lastNano) / 1_000_000_000d;
 		lastNano = currentNano;
-		
+
 //<<<<<<< HEAD
 //		List<Transform> cubeTransforms = new ArrayList<>();
 //
@@ -168,12 +175,12 @@ public class Application extends ApplicationListener {
 ////		renderer.draw(playerModel, playerTransform, whiteMat);
 //=======
 		renderer.draw(model, playerTransform, whiteMat);
-		
-		//renderer.draw(model, playerTransform);
+
+		// renderer.draw(model, playerTransform);
 
 		renderer.flush();
 
-		//cubeTransforms.clear();
+		// cubeTransforms.clear();
 
 //		var input = HuGame.getInput();
 		if (input.isKeyPressed(Key.A))
@@ -215,7 +222,7 @@ public class Application extends ApplicationListener {
 //		slider.update();
 //		button.render(batch);
 //		slider.render(batch);
-		//batch.draw(groundTexture, 0, 0, 100, 100);
+		// batch.draw(groundTexture, 0, 0, 100, 100);
 
 		batch.end();
 	}

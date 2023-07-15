@@ -55,53 +55,6 @@ public class Model {
 		final var vertices = new ArrayList<Float>();
 		final var indices = new ArrayList<Integer>();
 
-//		// textures as input to this constructor was removed, so probably
-//		// add some support for not using any texture (should be same as 
-//		// using white texture I guess)
-//		final var materials = assimpMaterials
-//				.stream()
-//				.map(this::createMaterial)
-//				.toList();
-//
-//		System.out.println("Mesh count: " + meshes.size());
-//		System.out.println("Material amount: " + materials.size());
-//		
-////		meshes.remove(2);
-//
-//		int indexOffset = 0;
-//		for (int i = 0; i < meshes.size(); i++) {
-//			final int fIndexOffset = indexOffset;
-//			var mesh = meshes.get(i);
-//			System.out.println("Adding mesh with index offset " + fIndexOffset);
-////			System.out.println("	Mesh:");
-//			final var meshVertices = mesh.vertices();
-//			final var localIndices = mesh.indices();
-//			final var meshIndices = new ArrayList<Integer>();
-//			for (int j = 0; j < localIndices.size(); j++) {
-//				meshIndices.add(localIndices.get(j) + indexOffset);
-//			}
-////					.stream()
-////					.map(index -> index + fIndexOffset)
-////					.toList();
-//			final var localMatIndex = mesh.materialIndex();
-//			final var globalMatIndex = materials.get(localMatIndex).getIndex();
-//			System.out.println("... and global mat index " + globalMatIndex);
-////			System.out.println("	Global mat index: " + globalMatIndex);
-//			// matIndex is local to mesh, so we need to get the actual material id 
-//			// Take in materials, so in here each assimp material in materials
-//			// could be mapped to some actual Material and then it could be
-//			// submitted to Materials.get and we'd get an ID out which would be
-//			// global rather than the local one. So basically we'll use the local
-//			// matIndex to index into materials list after input materials have been
-//			// mapped properly to real materials and submitted.
-//			
-//			// TODO: Clean up all classes related to models and Assimp!
-//			
-//			System.out.println(meshIndices);
-//			
-
-		System.out.println("Creating model");
-
 		final var textures = new ArrayList<Texture>();
 
 		// TODO: Make the AssimpMaterial list a list of Material instead,

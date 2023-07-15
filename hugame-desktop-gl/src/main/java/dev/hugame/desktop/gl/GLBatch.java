@@ -283,8 +283,6 @@ public class GLBatch implements Batch {
 	private void createEBO() {
 		int eboID = glGenBuffers();
 		int[] indices = generateAllQuadIndices();
-		for (int index : indices) {
-		}
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
 	}
