@@ -370,8 +370,10 @@ public class AssimpModelLoader {
 		System.out.println("    Reading " + fileStack.peek().fileName() + ": size = " + size + ", count = " + count);
 		System.out.println("        Remaining: " + data.remaining() + ", size * count: " + size * count);
 		System.out.println("        Position: " + data.position());
-		var amount = Math.min(data.remaining(), size * count);
+//		var amount = Math.min(data.remaining(), size * count);
+		var amount = Math.min(data.remaining() / size, count);
 		MemoryUtil.memCopy(MemoryUtil.memAddress(data), pBuffer, amount);
+		data.position(data.position() + (int) (amount * size));
 		return amount;
 	}
 
@@ -411,21 +413,6 @@ public class AssimpModelLoader {
 	}
 
 	private Optional<AIScene> loadScene(String fileName, AIFileIO fileSystem) {
-		// var maybeFileContent = Files.readBytes("/" + fileName);
-
-		// var fileContent = maybeFileContent
-		// .orElseThrow(() -> new RuntimeException(String.format("Failed to load model
-		// [%s]", fileName)));
-
-		// var fileBuffer = MemoryUtil.memAlloc(fileContent.length);
-		// System.out.println("NEW DATA BUFFER: " + fileBuffer.capacity());
-		// fileBuffer.put(fileContent);
-		// fileBuffer.flip();
-
-		// fileContentByName.put(fileName, fileBuffer);
-
-		// currentFileBuffer = fileBuffer;
-
 		var scene = aiImportFileEx(fileName, aiProcess_Triangulate | aiProcess_FlipUVs, fileSystem);
 		System.out.println("Generated scene: " + scene);
 		// Shouldn't close these, as they might be used later for another model
@@ -470,7 +457,7 @@ public class AssimpModelLoader {
 	
 	
 	private SceneLoader getInternalSceneLoader() {
-		return filePath -> loadScene(filePath, fileSystem).orElseThrow();
+		return filePath -> loadScene(filePath, fileSystem).orElse(null);
 	}
 	
 	private SceneLoader getSingleFileInternalSceneLoader() {

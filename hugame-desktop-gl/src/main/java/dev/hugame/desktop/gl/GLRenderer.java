@@ -92,7 +92,7 @@ public class GLRenderer implements Renderer {
 
 	@Override
 	@Deprecated
-	public void draw(Model model, Transform transform, Material material) {
+	public void draw(Model model, Transform transform, /*Unused*/Material material) {
 //		var instanceData = new InstanceData(transform, material);
 		draw(model, transform);
 	}
