@@ -26,7 +26,11 @@ public abstract class Buffer {
 	public void bind() {
 		glBindBuffer(target, handle);
 	}
-	
+
+	public void bufferData(long size) {
+		glBufferData(target, size, GL_DYNAMIC_DRAW);
+	}
+
 	public void bufferData(ByteBuffer data) {
 		glBufferData(target, data, GL_DYNAMIC_DRAW);
 	}

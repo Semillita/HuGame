@@ -44,8 +44,6 @@ public class Material implements Bufferable {
 
 	public Material(Vector3f ambientColor, Vector3f diffuseColor, Vector3f specularColor, float shininess,
 			int albedoMapID, int normalMapID, int specularMapID, int albedoMapIndex, int normalMapIndex, int specularMapIndex, int index) {
-//		System.out.println("------- Creating material with index " + index + " --------");
-
 		this.index = index;
 
 		this.ambientColor = ambientColor;
@@ -83,7 +81,6 @@ public class Material implements Bufferable {
 		var albedoMapSliceBytes = ByteSerializer.toBytes(albedoMapSlice);
 		var normalMapSliceBytes = ByteSerializer.toBytes(normalMapSlice);
 		var specularMapSliceBytes = ByteSerializer.toBytes(specularMapSlice);
-		var bullshitBytes = new byte[] { 0, 0, 0, 0 };
 
 		return ByteSerializer.squash(Arrays.asList(ambientBytes, albedoMapIDBytes, diffuseBytes, normalMapIDBytes,
 				specularBytes, specularMapIDBytes, shininessBytes, albedoMapSliceBytes, normalMapSliceBytes, specularMapSliceBytes));

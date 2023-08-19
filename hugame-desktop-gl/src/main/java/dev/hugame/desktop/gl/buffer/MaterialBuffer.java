@@ -16,7 +16,7 @@ public class MaterialBuffer extends ShaderStorageBuffer<Material> {
 	}
 
 	private MaterialBuffer(int handle, int maxItems) {
-		super(handle, Material.SIZE_IN_BYTES, maxItems);
+		super(handle, Material.SIZE_IN_BYTES);
 	}
 
 }

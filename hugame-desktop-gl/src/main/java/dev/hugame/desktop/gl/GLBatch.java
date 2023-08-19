@@ -18,9 +18,7 @@ import dev.hugame.graphics.Camera2D;
 import dev.hugame.graphics.Shader;
 import dev.hugame.graphics.Shaders;
 import dev.hugame.graphics.Texture;
-import dev.hugame.inject.Inject;
 import dev.hugame.util.Files;
-import dev.hugame.util.IntList;
 
 /** OpenGL implementation of batched 2D render calls. */
 public class GLBatch implements Batch {

@@ -27,8 +27,8 @@ import dev.hugame.graphics.material.Material;
 import dev.hugame.graphics.material.Materials;
 import dev.hugame.graphics.model.Model;
 import dev.hugame.util.Files;
-import dev.hugame.util.IntList;
 import dev.hugame.util.Transform;
+import org.lwjgl.system.MemoryUtil;
 
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_INT;
@@ -55,24 +55,26 @@ public class GLRenderer implements Renderer {
 	
 	public GLRenderer() {
 		modelInstanceData = new HashMap<>();
-		camera = new PerspectiveCamera(new Vector3f(100f, 100f, 100f));
+		camera = new PerspectiveCamera(new Vector3f(200f, 200f, 200f));
 		camera.lookAt(new Vector3f(0, 0, 0));
+		camera.update();
 		instanceShader = Shaders.get(Files.read("/shaders/instance_vertex_shader.glsl").get(),
 				Files.read("/shaders/instance_fragment_shader.glsl").get()).get();
 		batchShader = Shaders.get(Files.read("/shaders/batch_vertex_shader.glsl").get(),
 				Files.read("/shaders/batch_fragment_shader.glsl").get()).get();
 
-		pointLightBuffer = PointLightBuffer.allocate(10);
-		spotLightBuffer = SpotLightBuffer.allocate(10);
-		directionalLightBuffer = DirectionalLightBuffer.allocate(1);
-		
-		glDebugMessageCallback(new GLDebugMessageCallbackI() {
+		pointLightBuffer = PointLightBuffer.allocateNew(10);
+		spotLightBuffer = SpotLightBuffer.allocateNew(10);
+		directionalLightBuffer = DirectionalLightBuffer.allocateNew(1);
 
-			@Override
-			public void invoke(int source, int type, int id, int severity, int length, long message, long userParam) {
-				System.err.println("OpenGL error");
-			}
+		// TODO: Extract into separate class for convenience
+		glDebugMessageCallback((source, type, id, severity, length, message, userParam) -> {
+			var buffer = MemoryUtil.memByteBuffer(message, length);
+			var messageString = MemoryUtil.memUTF8(buffer);
+
+			System.out.println("OpenGL error: " + messageString);
 		}, 0);
+		glEnable(GL_DEBUG_OUTPUT);
 
 		glEnable(GL_BLEND);
 	}
@@ -113,27 +115,29 @@ public class GLRenderer implements Renderer {
 
 	@Override
 	public void flush() {
+		System.out.println("Flushing renderer");
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_MULTISAMPLE);
 
 		for (var entry : modelInstanceData.entrySet()) {
+			System.out.println("Rendering model");
 			var model = entry.getKey();
 			var instanceDataList = entry.getValue();
 
 			var instanceDataArray = createInstanceDataArray(instanceDataList);
 			var vaoID = model.getVAO();
-			var i_vboID = model.getInstaceVBO();
+			var vboID = model.getInstaceVBO();
 			var eboID = model.getEBO();
 			// TODO: Add casting to model::getTextures<T>
 			var textures = model.getTextures()
 					.stream()
-					.map(tex -> (GLTexture) tex)
+					.map(GLTexture.class::cast)
 					.map(GLTexture::getTextureArray)
 					.toList();
 
-			GLUtils.fillVBO(i_vboID, instanceDataArray);
+			GLUtils.fillVBO(vboID, instanceDataArray);
 
-			instanceShader.uploadVec3("cameraPosition", camera.position);
+			instanceShader.uploadVec3("cameraPosition", camera.getPosition());
 
 			GLUtils.uploadMatricesToShader(camera, instanceShader);
 			
@@ -149,9 +153,9 @@ public class GLRenderer implements Renderer {
 			pointLightBuffer.bindBase(1);
 			spotLightBuffer.bindBase(2);
 			directionalLightBuffer.bindBase(3);
-
+			System.out.println("glDrawElementsInstanced start");
 			glDrawElementsInstanced(GL_TRIANGLES, model.getIndexAmount(), GL_UNSIGNED_INT, 0, instanceDataList.size());
-
+			System.out.println("glDrawElementsInstanced stop");
 			disableVertexAttribArrays(0, 1, 2, 3, 4, 5, 6, 7, 8);
 			glBindVertexArray(0);
 			unbindTextureArrays();
@@ -162,7 +166,7 @@ public class GLRenderer implements Renderer {
 
 			camera.update();
 		}
-
+		System.out.println("Done flushing renderer");
 	}
 
 	@Override
@@ -172,9 +176,13 @@ public class GLRenderer implements Renderer {
 
 	@Override
 	public void updateEnvironment(Environment environment) {
+		System.out.println("- Point light");
 		fillPointLightBuffer(environment.getPointLights());
+		System.out.println("- Spot light");
 		fillSpotLightBuffer(environment.getSpotLights());
+		System.out.println("- Directional light");
 		fillDirectionalLightBuffer(environment.getDirectionalLights());
+		System.out.println("Done");
 	}
 	
 	public void renderBatch(GLBatch batch) {
@@ -210,7 +218,7 @@ public class GLRenderer implements Renderer {
 			textures.get(textureIndex).bind();
 		}
 	}
-	
+
 	private void fillPointLightBuffer(List<PointLight> lights) {
 		if (pointLightBuffer.getMaxItems() >= lights.size()) {
 			pointLightBuffer.refill(lights);

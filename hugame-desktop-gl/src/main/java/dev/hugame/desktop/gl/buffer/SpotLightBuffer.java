@@ -9,19 +9,20 @@ public class SpotLightBuffer extends ShaderStorageBuffer<SpotLight> {
 
 	public static SpotLightBuffer createFrom(List<SpotLight> lights) {
 		var handle = Buffer.generate();
-		var buffer = new SpotLightBuffer(handle, lights.size());
+		var buffer = new SpotLightBuffer(handle);
 		buffer.fill(lights);
 		return buffer;
 	}
 	
-	public static SpotLightBuffer allocate(int maxItems) {
+	public static SpotLightBuffer allocateNew(int maxItems) {
 		var handle = Buffer.generate();
-		var buffer = new SpotLightBuffer(handle, maxItems);
+		var buffer = new SpotLightBuffer(handle);
+		buffer.allocate(maxItems);
 		return buffer;
 	}
 
-	private SpotLightBuffer(int handle, int maxItems) {
-		super(handle, SpotLight.SIZE_IN_BYTES, maxItems);
+	private SpotLightBuffer(int handle) {
+		super(handle, SpotLight.SIZE_IN_BYTES);
 	}
 	
 }

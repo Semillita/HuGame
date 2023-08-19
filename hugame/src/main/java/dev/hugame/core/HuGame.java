@@ -107,7 +107,7 @@ public class HuGame {
 				}
 			} else {
 				window.pollEvents();
-				window.clear(1f, 1f, 0.3f);
+				window.clear(1f, 1f, 0.5f);
 				listener.onRender();
 				window.swapBuffers();
 			}
