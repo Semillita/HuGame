@@ -1,12 +1,12 @@
 package io.semillita.hugame.sandbox;
 
 import java.awt.Dimension;
-import java.util.List;
-import java.util.ArrayList;
 
+import dev.hugame.assimp.AssimpModelLoader;
+import dev.hugame.io.FileHandle;
+import dev.hugame.io.FileLocation;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import dev.hugame.core.ApplicationListener;
 import dev.hugame.core.HuGame;
@@ -15,7 +15,6 @@ import dev.hugame.core.Renderer;
 import dev.hugame.core.Window;
 import dev.hugame.desktop.gl.DesktopGLContext;
 import dev.hugame.desktop.gl.GLBatch;
-import dev.hugame.desktop.gl.GLTexture;
 import dev.hugame.environment.DirectionalLight;
 import dev.hugame.environment.Environment;
 import dev.hugame.environment.PointLight;
@@ -25,15 +24,11 @@ import dev.hugame.graphics.Shader;
 import dev.hugame.graphics.Texture;
 import dev.hugame.graphics.Textures;
 import dev.hugame.graphics.material.Material;
-import dev.hugame.graphics.material.MaterialCreateInfo;
 import dev.hugame.graphics.material.Materials;
-import dev.hugame.graphics.model.AssimpModelLoader;
 import dev.hugame.graphics.model.Model;
-import dev.hugame.graphics.model.ModelBuilder;
 import dev.hugame.inject.Inject;
 import dev.hugame.input.Key;
 import dev.hugame.ui.Slider;
-import dev.hugame.util.Files;
 import dev.hugame.util.Transform;
 import dev.hugame.window.WindowConfiguration;
 
@@ -87,8 +82,8 @@ public class Application extends ApplicationListener {
 	public void onCreate() {
 		System.out.println("Sandbox onCreate");
 		HuGame.inject(this);
-		playerTransform = new Transform(new Vector3f(playerX, playerY, playerZ), new Vector3f(0, 0, 0),
-				new Vector3f(10f, 10f, 10f));
+		playerTransform = new Transform(new Vector3f(0, 0, 0), new Vector3f(0, 0, 0),
+				new Vector3f(1, 1, 1f));
 
 		batch = new GLBatch();
 		HuGame.inject(batch);
@@ -102,7 +97,6 @@ public class Application extends ApplicationListener {
 		slider.setScreenToWorldCoordinateMapping(camera2D::screenToWorldCoords);
 
 		input.setMouseButtonListener((event) -> {
-//			System.out.println("Mouse event");
 			switch (event.action()) {
 			case PRESS:
 				button.mouseDown();
@@ -121,12 +115,12 @@ public class Application extends ApplicationListener {
 		});
 
 		environment = new Environment();
-		var pointLight1 = new PointLight(new Vector3f(2, 4, 2), new Vector3f(1, 1, 1), 1);
-		var spotLight1 = new SpotLight(new Vector3f(0, 4, 0), new Vector3f(-1f, -1, 0), new Vector3f(1, 0, 0), 2, 0.5f);
-		var directionalLight1 = new DirectionalLight(new Vector3f(-1f, -1f, -1f), new Vector3f(1, 1, 0), 0.5f);
+		var pointLight1 = new PointLight(new Vector3f(5, 5, 5), new Vector3f(1, 1, 1), 5);
+		var spotLight1 = new SpotLight(new Vector3f(0, 4, 0), new Vector3f(-1f, -1, 0), new Vector3f(1, 1, 0), 2, 0.5f);
+		var directionalLight1 = new DirectionalLight(new Vector3f(-1f, -1f, -1f), new Vector3f(1, 1, 1), 0.5f);
 		environment.add(pointLight1);
 		environment.add(spotLight1);
-//		environment.add(directionalLight1);
+		environment.add(directionalLight1);
 		renderer.updateEnvironment(environment);
 
 		input.setKeyListener((key, action) -> {
@@ -136,20 +130,17 @@ public class Application extends ApplicationListener {
 		blueMat = Materials.get(new Vector3f(0, 0, 1), new Vector3f(1, 1, 1), new Vector3f(1, 1, 1), 0.5f, -1, -1, -1,
 				-1, -1, -1);
 
-		System.out.println("LOADING MODEL");
-//		var assimpModel = new AssimpModelLoader().load("deccer_cubes_tex.fbx");
-//		model = new Model(assimpModel.meshes(), assimpModel.materials());
-		var assimpModel = new AssimpModelLoader().loadExternal("deccer_cubes_tex.gltf");
-		model = new Model(assimpModel.meshes(), assimpModel.materials());
-		System.out.println("Model has " + assimpModel.meshes().size() + " meshes and " + assimpModel.materials().size()
-				+ " materials");
-		System.out.println("FINISHED LOADING MODEL");
-
+		var modelFile = new FileHandle("deccer_cubes_tex.fbx", FileLocation.INTERNAL);
+		var resolvedModel = new AssimpModelLoader().load(modelFile);
+		model = new Model(resolvedModel.orElseThrow());
+		/*System.out.println("Model has " + assimpModel.meshes().size() + " meshes and " + assimpModel.materials().size()
+				+ " materials");*/
 		groundTexture = Textures.get("/ground.png");
 	}
 
 	@Override
 	public void onRender() {
+		System.out.println("onRender start");
 		var currentNano = System.nanoTime();
 		var elapsed = (currentNano - lastNano) / 1_000_000_000d;
 		lastNano = currentNano;
@@ -174,7 +165,7 @@ public class Application extends ApplicationListener {
 //		}
 ////		renderer.draw(playerModel, playerTransform, whiteMat);
 //=======
-		renderer.draw(model, playerTransform, whiteMat);
+		renderer.draw(model, playerTransform);
 
 		// renderer.draw(model, playerTransform);
 
@@ -214,9 +205,9 @@ public class Application extends ApplicationListener {
 		playerTransform.update();
 
 		// Render 2D
-		batch.setCamera(camera2D);
-		batch.setShader(shader);
-		batch.begin();
+		//batch.setCamera(camera2D);
+		//batch.setShader(shader);
+		//batch.begin();
 
 //		button.update();
 //		slider.update();
@@ -224,7 +215,8 @@ public class Application extends ApplicationListener {
 //		slider.render(batch);
 		// batch.draw(groundTexture, 0, 0, 100, 100);
 
-		batch.end();
+		//batch.end();
+		System.out.println("onRender stop");
 	}
 
 	@Override

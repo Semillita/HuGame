@@ -31,3 +31,5 @@ hs_err_pid*
 *.obj
 *.gltf
 *.glb
+
+*/target

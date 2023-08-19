@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import dev.hugame.model.spec.ResolvedMaterial;
+import dev.hugame.model.spec.ResolvedModel;
 import org.joml.Vector3f;
 
 import dev.hugame.graphics.GLUtils;
@@ -51,63 +53,58 @@ public class Model {
 	private int vaoID, vboID, i_vboID, eboID;
 	private List<Texture> textures;
 
-	public Model(List<AssimpMesh> meshes, List<AssimpMaterial> assimpMaterials) {
+	public Model(ResolvedModel resolvedModel) {
+		System.out.println("Model constructor");
 		final var vertices = new ArrayList<Float>();
 		final var indices = new ArrayList<Integer>();
 
 		final var textures = new ArrayList<Texture>();
 
-		// TODO: Make the AssimpMaterial list a list of Material instead,
+		var resolvedMaterials = resolvedModel.getMaterials();
+		var resolvedMeshes = resolvedModel.getMeshes();
+
 		// before this constructor is called, so that Model doesn't need
 		// to know that Assimp is being used. AssimpMaterial::generate
 		// or whatever can be used.
-		var materials = assimpMaterials.stream().map(assimpMaterial -> {
+		var materials = resolvedMaterials.stream().map(resolvedMaterial -> {
 			System.out.println("---- MATERIAL");
-			var maybeAlbedoMap = assimpMaterial.albedoMap();
+			var maybeAlbedoMap = resolvedMaterial.getAlbedoMap();
 			var maybeAlbedoMapIdentity = maybeAddTextureToList(maybeAlbedoMap, textures);
 			var albedoMapId = maybeAlbedoMapIdentity.map(TextureIdentity::id).orElse(-1);
 			var albedoMapSlice = maybeAlbedoMapIdentity.map(TextureIdentity::slice).orElse(-1);
 			System.out.println("Albedo ID: " + albedoMapId + ", albedo slice: " + albedoMapSlice);
 
-			var maybeNormalMap = assimpMaterial.normalMap();
+			var maybeNormalMap = resolvedMaterial.getNormalMap();
 			var maybeNormalMapIdentity = maybeAddTextureToList(maybeNormalMap, textures);
 			var normalMapId = maybeNormalMapIdentity.map(TextureIdentity::id).orElse(-1);
 			var normalMapSlice = maybeNormalMapIdentity.map(TextureIdentity::slice).orElse(-1);
 
-			var maybeSpecularMap = assimpMaterial.specularMap();
+			var maybeSpecularMap = resolvedMaterial.getSpecularMap();
 			var maybeSpecularMapIdentity = maybeAddTextureToList(maybeSpecularMap, textures);
 			var specularMapId = maybeSpecularMapIdentity.map(TextureIdentity::id).orElse(-1);
 			var specularMapSlice = maybeSpecularMapIdentity.map(TextureIdentity::slice).orElse(-1);
 
-			var material = createMaterial(assimpMaterial, albedoMapId, albedoMapSlice, normalMapId, normalMapSlice,
+			var actualMaterial = createMaterial(resolvedMaterial, albedoMapId, albedoMapSlice, normalMapId, normalMapSlice,
 					specularMapId, specularMapSlice);
-			return material;
+			return actualMaterial;
 		}).toList();
 
-		var amountOfMaterials = materials.size();
-
-		System.out.println("Total of " + amountOfMaterials + " materials");
-
 		int indexOffset = 0;
-		for (int i = 0; i < meshes.size(); i++) {
-			System.out.println("Mesh " + i);
-			final var mesh = meshes.get(i);
+		for (int i = 0; i < resolvedMeshes.size(); i++) {
+			final var mesh = resolvedMeshes.get(i);
 			final var meshIndexOffset = indexOffset;
-			final var meshVertices = mesh.vertices();
-			final var localIndices = mesh.indices();
+			final var meshVertices = mesh.getVertices();
+			final var localIndices = mesh.getIndices();
 			final var globalIndices = localIndices.stream().map(index -> index + meshIndexOffset).toList();
 
-			final var localMatIndex = mesh.materialIndex();
-			System.out.println("  Local mat index: " + localMatIndex);
+			final var localMatIndex = mesh.getMaterialIndex();
 			final var material = materials.get(localMatIndex);
 			final var globalMatIndex = material.getIndex();
-			System.out.println("  Global mat index: " + globalMatIndex);
-			// TODO: Clean up all classes related to models and Assimp!
 
 			for (var vertex : meshVertices) {
-				final var position = vertex.position();
-				final var normal = vertex.normal();
-				final var texCoords = vertex.texCoords();
+				final var position = vertex.getPosition();
+				final var normal = vertex.getNormal();
+				final var texCoords = vertex.getTextureCoordinates();
 
 				vertices.add(position.x);
 				vertices.add(position.y);
@@ -120,9 +117,7 @@ public class Model {
 				vertices.add(texCoords.x);
 				vertices.add(texCoords.y);
 
-//				vertices.add(0f); // TODO: Add actual texture ID here
 				vertices.add((float) globalMatIndex);
-				// Hmm so we got texture2darray working but materials are somehow acting out?
 			}
 			indices.addAll(globalIndices);
 			indexOffset += meshVertices.size();
@@ -233,9 +228,9 @@ public class Model {
 		}
 	}
 
-	private Material createMaterial(AssimpMaterial assimpMaterial, int albedoMapID, int albedoMapSlice, int normalMapID,
-			int normalMapSlice, int specularMapID, int specularMapSlice) {
-		var color = assimpMaterial.albedoColor().orElse(new Vector3f(1));
+	private Material createMaterial(ResolvedMaterial resolvedMaterial, int albedoMapID, int albedoMapSlice, int normalMapID,
+									int normalMapSlice, int specularMapID, int specularMapSlice) {
+		var color = resolvedMaterial.getAlbedoColor().orElse(new Vector3f(1));
 		return Materials.get(color, color, color, 32, albedoMapID, normalMapID, specularMapID, albedoMapSlice,
 				normalMapSlice, specularMapSlice);
 	}

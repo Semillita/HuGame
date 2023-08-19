@@ -10,19 +10,20 @@ public class PointLightBuffer extends ShaderStorageBuffer<PointLight> {
 
 	public static PointLightBuffer createFrom(List<PointLight> lights) {
 		var handle = Buffer.generate();
-		var buffer = new PointLightBuffer(handle, lights.size());
+		var buffer = new PointLightBuffer(handle);
 		buffer.fill(lights);
 		return buffer;
 	}
 	
-	public static PointLightBuffer allocate(int maxItems) {
+	public static PointLightBuffer allocateNew(int maxItems) {
 		var handle = Buffer.generate();
-		var buffer = new PointLightBuffer(handle, maxItems);
+		var buffer = new PointLightBuffer(handle);
+		buffer.allocate(maxItems);
 		return buffer;
 	}
 
-	private PointLightBuffer(int handle, int maxItems) {
-		super(handle, PointLight.SIZE_IN_BYTES, maxItems);
+	private PointLightBuffer(int handle) {
+		super(handle, PointLight.SIZE_IN_BYTES);
 	}
 
 }

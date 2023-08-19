@@ -1,46 +1,30 @@
-package dev.hugame.graphics.model;
+package dev.hugame.assimp;
 
-import static org.lwjgl.assimp.Assimp.*;
-
-import java.awt.Dimension;
-import java.io.File;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Stack;
-
+import dev.hugame.core.HuGame;
+import dev.hugame.graphics.Texture;
+import dev.hugame.graphics.Textures;
+import dev.hugame.io.FileHandle;
+import dev.hugame.io.FileLocation;
+import dev.hugame.model.spec.*;
+import dev.hugame.util.Files;
+import dev.hugame.util.ImageLoader;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.assimp.AIColor4D;
-import org.lwjgl.assimp.AIFile;
-import org.lwjgl.assimp.AIFileIO;
-import org.lwjgl.assimp.AIFileOpenProcI;
-import org.lwjgl.assimp.AIFileSeekI;
-import org.lwjgl.assimp.AILogStreamCallback;
-import org.lwjgl.assimp.AIMaterial;
-import org.lwjgl.assimp.AIMatrix4x4;
-import org.lwjgl.assimp.AIMesh;
-import org.lwjgl.assimp.AINode;
-import org.lwjgl.assimp.AIScene;
-import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.assimp.AIString;
-import org.lwjgl.assimp.AITexture;
-import org.lwjgl.assimp.Assimp;
+import org.lwjgl.assimp.*;
 import org.lwjgl.system.MemoryUtil;
 
-import dev.hugame.core.HuGame;
-import dev.hugame.graphics.ImageData;
-import dev.hugame.graphics.Texture;
-import dev.hugame.graphics.Textures;
-import dev.hugame.util.Files;
-import dev.hugame.util.ImageLoader;
+import java.awt.*;
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.*;
 
-public class AssimpModelLoader {
+import static org.lwjgl.assimp.Assimp.*;
+
+public class AssimpModelLoader extends ModelLoader {
 
 	private final AIFileIO fileSystem;
 
@@ -58,23 +42,33 @@ public class AssimpModelLoader {
 		System.out.println("TIME TO CREATE FILE SYSTEM: " + elapsed / 1_000_000_000d + " seconds");
 	}
 
+	@Override
+	public boolean supports(String modelFormat, FileLocation fileLocation) {
+		return true;
+	}
+
+	@Override
+	public Optional<ResolvedModel> load(FileHandle file) {
+		return switch (file.location()) {
+			case INTERNAL -> Optional.ofNullable(load(file.path()));
+			case EXTERNAL -> Optional.ofNullable(loadExternal(file.path()));
+		};
+	}
+
 	/** Does not work for gltf and glb files */
-	public AssimpModel load(String filepath) {
-//		 Only works for real files, not ones zipped into a jar
-//		var absoluteFilepath = new File(AssimpModelLoader.class.getClassLoader().getResource(filepath).getFile()).getAbsolutePath();
-//		var scene = aiImportFile(absoluteFilepath, aiProcess_Triangulate | aiProcess_FlipUVs);
+	public ResolvedModel load(String filepath) {
 		return load(getInternalSceneLoader(), filepath);
 	}
 	
-	public AssimpModel loadSingleFile(String filePath) {
+	public ResolvedModel loadSingleFile(String filePath) {
 		return load(getSingleFileInternalSceneLoader(), filePath);
 	}
 
-	public AssimpModel loadExternal(String filePath) {
+	public ResolvedModel loadExternal(String filePath) {
 		return load(getExternalFileSceneLoader(), filePath);
 	}
 	
-	private AssimpModel load(SceneLoader sceneLoader, String filePath) {
+	private ResolvedModel load(SceneLoader sceneLoader, String filePath) {
 		var scene = sceneLoader.load(filePath);
 
 		if (scene == null) {
@@ -83,16 +77,15 @@ public class AssimpModelLoader {
 			return null;
 		}
 
-		var meshesInScene = getMeshesInScene(scene);
+		var aiMeshesInScene = getMeshesInScene(scene);
 
-		var assimpMeshes = getMeshesInNode(scene.mRootNode(), meshesInScene, 0, Optional.empty());
+		var meshes = getMeshesInNode(scene.mRootNode(), aiMeshesInScene, 0, Optional.empty());
 		var embeddedTextures = getEmbeddedTextures(scene);
 		var texturesInScene = new ArrayList<Texture>();
-		var assimpMaterials = getMaterials(scene, embeddedTextures, texturesInScene);
+		var materials = getMaterialsInScene(scene, embeddedTextures, texturesInScene);
 //		var meshesInScene = getMeshesInScene(scene);
-		System.out.println("Amount of materials: " + assimpMaterials.size());
 		
-		return new AssimpModel(assimpMeshes, assimpMaterials, List.of());
+		return new ResolvedModel(meshes, materials);
 	}
 	
 	private List<Texture> getEmbeddedTextures(AIScene scene) {
@@ -160,7 +153,7 @@ public class AssimpModelLoader {
 		return meshes;
 	}
 	
-	private List<AssimpMesh> getMeshesInNode(AINode node, List<AIMesh> meshesInScene, int indent, Optional<Matrix4f> maybeParentTransform) {
+	private List<ResolvedMesh> getMeshesInNode(AINode node, List<AIMesh> meshesInScene, int indent, Optional<Matrix4f> maybeParentTransform) {
 		var ind = "";
 		for (int i = 0; i < indent; i++) {
 			ind += "	";
@@ -172,7 +165,7 @@ public class AssimpModelLoader {
 		var parentTransform = maybeParentTransform.orElse(new Matrix4f().identity());
 		transform.mul(parentTransform);
 		
-		var meshes = new ArrayList<AssimpMesh>();
+		var meshes = new ArrayList<ResolvedMesh>();
 		var meshesIndices = node.mMeshes();
 		for (int i = 0; i < node.mNumMeshes(); i++) {
 			System.out.println(ind + "	Mesh");
@@ -203,10 +196,10 @@ public class AssimpModelLoader {
 		// TODO: Make this return new Materix4f(buffer).transpose();
 	}
 
-	private AssimpMesh createAssimpMesh(AIMesh mesh, Matrix4f transformation) {
+	private ResolvedMesh createAssimpMesh(AIMesh mesh, Matrix4f transformation) {
 		final var positions = new ArrayList<Vector3f>();
 		final var normals = new ArrayList<Vector3f>();
-		final var textureCoords = new ArrayList<Vector3f>();
+		final var textureCoords = new ArrayList<Vector2f>();
 
 //		System.out.println("(Creating assimp mesh)");
 		
@@ -229,13 +222,13 @@ public class AssimpModelLoader {
 		var nTextureCoords = mesh.mTextureCoords(0);
 		for (int i = 0; i < nTextureCoords.limit(); i++) {
 			var coords = nTextureCoords.get(i);
-			textureCoords.add(new Vector3f(coords.x(), coords.y(), coords.z()));
+			textureCoords.add(new Vector2f(coords.x(), coords.y()));
 		}
 
 		// Vertices
-		final var vertices = new ArrayList<AssimpVertex>();
+		final var vertices = new ArrayList<ResolvedVertex>();
 		for (int i = 0; i < positions.size(); i++) {
-			vertices.add(new AssimpVertex(positions.get(i), normals.get(i), textureCoords.get(i)));
+			vertices.add(new ResolvedVertex(positions.get(i), normals.get(i), textureCoords.get(i)));
 		}
 
 		// Indices
@@ -249,12 +242,12 @@ public class AssimpModelLoader {
 			}
 		}
 		
-		return new AssimpMesh(vertices, indices, mesh.mMaterialIndex());
+		return new ResolvedMesh(vertices, indices, mesh.mMaterialIndex());
 	}
 	
-	private List<AssimpMaterial> getMaterials(AIScene scene, List<Texture> embeddedTextures,
-			List<Texture> texturesInScene) {
-		var materials = new ArrayList<AssimpMaterial>();
+	private List<ResolvedMaterial> getMaterialsInScene(AIScene scene, List<Texture> embeddedTextures,
+													   List<Texture> texturesInScene) {
+		var materials = new ArrayList<ResolvedMaterial>();
 		
 		var numMaterials = scene.mNumMaterials();
 		var nMaterials = scene.mMaterials();
@@ -270,7 +263,7 @@ public class AssimpModelLoader {
 		return materials;
 	}
 
-	private AssimpMaterial getMaterial(AIScene aiScene, AIMaterial aiMaterial, List<Texture> embeddedTextures,
+	private ResolvedMaterial getMaterial(AIScene aiScene, AIMaterial aiMaterial, List<Texture> embeddedTextures,
 			List<Texture> texturesInScene) {
 		System.out.println("  getMaterial()");
 		var albedoColor = getAlbedoColor(aiMaterial);
@@ -291,7 +284,7 @@ public class AssimpModelLoader {
 				embeddedTextures, texturesInScene);
 		var maybeSpecularMap = maybeSpecularTextureIndex.map(texturesInScene::get);
 
-		var material = new AssimpMaterial(Optional.ofNullable(albedoColor), maybeAlbedoMap, maybeNormalMap,
+		var material = new ResolvedMaterial(Optional.ofNullable(albedoColor), maybeAlbedoMap, maybeNormalMap,
 				maybeSpecularMap);
 
 		return material;
