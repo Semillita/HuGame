@@ -49,9 +49,6 @@ public interface Window {
 	/** Polls window events from OS. */
 	public void pollEvents();
 
-	/** Clears the window's framebuffer with the given RGB value. */
-	public void clear(float r, float g, float b);
-
 	/** Swaps the buffers of the window. */
 	public void swapBuffers();
 

@@ -8,15 +8,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
+import dev.hugame.desktop.gl.shader.ShaderFactory;
 import org.lwjgl.BufferUtils;
 
 import dev.hugame.core.HuGame;
-import dev.hugame.core.Renderer;
 import dev.hugame.graphics.Batch;
 import dev.hugame.graphics.Camera;
 import dev.hugame.graphics.Camera2D;
 import dev.hugame.graphics.Shader;
-import dev.hugame.graphics.Shaders;
 import dev.hugame.graphics.Texture;
 import dev.hugame.util.Files;
 
@@ -40,8 +39,11 @@ public class GLBatch implements Batch {
 	private static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
 
 	public static Shader getDefaultShader() {
-		return Shaders.get(Files.read("/shaders/batch_vertex_shader.glsl").get(),
-				Files.read("/shaders/batch_fragment_shader.glsl").get()).get();
+		var shaderFactory = new ShaderFactory();
+		var vertexSource = Files.read("/shaders/batch_vertex_shader.glsl").orElseThrow();
+		var fragmentSource = Files.read("/shaders/batch_fragment_shader.glsl").orElseThrow();
+
+		return shaderFactory.createShader(vertexSource, fragmentSource).orElseThrow();
 	}
 
 	private final int textureSlotAmount;
@@ -242,7 +244,7 @@ public class GLBatch implements Batch {
 	}
 
 	public void setShader(Shader shader) {
-		this.shader = (Shader) shader;
+		this.shader = shader;
 	}
 
 	public void flush() {

@@ -1,20 +1,15 @@
-package dev.hugame.graphics;
+package dev.hugame.desktop.gl.shader;
+
+import dev.hugame.graphics.Shader;
 
 import java.util.Optional;
 
-import static org.lwjgl.opengl.GL20.glGetShaderInfoLog;
-import static org.lwjgl.opengl.GL40.*;
+import static org.lwjgl.opengl.GL11.GL_FALSE;
+import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL20.glGetProgramInfoLog;
 
-/** Utility class for loading shaders */
-public class Shaders {
-
-	/**
-	 * Attempts to load a shader with the given sources.
-	 * 
-	 * @return an optional containing a generated shader if the initialization was
-	 *         successful
-	 */
-	public static Optional<Shader> get(String vertexSource, String fragmentSource) {
+public class ShaderFactory {
+	public Optional<OpenGLShader> createShader(String vertexSource, String fragmentSource) {
 		var vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(vertexShaderID, vertexSource);
 		glCompileShader(vertexShaderID);
@@ -54,8 +49,6 @@ public class Shaders {
 			return Optional.empty();
 		}
 
-		return Optional.of(new Shader(shaderProgramID));
-
+		return Optional.of(new OpenGLShader(shaderProgramID));
 	}
-
 }

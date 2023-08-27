@@ -2,7 +2,16 @@ package dev.hugame.graphics.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import dev.hugame.graphics.material.Material;
+import dev.hugame.graphics.material.MaterialCreateInfo;
+import dev.hugame.graphics.material.Materials;
+import dev.hugame.model.spec.ResolvedMaterial;
+import dev.hugame.model.spec.ResolvedMesh;
+import dev.hugame.model.spec.ResolvedModel;
+import dev.hugame.model.spec.ResolvedVertex;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import dev.hugame.graphics.Texture;
@@ -164,8 +173,20 @@ public class ModelBuilder {
 	 * 
 	 * @return the model
 	 */
-	public Model generate() {
-		Model model = new Model(vertices, indices, textures);
+	public ResolvedModel generate() {
+		var resolvedVertices = new ArrayList<ResolvedVertex>();
+		for (int i = 0; i < vertices.size() / 9; i++) {
+			var position = new Vector3f(vertices.get(i * 9 + 0), vertices.get(i * 9 + 1), vertices.get(i * 9 + 2));
+			var normal = new Vector3f(vertices.get(i * 9 + 3), vertices.get(i * 9 + 4), vertices.get(i * 9 + 5));
+			var texCoords = new Vector2f(vertices.get(i * 9 + 6), vertices.get(i * 9 + 7));
+			// Ignoring tex ID
+			resolvedVertices.add(new ResolvedVertex(position, normal, texCoords));
+		}
+
+		var mesh = new ResolvedMesh(resolvedVertices, indices, 0);
+		var material = new ResolvedMaterial(
+				Optional.of(new Vector3f(1, 0, 0)), Optional.empty(), Optional.empty(), Optional.empty());
+		var model = new ResolvedModel(List.of(mesh), List.of(material));
 		vertices.clear();
 		indices.clear();
 		textures = new ArrayList<>();
