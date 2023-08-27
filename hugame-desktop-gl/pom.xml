@@ -5,6 +5,7 @@
 	<version>0.0.1</version>
 	<name>HuGame GL</name>
 	<properties>
+		<lwjgl.version>3.3.1</lwjgl.version>
 		<maven.compiler.target>17</maven.compiler.target>
 		<maven.compiler.source>17</maven.compiler.source>
 	</properties>
@@ -18,6 +19,11 @@
 			<groupId>io.semillita.hugame</groupId>
 			<artifactId>hugame-desktop-window</artifactId>
 			<version>0.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.lwjgl</groupId>
+			<artifactId>lwjgl-opengl</artifactId>
+			<version>${lwjgl.version}</version>
 		</dependency>
 	</dependencies>
 </project>

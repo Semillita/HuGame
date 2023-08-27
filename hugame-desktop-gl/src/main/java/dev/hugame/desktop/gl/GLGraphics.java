@@ -6,6 +6,8 @@ import dev.hugame.core.Renderer;
 import dev.hugame.graphics.Texture;
 import dev.hugame.util.ImageLoader;
 
+import static org.lwjgl.opengl.GL45.*;
+
 public final class GLGraphics implements Graphics {
 
 	private final GLRenderer renderer;
@@ -37,6 +39,12 @@ public final class GLGraphics implements Graphics {
 	@Override
 	public void create() {
 		textureCollector.generate();
+	}
+
+	@Override
+	public void clear(float red, float green, float blue) {
+		glClearColor(red, green, blue, 1);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 	
 }

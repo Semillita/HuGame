@@ -1,14 +1,11 @@
 package dev.hugame.window;
 
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL40.*;
 
 import java.awt.Dimension;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
-
-import org.lwjgl.opengl.GL;
 
 import dev.hugame.core.Window;
 
@@ -19,12 +16,13 @@ public class DesktopWindow implements Window {
 	}
 	
 	private final long handle;
+	private final BiConsumer<Integer, Integer> updateViewport;
 	private Runnable onRender;
 	private Supplier<Boolean> onClose;
 	private Optional<BiConsumer<Integer, Integer>> maybeResizeListener;
 	private Dimension size;
 	
-	public DesktopWindow(WindowConfiguration config) {
+	public DesktopWindow(WindowConfiguration config, Runnable createCapabilities, BiConsumer<Integer, Integer> updateViewport) {
 		glfwWindowHint(GLFW_RESIZABLE, config.resizable ? 1 : 0);
 		glfwWindowHint(GLFW_DECORATED, config.decorated ? 1 : 0);
 		glfwWindowHint(GLFW_FOCUSED, config.focused ? 1 : 0);
@@ -46,14 +44,16 @@ public class DesktopWindow implements Window {
 		glfwSwapInterval(GLFW_TRUE);
 		
 		glfwShowWindow(handle);
-		
-		GL.createCapabilities();
+
+		createCapabilities.run();
 		
 		size = new Dimension(config.width, config.height);
 		
 		maybeResizeListener = Optional.empty();
 		glfwSetWindowSizeCallback(handle, this::resizeCallback);
 		glfwMakeContextCurrent(handle);
+
+		this.updateViewport = updateViewport;
 	}
 	
 	@Override
@@ -118,12 +118,6 @@ public class DesktopWindow implements Window {
 	}
 	
 	@Override
-	public void clear(float r, float g, float b) {
-		glClearColor(r, g, b, 1);	
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	}
-	
-	@Override
 	public void swapBuffers() {
 		glfwSwapBuffers(handle);
 	}
@@ -140,7 +134,7 @@ public class DesktopWindow implements Window {
 	
 	private void resizeCallback(long handle, int width, int height) {
 		size = new Dimension(width, height);
-		glViewport(0, 0, width, height);
+		updateViewport.accept(width, height);
 		maybeResizeListener.ifPresent(resizeListener -> resizeListener.accept(width, height));
 	}
 	

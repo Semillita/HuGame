@@ -1,4 +1,4 @@
-package dev.hugame.graphics;
+package dev.hugame.desktop.gl;
 
 import static org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER;
 import static org.lwjgl.opengl.GL15.GL_DYNAMIC_DRAW;
@@ -12,6 +12,9 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 import java.util.List;
 
+import dev.hugame.desktop.gl.shader.OpenGLShader;
+import dev.hugame.graphics.Camera;
+import dev.hugame.graphics.Shader;
 import org.joml.Matrix4f;
 
 public class GLUtils {
@@ -50,7 +53,7 @@ public class GLUtils {
 		glBufferSubData(GL_ARRAY_BUFFER, 0, values);
 	}
 
-	public static void uploadMatricesToShader(Camera camera, Shader shader) {
+	public static void uploadMatricesToShader(Camera camera, OpenGLShader shader) {
 		shader.uploadMat4f("uProjection", camera.getProjectionMatrix());
 		shader.uploadMat4f("uView", camera.getViewMatrix());
 	}

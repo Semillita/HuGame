@@ -3,6 +3,7 @@ package io.semillita.hugame.sandbox;
 import java.awt.Dimension;
 
 import dev.hugame.assimp.AssimpModelLoader;
+import dev.hugame.desktop.gl.model.OpenGLModel;
 import dev.hugame.io.FileHandle;
 import dev.hugame.io.FileLocation;
 import org.joml.Vector2f;
@@ -130,9 +131,10 @@ public class Application extends ApplicationListener {
 		blueMat = Materials.get(new Vector3f(0, 0, 1), new Vector3f(1, 1, 1), new Vector3f(1, 1, 1), 0.5f, -1, -1, -1,
 				-1, -1, -1);
 
+		var modelLoader = new AssimpModelLoader();
 		var modelFile = new FileHandle("deccer_cubes_tex.fbx", FileLocation.INTERNAL);
-		var resolvedModel = new AssimpModelLoader().load(modelFile);
-		model = new Model(resolvedModel.orElseThrow());
+		var resolvedModel = modelLoader.load(modelFile);
+		model = OpenGLModel.from(resolvedModel.orElseThrow());
 		/*System.out.println("Model has " + assimpModel.meshes().size() + " meshes and " + assimpModel.materials().size()
 				+ " materials");*/
 		groundTexture = Textures.get("/ground.png");

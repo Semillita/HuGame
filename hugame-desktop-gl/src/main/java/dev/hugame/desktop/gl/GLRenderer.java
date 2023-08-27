@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+import dev.hugame.desktop.gl.model.OpenGLModel;
+import dev.hugame.desktop.gl.shader.OpenGLShader;
+import dev.hugame.desktop.gl.shader.ShaderFactory;
 import org.joml.Vector3f;
-import org.lwjgl.opengl.GLDebugMessageCallbackI;
 
 import dev.hugame.core.Renderer;
 import dev.hugame.desktop.gl.buffer.DirectionalLightBuffer;
@@ -18,11 +20,8 @@ import dev.hugame.environment.DirectionalLight;
 import dev.hugame.environment.Environment;
 import dev.hugame.environment.PointLight;
 import dev.hugame.environment.SpotLight;
-import dev.hugame.graphics.GLUtils;
 import dev.hugame.graphics.InstanceData;
 import dev.hugame.graphics.PerspectiveCamera;
-import dev.hugame.graphics.Shader;
-import dev.hugame.graphics.Shaders;
 import dev.hugame.graphics.material.Material;
 import dev.hugame.graphics.material.Materials;
 import dev.hugame.graphics.model.Model;
@@ -43,8 +42,10 @@ public class GLRenderer implements Renderer {
 
 	private Map<Model, List<InstanceData>> modelInstanceData;
 	private PerspectiveCamera camera;
-	private Shader instanceShader;
-	private Shader batchShader;
+
+	// TODO: Implement support for custom shaders
+	private OpenGLShader instanceShader;
+	private OpenGLShader batchShader;
 
 	private MaterialBuffer matBuffer;
 	private PointLightBuffer pointLightBuffer;
@@ -58,10 +59,19 @@ public class GLRenderer implements Renderer {
 		camera = new PerspectiveCamera(new Vector3f(200f, 200f, 200f));
 		camera.lookAt(new Vector3f(0, 0, 0));
 		camera.update();
-		instanceShader = Shaders.get(Files.read("/shaders/instance_vertex_shader.glsl").get(),
+
+		var shaderFactory = new ShaderFactory();
+		var instanceVertexSource = Files.read("/shaders/instance_vertex_shader.glsl").orElseThrow();
+		var instanceFragmentSource = Files.read("/shaders/instance_fragment_shader.glsl").orElseThrow();
+		var batchVertexSource = Files.read("/shaders/batch_vertex_shader.glsl").orElseThrow();
+		var batchFragmentSource = Files.read("/shaders/batch_fragment_shader.glsl").orElseThrow();
+
+		/*instanceShader = Shaders.get(Files.read("/shaders/instance_vertex_shader.glsl").get(),
 				Files.read("/shaders/instance_fragment_shader.glsl").get()).get();
 		batchShader = Shaders.get(Files.read("/shaders/batch_vertex_shader.glsl").get(),
-				Files.read("/shaders/batch_fragment_shader.glsl").get()).get();
+				Files.read("/shaders/batch_fragment_shader.glsl").get()).get();*/
+		instanceShader = shaderFactory.createShader(instanceVertexSource, instanceFragmentSource).orElseThrow();
+		batchShader = shaderFactory.createShader(batchVertexSource, batchFragmentSource).orElseThrow();
 
 		pointLightBuffer = PointLightBuffer.allocateNew(10);
 		spotLightBuffer = SpotLightBuffer.allocateNew(10);
@@ -124,12 +134,18 @@ public class GLRenderer implements Renderer {
 			var model = entry.getKey();
 			var instanceDataList = entry.getValue();
 
+			if (!(model instanceof OpenGLModel)) {
+				// TODO: Make a utility service for getting
+				throw new RuntimeException("Invalid type of Model: " + model.getClass());
+			}
+			var glModel = (OpenGLModel) model;
+
 			var instanceDataArray = createInstanceDataArray(instanceDataList);
-			var vaoID = model.getVAO();
-			var vboID = model.getInstaceVBO();
-			var eboID = model.getEBO();
+			var vaoID = glModel.getVAO();
+			var vboID = glModel.getInstaceVBO();
+			var eboID = glModel.getEBO();
 			// TODO: Add casting to model::getTextures<T>
-			var textures = model.getTextures()
+			var textures = glModel.getTextures()
 					.stream()
 					.map(GLTexture.class::cast)
 					.map(GLTexture::getTextureArray)
@@ -154,7 +170,7 @@ public class GLRenderer implements Renderer {
 			spotLightBuffer.bindBase(2);
 			directionalLightBuffer.bindBase(3);
 			System.out.println("glDrawElementsInstanced start");
-			glDrawElementsInstanced(GL_TRIANGLES, model.getIndexAmount(), GL_UNSIGNED_INT, 0, instanceDataList.size());
+			glDrawElementsInstanced(GL_TRIANGLES, model.getIndexCount(), GL_UNSIGNED_INT, 0, instanceDataList.size());
 			System.out.println("glDrawElementsInstanced stop");
 			disableVertexAttribArrays(0, 1, 2, 3, 4, 5, 6, 7, 8);
 			glBindVertexArray(0);
@@ -249,7 +265,7 @@ public class GLRenderer implements Renderer {
 		instanceShader.uploadInt("directionalLightAmount", lights.size());
 	}
 
-	private void uploadTexturesToShader(int[] textureSlots, Shader shader) {
+	private void uploadTexturesToShader(int[] textureSlots, OpenGLShader shader) {
 		shader.uploadTextureArray("uTextures", textureSlots);
 	}
 

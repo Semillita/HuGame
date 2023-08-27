@@ -10,6 +10,8 @@ import dev.hugame.window.DesktopInput;
 import dev.hugame.window.DesktopWindow;
 import dev.hugame.window.WindowConfiguration;
 
+import static org.lwjgl.opengl.GL45.*;
+
 public final class DesktopGLContext implements HuGameContext {
 
 	private GLGraphics graphics;
@@ -17,7 +19,7 @@ public final class DesktopGLContext implements HuGameContext {
 	private DesktopInput input;
 
 	public DesktopGLContext(WindowConfiguration windowConfig) {
-		window = new DesktopWindow(windowConfig);
+		window = new DesktopWindow(windowConfig, () -> GL.createCapabilities(), (width, height) -> glViewport(0, 0, width, height));
 		GL.createCapabilities();
 		graphics = new GLGraphics();
 		input = new DesktopInput(window.getHandle());

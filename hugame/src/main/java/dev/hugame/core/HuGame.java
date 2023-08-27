@@ -1,9 +1,5 @@
 package dev.hugame.core;
 
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.opengl.GL;
-
-import dev.hugame.graphics.Textures;
 import dev.hugame.inject.Inject;
 import dev.hugame.inject.InjectionEngine;
 
@@ -107,7 +103,7 @@ public class HuGame {
 				}
 			} else {
 				window.pollEvents();
-				window.clear(1f, 1f, 0.5f);
+				graphics.clear(1f, 1f, 0.5f);
 				listener.onRender();
 				window.swapBuffers();
 			}

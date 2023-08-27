@@ -21,4 +21,7 @@ public interface Graphics {
 	public Texture getTexture(byte[] bytes);
 	
 	public void create();
+
+	/** Clears the context's framebuffer with the given RGB value. */
+	void clear(float red, float green, float blue);
 }
