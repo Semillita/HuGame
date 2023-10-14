@@ -96,10 +96,11 @@ public class HuGame {
 
 		while (true) {
 			if (window.shouldClose()) {
-				if (listener.onClose()) {
+				if (listener.shouldClose()) {
 					break;
 				} else {
 					window.setShouldClose(false);
+					// TODO: Kinda broken, if it gets here it should still poll event and run script
 				}
 			} else {
 				window.pollEvents();

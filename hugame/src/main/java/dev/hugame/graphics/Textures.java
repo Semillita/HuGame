@@ -21,14 +21,18 @@ public class Textures {
 		loadedTextures = new HashMap<>();
 		HuGame.injectStatic(Textures.class);
 	}
-	
+
+	/** Good concept but should only be used in a heavy-weight HuGame application
+	 * that is the only one running in the current Java application. Cannot use such
+	 * static APIs as long as support for multiple engine instances is a possibility.*/
+	@Deprecated
 	public static Texture get(String filepath) {
 		if (loadedTextures.containsKey(filepath)) {
 			return loadedTextures.get(filepath);
 		} else {
 			var maybeSource = Files.readBytes(filepath);
 			if (maybeSource.isEmpty()) return null;
-			var texture = graphics.getTexture(maybeSource.get());
+			var texture = graphics.createTexture(maybeSource.get());
 			loadedTextures.put(filepath, texture);
 			return texture;
 		}

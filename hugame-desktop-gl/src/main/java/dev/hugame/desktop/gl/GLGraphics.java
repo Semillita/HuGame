@@ -3,8 +3,12 @@ package dev.hugame.desktop.gl;
 import dev.hugame.core.Graphics;
 import dev.hugame.core.GraphicsAPI;
 import dev.hugame.core.Renderer;
+import dev.hugame.desktop.gl.model.OpenGLModel;
 import dev.hugame.graphics.Texture;
+import dev.hugame.graphics.model.Model;
+import dev.hugame.model.spec.ResolvedModel;
 import dev.hugame.util.ImageLoader;
+import org.lwjgl.opengl.GL;
 
 import static org.lwjgl.opengl.GL45.*;
 
@@ -14,6 +18,8 @@ public final class GLGraphics implements Graphics {
 	private TextureCollector textureCollector;
 	
 	public GLGraphics() {
+		GL.createCapabilities();
+
 		renderer = new GLRenderer();
 		textureCollector = new TextureCollector();
 	}
@@ -29,11 +35,15 @@ public final class GLGraphics implements Graphics {
 	}
 
 	@Override
-	public Texture getTexture(byte[] bytes) {
+	public Texture createTexture(byte[] bytes) {
 		var imageData = ImageLoader.read(bytes, 4);
-		var texture = textureCollector.addTexture(imageData);
-		
-		return texture;
+
+		return textureCollector.addTexture(imageData);
+	}
+
+	@Override
+	public Model createModel(ResolvedModel resolvedModel) {
+		return OpenGLModel.from(resolvedModel);
 	}
 
 	@Override

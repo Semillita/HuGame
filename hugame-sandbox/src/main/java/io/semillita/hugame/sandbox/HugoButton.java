@@ -11,9 +11,12 @@ public class HugoButton extends Button {
 	private final Texture texture;
 	private final Texture hover;
 	
-	public HugoButton() {
-		texture = Textures.get("/button.png");
-		hover = Textures.get("/hover.png");
+	public HugoButton(Texture baseTexture, Texture hoverTexture) {
+		this.texture = baseTexture;
+		this.hover = hoverTexture;
+
+		/*texture = Textures.get("/button.png");
+		hover = Textures.get("/hover.png");*/
 	}
 	
 	public void render(GLBatch batch) {

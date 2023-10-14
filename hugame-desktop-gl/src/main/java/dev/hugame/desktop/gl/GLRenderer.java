@@ -66,10 +66,6 @@ public class GLRenderer implements Renderer {
 		var batchVertexSource = Files.read("/shaders/batch_vertex_shader.glsl").orElseThrow();
 		var batchFragmentSource = Files.read("/shaders/batch_fragment_shader.glsl").orElseThrow();
 
-		/*instanceShader = Shaders.get(Files.read("/shaders/instance_vertex_shader.glsl").get(),
-				Files.read("/shaders/instance_fragment_shader.glsl").get()).get();
-		batchShader = Shaders.get(Files.read("/shaders/batch_vertex_shader.glsl").get(),
-				Files.read("/shaders/batch_fragment_shader.glsl").get()).get();*/
 		instanceShader = shaderFactory.createShader(instanceVertexSource, instanceFragmentSource).orElseThrow();
 		batchShader = shaderFactory.createShader(batchVertexSource, batchFragmentSource).orElseThrow();
 
@@ -98,7 +94,6 @@ public class GLRenderer implements Renderer {
 		initialized = true;
 		
 		var materials = Materials.collect();
-		System.out.println("Collected " + materials.size() + " materials");
 		matBuffer = MaterialBuffer.createFrom(materials);
 	}
 
@@ -125,12 +120,10 @@ public class GLRenderer implements Renderer {
 
 	@Override
 	public void flush() {
-		System.out.println("Flushing renderer");
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_MULTISAMPLE);
 
 		for (var entry : modelInstanceData.entrySet()) {
-			System.out.println("Rendering model");
 			var model = entry.getKey();
 			var instanceDataList = entry.getValue();
 
@@ -169,9 +162,7 @@ public class GLRenderer implements Renderer {
 			pointLightBuffer.bindBase(1);
 			spotLightBuffer.bindBase(2);
 			directionalLightBuffer.bindBase(3);
-			System.out.println("glDrawElementsInstanced start");
 			glDrawElementsInstanced(GL_TRIANGLES, model.getIndexCount(), GL_UNSIGNED_INT, 0, instanceDataList.size());
-			System.out.println("glDrawElementsInstanced stop");
 			disableVertexAttribArrays(0, 1, 2, 3, 4, 5, 6, 7, 8);
 			glBindVertexArray(0);
 			unbindTextureArrays();
@@ -182,7 +173,6 @@ public class GLRenderer implements Renderer {
 
 			camera.update();
 		}
-		System.out.println("Done flushing renderer");
 	}
 
 	@Override

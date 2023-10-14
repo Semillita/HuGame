@@ -1,21 +1,16 @@
 package io.semillita.hugame.sandbox;
 
-import java.awt.Dimension;
-
+import dev.hugame.application.HuGameApplicationContext;
+import dev.hugame.application.SimpleApplicationConfiguration;
+import dev.hugame.application.SimpleApplicationListener;
+import dev.hugame.application.SimpleHuGameApplication;
 import dev.hugame.assimp.AssimpModelLoader;
-import dev.hugame.desktop.gl.model.OpenGLModel;
-import dev.hugame.io.FileHandle;
-import dev.hugame.io.FileLocation;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-
-import dev.hugame.core.ApplicationListener;
-import dev.hugame.core.HuGame;
 import dev.hugame.core.Input;
 import dev.hugame.core.Renderer;
 import dev.hugame.core.Window;
-import dev.hugame.desktop.gl.DesktopGLContext;
 import dev.hugame.desktop.gl.GLBatch;
+import dev.hugame.desktop.gl.GLGraphics;
+import dev.hugame.desktop.gl.GLRenderer;
 import dev.hugame.environment.DirectionalLight;
 import dev.hugame.environment.Environment;
 import dev.hugame.environment.PointLight;
@@ -23,37 +18,56 @@ import dev.hugame.environment.SpotLight;
 import dev.hugame.graphics.Camera2D;
 import dev.hugame.graphics.Shader;
 import dev.hugame.graphics.Texture;
-import dev.hugame.graphics.Textures;
 import dev.hugame.graphics.material.Material;
 import dev.hugame.graphics.material.Materials;
 import dev.hugame.graphics.model.Model;
-import dev.hugame.inject.Inject;
 import dev.hugame.input.Key;
+import dev.hugame.io.FileHandle;
+import dev.hugame.io.FileLocation;
+import dev.hugame.model.spec.ModelLoader;
 import dev.hugame.ui.Slider;
+import dev.hugame.util.TextureLoader;
 import dev.hugame.util.Transform;
+import dev.hugame.window.DesktopInput;
+import dev.hugame.window.DesktopWindow;
 import dev.hugame.window.WindowConfiguration;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.lwjgl.opengl.GL;
 
-public class Application extends ApplicationListener {
+import java.awt.*;
+import java.util.List;
+import java.util.function.Supplier;
 
+import static org.lwjgl.opengl.GL45.*;
+
+public class Application implements SimpleApplicationListener {
 	public static void main(String[] args) {
-		HuGame.start(
-				new DesktopGLContext(
-						new WindowConfiguration().width(960).height(540).title("App").x(500).y(300).decorated(true)),
-				new Application());
+		var windowConfig = new WindowConfiguration()
+				.width(960)
+				.height(540)
+				.title("App")
+				.x(500)
+				.y(300)
+				.decorated(true);
+
+		Supplier<SimpleApplicationConfiguration> configurer = () -> {
+			var window = new DesktopWindow(windowConfig, (width, height) -> glViewport(0, 0, width, height));
+			var graphics = new GLGraphics();
+			var input = new DesktopInput(window);
+
+			var assimpModelLoader = new AssimpModelLoader(new TextureLoader(graphics));
+
+			return new SimpleApplicationConfiguration(graphics, window, input, List.of(assimpModelLoader));
+		};
+
+		var application = new SimpleHuGameApplication(new Application(), configurer);
+		application.start();
 	}
 
-	private Model cubeModel;
-
-	private Texture[] grassSides;
-
-	private Model playerModel;
 	private Transform playerTransform;
 
 	Material blueMat;
-	Material redMat;
-	Material greenMat;
-	Material whiteMat;
-	Material donutMat;
 
 	float playerX = 0, playerY = 0, playerZ = 0;
 
@@ -68,49 +82,57 @@ public class Application extends ApplicationListener {
 
 	private Model model;
 
-	@Inject
-	Window window;
-	@Inject
-	Input input;
-	@Inject
-	Renderer renderer;
+	private Window window;
+	private Input input;
+	private Renderer renderer;
+	private ModelLoader modelLoader;
 
 	private long lastNano;
 
 	private Texture groundTexture;
+	private TextureLoader textureLoader;
 
 	@Override
-	public void onCreate() {
-		System.out.println("Sandbox onCreate");
-		HuGame.inject(this);
+	public void onCreate(HuGameApplicationContext applicationContext) {
+		this.window = applicationContext.getWindow();
+		this.input = applicationContext.getInput();
+
+		var graphics = applicationContext.getGraphics();
+		this.renderer = graphics.getRenderer();
+
+		this.modelLoader = applicationContext.getModelLoader();
+
+		textureLoader = new TextureLoader(graphics);
+
 		playerTransform = new Transform(new Vector3f(0, 0, 0), new Vector3f(0, 0, 0),
 				new Vector3f(1, 1, 1f));
 
-		batch = new GLBatch();
-		HuGame.inject(batch);
-		camera2D = new Camera2D(new Vector2f(960, 540), new Dimension(1920, 1080));
+		// TODO: Change into graphics.createBatch()
+		batch = new GLBatch((GLRenderer) renderer);
+		//HuGame.inject(batch);
+		camera2D = new Camera2D(window, new Vector2f(960, 540), new Dimension(1920, 1080));
 		shader = GLBatch.getDefaultShader();
 
-		button = new HugoButton();
+		button = new HugoButton(textureLoader.get("/button.png"), textureLoader.get("/hover.png"));
 		button.setScreenToWorldCoordinateMapping(camera2D::screenToWorldCoords);
 
-		slider = new Slider();
+		slider = new Slider(textureLoader.get("/slider_background.png"), textureLoader.get("/slider_thumb.png"));
 		slider.setScreenToWorldCoordinateMapping(camera2D::screenToWorldCoords);
 
 		input.setMouseButtonListener((event) -> {
 			switch (event.action()) {
-			case PRESS:
-				button.mouseDown();
-				slider.mouseDown();
-				break;
-			case RELEASE:
-				button.mouseUp();
-				slider.mouseUp();
+				case PRESS -> {
+					button.mouseDown();
+					slider.mouseDown();
+				}
+				case RELEASE -> {
+					button.mouseUp();
+					slider.mouseUp();
+				}
 			}
 		});
 
 		window.setResizeListener((width, height) -> {
-//			System.out.println(width + ", " + height);
 			camera2D.updateViewport();
 			camera2D.update();
 		});
@@ -124,58 +146,22 @@ public class Application extends ApplicationListener {
 		environment.add(directionalLight1);
 		renderer.updateEnvironment(environment);
 
-		input.setKeyListener((key, action) -> {
-//			System.out.println(key);
-		});
-
 		blueMat = Materials.get(new Vector3f(0, 0, 1), new Vector3f(1, 1, 1), new Vector3f(1, 1, 1), 0.5f, -1, -1, -1,
 				-1, -1, -1);
 
-		var modelLoader = new AssimpModelLoader();
 		var modelFile = new FileHandle("deccer_cubes_tex.fbx", FileLocation.INTERNAL);
 		var resolvedModel = modelLoader.load(modelFile);
-		model = OpenGLModel.from(resolvedModel.orElseThrow());
-		/*System.out.println("Model has " + assimpModel.meshes().size() + " meshes and " + assimpModel.materials().size()
-				+ " materials");*/
-		groundTexture = Textures.get("/ground.png");
+
+		model = graphics.createModel(resolvedModel.orElseThrow());
+		groundTexture = textureLoader.get("/ground.png");
 	}
 
 	@Override
 	public void onRender() {
-		System.out.println("onRender start");
-		var currentNano = System.nanoTime();
-		var elapsed = (currentNano - lastNano) / 1_000_000_000d;
-		lastNano = currentNano;
-
-//<<<<<<< HEAD
-//		List<Transform> cubeTransforms = new ArrayList<>();
-//
-//		for (int x = (int) playerX - 12; x < playerX + 12; x++) {
-//			for (int z = (int) playerZ - 12; z < playerZ + 12; z++) {
-//				for (int y = -6; y < 1; y++) {
-//					var dis = Math.sqrt(Math.pow(x - playerX, 2) + Math.pow(z - playerZ, 2) + Math.pow(y - 0, 2));
-//					if (dis <= 9) {
-//						cubeTransforms.add(
-//								new Transform(new Vector3f(x, y, z), new Vector3f(0, 0, 0), new Vector3f(1, 1, 1)));
-//					}
-//				}
-//			}
-//		}
-//
-//		for (var transform : cubeTransforms) {
-////			renderer.draw(donut, transform, whiteMat);
-//		}
-////		renderer.draw(playerModel, playerTransform, whiteMat);
-//=======
 		renderer.draw(model, playerTransform);
-
-		// renderer.draw(model, playerTransform);
 
 		renderer.flush();
 
-		// cubeTransforms.clear();
-
-//		var input = HuGame.getInput();
 		if (input.isKeyPressed(Key.A))
 			playerX -= 1f;
 		if (input.isKeyPressed(Key.D))
@@ -205,25 +191,15 @@ public class Application extends ApplicationListener {
 		playerTransform.position.x = playerX;
 		playerTransform.position.z = playerZ;
 		playerTransform.update();
-
-		// Render 2D
-		//batch.setCamera(camera2D);
-		//batch.setShader(shader);
-		//batch.begin();
-
-//		button.update();
-//		slider.update();
-//		button.render(batch);
-//		slider.render(batch);
-		// batch.draw(groundTexture, 0, 0, 100, 100);
-
-		//batch.end();
-		System.out.println("onRender stop");
 	}
 
 	@Override
-	public boolean onClose() {
+	public boolean shouldClose() {
 		return true;
 	}
 
+	@Override
+	public void onDestroy() {
+		System.out.println("Destroying...");
+	}
 }

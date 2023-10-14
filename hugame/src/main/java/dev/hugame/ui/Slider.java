@@ -10,9 +10,9 @@ public class Slider extends Button {
 	private Texture background, thumb;
 	private float value = 0.5f;
 	
-	public Slider() {
-		background = Textures.get("/slider_background.png");
-		thumb = Textures.get("/slider_thumb.png");
+	public Slider(Texture baseTexture, Texture thumbTexture) {
+		this.background = baseTexture;
+		this.thumb = thumbTexture;
 	}
 	
 	public void render(Batch batch) {
