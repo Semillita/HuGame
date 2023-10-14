@@ -1,38 +1,30 @@
-package dev.hugame.core;
+package dev.hugame.application;
 
-/** Listener responsible for general application events. */
-public class ApplicationListener {
+import dev.hugame.core.ApplicationListener;
 
+public interface SimpleApplicationListener {
 	/**
 	 * Called when the application is being created.
-	 * 
+	 *
 	 * Application initialization code should be put here and not in the constructor
-	 * of a class implementing {@link ApplicationListener}.
+	 * of a class implementing this interface.
 	 */
-
-	public void onCreate() {
-
-	}
+	void onCreate(HuGameApplicationContext applicationContext);
 
 	/** Called on every frame, locked to V-sync. */
-	public void onRender() {
-
-	}
+	void onRender();
 
 	/**
 	 * Called when an attempt to close the application window has been made.
 	 *
 	 * @return whether the window close event should go through or not.
 	 */
-	public boolean shouldClose() {
+	default boolean shouldClose() {
 		return true;
 	}
 
 	/**
 	 * Called when the application is being destroyed.
 	 * */
-	public void onDestroy() {
-
-	}
-
+	void onDestroy();
 }

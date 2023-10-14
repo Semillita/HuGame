@@ -5,9 +5,10 @@ import static org.lwjgl.glfw.GLFW.*;
 import java.awt.Dimension;
 import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 
 import dev.hugame.core.Window;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.system.MemoryUtil;
 
 public class DesktopWindow implements Window {
 
@@ -17,12 +18,15 @@ public class DesktopWindow implements Window {
 	
 	private final long handle;
 	private final BiConsumer<Integer, Integer> updateViewport;
-	private Runnable onRender;
-	private Supplier<Boolean> onClose;
 	private Optional<BiConsumer<Integer, Integer>> maybeResizeListener;
 	private Dimension size;
 	
-	public DesktopWindow(WindowConfiguration config, Runnable createCapabilities, BiConsumer<Integer, Integer> updateViewport) {
+	public DesktopWindow(WindowConfiguration config, BiConsumer<Integer, Integer> updateViewport) {
+		glfwSetErrorCallback((error, descriptionPointer) -> {
+			var message = MemoryUtil.memUTF8(descriptionPointer);
+			System.err.println("GLFW Error " + error + ": " + message);
+		});
+
 		glfwWindowHint(GLFW_RESIZABLE, config.resizable ? 1 : 0);
 		glfwWindowHint(GLFW_DECORATED, config.decorated ? 1 : 0);
 		glfwWindowHint(GLFW_FOCUSED, config.focused ? 1 : 0);
@@ -45,8 +49,6 @@ public class DesktopWindow implements Window {
 		
 		glfwShowWindow(handle);
 
-		createCapabilities.run();
-		
 		size = new Dimension(config.width, config.height);
 		
 		maybeResizeListener = Optional.empty();
@@ -55,9 +57,14 @@ public class DesktopWindow implements Window {
 
 		this.updateViewport = updateViewport;
 	}
-	
+
 	@Override
 	public void setVisible(boolean visible) {
+		if (visible) {
+			glfwShowWindow(handle);
+		} else {
+			glfwHideWindow(handle);
+		}
 	}
 
 	@Override
@@ -77,14 +84,20 @@ public class DesktopWindow implements Window {
 
 	@Override
 	public int getX() {
-		// TODO Auto-generated method stub
-		return 0;
+		var xPosBuffer = BufferUtils.createIntBuffer(1);
+
+		glfwGetWindowPos(handle, xPosBuffer, BufferUtils.createIntBuffer(1));
+
+		return xPosBuffer.get(0);
 	}
 
 	@Override
 	public int getY() {
-		// TODO Auto-generated method stub
-		return 0;
+		var yPosBuffer = BufferUtils.createIntBuffer(1);
+
+		glfwGetWindowPos(handle, BufferUtils.createIntBuffer(1), yPosBuffer);
+
+		return yPosBuffer.get(0);
 	}
 	
 	@Override
@@ -98,14 +111,8 @@ public class DesktopWindow implements Window {
 	}
 
 	@Override
-	public boolean close() {
-		return (onClose != null) ? onClose.get() : true;
-	}
-
-	@Override
 	public void destroy() {
-		// TODO Auto-generated method stub
-		
+		glfwDestroyWindow(handle);
 	}
 	
 	public long getHandle() {

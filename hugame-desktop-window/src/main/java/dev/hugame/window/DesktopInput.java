@@ -15,6 +15,7 @@ import dev.hugame.core.Window;
 import dev.hugame.inject.Inject;
 import dev.hugame.input.Key;
 
+// TODO: Make the window implementation create the input implementation.
 public class DesktopInput implements Input {
 
 	private final Map<Key, Boolean> pressedKeys;
@@ -23,11 +24,14 @@ public class DesktopInput implements Input {
 	private Optional<Consumer<MouseEvent>> maybeMouseButtonListener;
 	private Optional<Consumer<Integer>> maybeMousePressListener;
 	private Optional<Consumer<Integer>> maybeMouseReleaseListener;
-	private Optional<BiConsumer<Key, KeyAction>> maybeKeyListener;
+	private Optional<BiConsumer<Key, KeyAction>> maybeKeyListener = Optional.empty();
 
-	@Inject private Window window;
-	
-	public DesktopInput(long windowHandle) {
+	private final Window window;
+
+	public DesktopInput(DesktopWindow window) {
+		this.window = window;
+		var windowHandle = window.getHandle();
+
 		pressedKeys = new HashMap<>();
 		mousePosition = new Point(0, 0);
 		maybeMousePressListener = Optional.empty();
@@ -45,7 +49,7 @@ public class DesktopInput implements Input {
 
 	@Override
 	public boolean isKeyPressed(Key key) {
-		return pressedKeys.containsKey(key) ? pressedKeys.get(key) : false;
+		return pressedKeys.getOrDefault(key, false);
 	}
 
 	@Override
@@ -69,14 +73,10 @@ public class DesktopInput implements Input {
 		var keyAction = getKeyAction(action);
 
 		if (keyAction == null) return;
-		
+
 		switch (keyAction) {
-		case PRESS:
-			pressedKeys.put(key, true);
-			break;
-		case RELEASE:
-			pressedKeys.put(key, false);
-			break;
+			case PRESS -> pressedKeys.put(key, true);
+			case RELEASE -> pressedKeys.put(key, false);
 		}
 		
 		maybeKeyListener.ifPresent(listener -> listener.accept(key, keyAction));
@@ -91,17 +91,14 @@ public class DesktopInput implements Input {
 	}
 
 	private void mouseMoveCallback(long windowHandle, double x, double y) {
+		System.out.println("    MOUSE MOVE CALLBACK");
 		mousePosition = new Point((int) x, window.getHeight() - 1 - ((int) y));
 	}
 
 	private void mouseButtonCallback(long window, int button, int action, int mods) {
 		switch (action) {
-		case GLFW_PRESS:
-			maybeMousePressListener.ifPresent(listener -> listener.accept(button));
-			break;
-		case GLFW_RELEASE:
-			maybeMouseReleaseListener.ifPresent(listener -> listener.accept(button));
-			break;
+			case GLFW_PRESS -> maybeMousePressListener.ifPresent(listener -> listener.accept(button));
+			case GLFW_RELEASE -> maybeMouseReleaseListener.ifPresent(listener -> listener.accept(button));
 		}
 	}
 

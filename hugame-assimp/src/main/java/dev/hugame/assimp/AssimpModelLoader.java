@@ -2,12 +2,12 @@ package dev.hugame.assimp;
 
 import dev.hugame.core.HuGame;
 import dev.hugame.graphics.Texture;
-import dev.hugame.graphics.Textures;
 import dev.hugame.io.FileHandle;
 import dev.hugame.io.FileLocation;
 import dev.hugame.model.spec.*;
 import dev.hugame.util.Files;
 import dev.hugame.util.ImageLoader;
+import dev.hugame.util.TextureLoader;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -26,20 +26,19 @@ import static org.lwjgl.assimp.Assimp.*;
 
 public class AssimpModelLoader extends ModelLoader {
 
+	private final TextureLoader textureLoader;
 	private final AIFileIO fileSystem;
 
-	private ByteBuffer currentFileBuffer;
 	private Map<String, ByteBuffer> fileContentByName;
-	private String currentFileName;
 	private Stack<LoadedFile> fileStack;
 
-	public AssimpModelLoader() {
+	public AssimpModelLoader(TextureLoader textureLoader) {
+		this.textureLoader = textureLoader;
 		this.fileContentByName = new HashMap<>();
 		this.fileStack = new Stack<>();
 		var start = System.nanoTime();
 		this.fileSystem = createFileSystem();
 		var elapsed = System.nanoTime() - start;
-		System.out.println("TIME TO CREATE FILE SYSTEM: " + elapsed / 1_000_000_000d + " seconds");
 	}
 
 	@Override
@@ -112,7 +111,7 @@ public class AssimpModelLoader extends ModelLoader {
 				var fileBytes = new byte[dataBuffer.limit()];
 				dataBuffer.get(fileBytes);
 				MemoryUtil.memFree(dataBuffer);
-				var texture = HuGame.getGraphics().getTexture(fileBytes);
+				var texture = HuGame.getGraphics().createTexture(fileBytes);
 				textures.add(texture);
 				System.out.println(filename + ":");
 				System.out.println(image);
@@ -189,11 +188,8 @@ public class AssimpModelLoader extends ModelLoader {
 	private Matrix4f toJomlMatrix(AIMatrix4x4 aiMatrix) {
 		var address = aiMatrix.address();
 		var buffer = MemoryUtil.memFloatBuffer(address, 16);
-		var matrix = new Matrix4f(buffer);
-		matrix.transpose();
-		
-		return matrix;
-		// TODO: Make this return new Materix4f(buffer).transpose();
+
+		return new Matrix4f(buffer).transpose();
 	}
 
 	private ResolvedMesh createAssimpMesh(AIMesh mesh, Matrix4f transformation) {
@@ -201,8 +197,6 @@ public class AssimpModelLoader extends ModelLoader {
 		final var normals = new ArrayList<Vector3f>();
 		final var textureCoords = new ArrayList<Vector2f>();
 
-//		System.out.println("(Creating assimp mesh)");
-		
 		var nPositions = mesh.mVertices();
 		for (int i = 0; i < nPositions.limit(); i++) {
 			var aiPosition = nPositions.get(i);
@@ -320,7 +314,7 @@ public class AssimpModelLoader extends ModelLoader {
 		} else {
 			// This texture is external
 			System.out.println("    |-Load texture with path " + path);
-			var texture = Textures.get("/" + path);
+			var texture = textureLoader.get("/" + path);
 			System.out.println("    -texture: " + texture);
 
 			var globalIndex = texturesInScene.size();
@@ -363,8 +357,8 @@ public class AssimpModelLoader extends ModelLoader {
 		System.out.println("    Reading " + fileStack.peek().fileName() + ": size = " + size + ", count = " + count);
 		System.out.println("        Remaining: " + data.remaining() + ", size * count: " + size * count);
 		System.out.println("        Position: " + data.position());
-//		var amount = Math.min(data.remaining(), size * count);
-		var amount = Math.min(data.remaining() / size, count);
+		var amount = Math.min(data.remaining(), size * count);
+//		var amount = Math.min(data.remaining() / size, count);
 		MemoryUtil.memCopy(MemoryUtil.memAddress(data), pBuffer, amount);
 		data.position(data.position() + (int) (amount * size));
 		return amount;
@@ -382,9 +376,6 @@ public class AssimpModelLoader extends ModelLoader {
 	}
 
 	private LoadedFile getFile(String fileName) {
-		// TODO: Remove
-		currentFileName = fileName;
-
 		if (fileContentByName.containsKey(fileName)) {
 			System.out.println("Using cached buffer for [" + fileName + "]");
 			return new LoadedFile(fileName, fileContentByName.get(fileName));
@@ -465,7 +456,7 @@ public class AssimpModelLoader extends ModelLoader {
 		return new File(AssimpModelLoader.class.getClassLoader().getResource(filePath).getFile())
 				.getAbsolutePath();
 	}
-	
+
 	private static ByteBuffer getFileContentBuffer(String filePath) {
 		var fileBytes = Files.readBytes(filePath).orElseThrow();
 		var buffer = BufferUtils.createByteBuffer(fileBytes.length);

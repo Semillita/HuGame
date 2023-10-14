@@ -18,12 +18,13 @@ public class InjectionEngine {
 	public InjectionEngine() {
 		dependencyObjects = new HashMap<>();
 	}
-	
-	public void setDefaultInstance(Object instance) {
-		setDefaultInstance(instance, instance.getClass());
+
+	@SuppressWarnings("unchecked")
+	public <T> void setDefaultInstance(T instance) {
+		setDefaultInstance(instance, (Class<T>) instance.getClass());
 	}
 	
-	public void setDefaultInstance(Object instance, Class<?> clazz) {
+	public <T> void setDefaultInstance(T instance, Class<? super T> clazz) {
 		if (instance == null) {
 			throw new IllegalArgumentException("Instance cannot be null");
 		}

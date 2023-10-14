@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import dev.hugame.desktop.gl.shader.ShaderFactory;
 import org.lwjgl.BufferUtils;
@@ -62,11 +63,11 @@ public class GLBatch implements Batch {
 
 	private GLRenderer renderer;
 
-	public GLBatch() {
-		this(getDefaultShader());
+	public GLBatch(GLRenderer renderer) {
+		this(renderer, getDefaultShader());
 	}
 
-	public GLBatch(Shader shader) {
+	public GLBatch(GLRenderer renderer, Shader shader) {
 		this.shader = shader;
 		IntBuffer units = BufferUtils.createIntBuffer(1);
 		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, units);
@@ -80,9 +81,8 @@ public class GLBatch implements Batch {
 
 		setVertexAttribPointers();
 
-		renderer = (GLRenderer) HuGame.getRenderer();
-		
-//		textureArrays = new IntList(textureSlotAmount);
+		this.renderer = renderer;
+
 		textureArrays = new ArrayList<>();
 	}
 
@@ -130,14 +130,12 @@ public class GLBatch implements Batch {
 			flush();
 		}
 		
-		if (!(texture instanceof GLTexture)) {
+		if (!(texture instanceof GLTexture glTexture)) {
 			throw new RuntimeException("Wrong API implementation of Texture used for GLBatch");
 		}
-		
-		var glTexture = (GLTexture) texture;
+
 		var textureArray = glTexture.getTextureArray();
-		var textureArrayIndex = glTexture.getArrayIndex();
-		
+
 		final float u1 = 0, v1 = 1, u2 = 1, v2 = 0;
 
 		var textureSlot = textureArrays.indexOf(textureArray);
@@ -297,7 +295,7 @@ public class GLBatch implements Batch {
 	}
 
 	private int[] getQuadIndices(int quadOffset) {
-		return Arrays.asList(3, 2, 0, 0, 2, 1).stream().mapToInt(index -> index + quadOffset).toArray();
+		return Stream.of(3, 2, 0, 0, 2, 1).mapToInt(index -> index + quadOffset).toArray();
 	}
 
 	private void setVertexAttribPointers() {

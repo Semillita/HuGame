@@ -19,10 +19,9 @@ public final class DesktopGLContext implements HuGameContext {
 	private DesktopInput input;
 
 	public DesktopGLContext(WindowConfiguration windowConfig) {
-		window = new DesktopWindow(windowConfig, () -> GL.createCapabilities(), (width, height) -> glViewport(0, 0, width, height));
-		GL.createCapabilities();
+		window = new DesktopWindow(windowConfig, (width, height) -> glViewport(0, 0, width, height));
 		graphics = new GLGraphics();
-		input = new DesktopInput(window.getHandle());
+		input = new DesktopInput(window);
 	}
 
 	@Override

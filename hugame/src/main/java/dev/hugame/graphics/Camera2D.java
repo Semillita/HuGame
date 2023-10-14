@@ -3,6 +3,7 @@ package dev.hugame.graphics;
 import java.awt.Dimension;
 import java.awt.Point;
 
+import dev.hugame.core.Window;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -12,11 +13,13 @@ import dev.hugame.core.HuGame;
 /** A camera used to capture rendering of 2D images and shapes. */
 public non-sealed class Camera2D extends Camera {
 
+	private final Window window;
 	private final Dimension minViewportSize;
 	private Dimension viewportSize;
 	private Vector2f position;
 
-	public Camera2D(Vector2f position, Dimension minViewportSize) {
+	public Camera2D(Window window, Vector2f position, Dimension minViewportSize) {
+		this.window = window;
 		this.position = position;
 		this.minViewportSize = minViewportSize;
 
@@ -85,7 +88,7 @@ public non-sealed class Camera2D extends Camera {
 	 * resolution.
 	 */
 	public void updateViewport() {
-		var windowSize = HuGame.getWindow().getSize();
+		var windowSize = window.getSize();
 		var minViewportSizeRatio = minViewportSize.width / (float) minViewportSize.height;
 		var windowSizeRatio = windowSize.width / (float) windowSize.height;
 

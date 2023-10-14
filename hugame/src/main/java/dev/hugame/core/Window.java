@@ -37,12 +37,6 @@ public interface Window {
 	 */
 	public void requestAttention();
 
-	/**
-	 * Attempts to close the window. The request will go through the
-	 * {@link ApplicationListener#onClose()}.
-	 */
-	public boolean close();
-
 	/** Destroys the window if possible. */
 	public void destroy();
 

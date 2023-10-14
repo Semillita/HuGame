@@ -1,26 +1,26 @@
 package dev.hugame.core;
 
+import dev.hugame.context.TextureFactory;
 import dev.hugame.graphics.Texture;
+import dev.hugame.graphics.model.Model;
+import dev.hugame.model.spec.ResolvedModel;
 
 /** A general interface to interact with objects specific to the graphics API */
-public interface Graphics {
+public interface Graphics extends TextureFactory {
 
 	/** Returns the graphics API with platform used in the running application */
-	public GraphicsAPI getAPI();
+	GraphicsAPI getAPI();
 
 	/** Returns the renderer used with the specific graphics API */
-	public Renderer getRenderer();
+	Renderer getRenderer();
 
-	/**
-	 * Creates a texture from the given bytes.
-	 * 
-	 * @param bytes the bytes representing the content of the file
-	 * 
-	 * @return a new texture
-	 */
-	public Texture getTexture(byte[] bytes);
-	
-	public void create();
+	/** Creates a model implementation backed by the selected graphics API
+	 *
+	 * @param resolvedModel the resolved model data
+	 * @return a model implementation */
+	Model createModel(ResolvedModel resolvedModel);
+
+	void create();
 
 	/** Clears the context's framebuffer with the given RGB value. */
 	void clear(float red, float green, float blue);
