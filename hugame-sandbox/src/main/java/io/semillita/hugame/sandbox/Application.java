@@ -1,5 +1,6 @@
 package io.semillita.hugame.sandbox;
 
+import dev.hugame.vulkan.core.VulkanGraphics;
 import dev.hugame.application.HuGameApplicationContext;
 import dev.hugame.application.SimpleApplicationConfiguration;
 import dev.hugame.application.SimpleApplicationListener;
@@ -8,15 +9,12 @@ import dev.hugame.assimp.AssimpModelLoader;
 import dev.hugame.core.Input;
 import dev.hugame.core.Renderer;
 import dev.hugame.core.Window;
-import dev.hugame.desktop.gl.GLBatch;
-import dev.hugame.desktop.gl.GLGraphics;
-import dev.hugame.desktop.gl.GLRenderer;
 import dev.hugame.environment.DirectionalLight;
 import dev.hugame.environment.Environment;
 import dev.hugame.environment.PointLight;
 import dev.hugame.environment.SpotLight;
+import dev.hugame.graphics.Batch;
 import dev.hugame.graphics.Camera2D;
-import dev.hugame.graphics.Shader;
 import dev.hugame.graphics.Texture;
 import dev.hugame.graphics.material.Material;
 import dev.hugame.graphics.material.Materials;
@@ -33,13 +31,11 @@ import dev.hugame.window.DesktopWindow;
 import dev.hugame.window.WindowConfiguration;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import org.lwjgl.opengl.GL;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Random;
 import java.util.function.Supplier;
-
-import static org.lwjgl.opengl.GL45.*;
 
 public class Application implements SimpleApplicationListener {
 	public static void main(String[] args) {
@@ -49,15 +45,20 @@ public class Application implements SimpleApplicationListener {
 				.title("App")
 				.x(500)
 				.y(300)
-				.decorated(true);
+				.decorated(true)
+				.resizable(true)
+				.transparentFramebuffer(true);
 
 		Supplier<SimpleApplicationConfiguration> configurer = () -> {
-			var window = new DesktopWindow(windowConfig, (width, height) -> glViewport(0, 0, width, height));
-			var graphics = new GLGraphics();
+			/*var window = new DesktopWindow(windowConfig, (width, height) -> glViewport(0, 0, width, height), true);
+			var graphics = new GLGraphics(window);
+			var input = new DesktopInput(window);*/
+
+			var window = new DesktopWindow(windowConfig, (width, height) -> System.out.println("Resizing viewport"), false);
+			var graphics = new VulkanGraphics(window);
 			var input = new DesktopInput(window);
 
 			var assimpModelLoader = new AssimpModelLoader(new TextureLoader(graphics));
-
 			return new SimpleApplicationConfiguration(graphics, window, input, List.of(assimpModelLoader));
 		};
 
@@ -71,9 +72,10 @@ public class Application implements SimpleApplicationListener {
 
 	float playerX = 0, playerY = 0, playerZ = 0;
 
-	private GLBatch batch;
+	// TODO: Bake the batch into Renderer (abstract renderer implementation
+	//       decides whether to batch or just make draw calls)
+	private Batch batch;
 	private Camera2D camera2D;
-	private Shader shader;
 
 	private HugoButton button;
 	private Slider slider;
@@ -105,13 +107,10 @@ public class Application implements SimpleApplicationListener {
 		textureLoader = new TextureLoader(graphics);
 
 		playerTransform = new Transform(new Vector3f(0, 0, 0), new Vector3f(0, 0, 0),
-				new Vector3f(1, 1, 1f));
+				new Vector3f(10.0f, 10.0f, 10.0f));
 
-		// TODO: Change into graphics.createBatch()
-		batch = new GLBatch((GLRenderer) renderer);
-		//HuGame.inject(batch);
+		batch = graphics.createBatch();
 		camera2D = new Camera2D(window, new Vector2f(960, 540), new Dimension(1920, 1080));
-		shader = GLBatch.getDefaultShader();
 
 		button = new HugoButton(textureLoader.get("/button.png"), textureLoader.get("/hover.png"));
 		button.setScreenToWorldCoordinateMapping(camera2D::screenToWorldCoords);
@@ -132,7 +131,7 @@ public class Application implements SimpleApplicationListener {
 			}
 		});
 
-		window.setResizeListener((width, height) -> {
+		window.addResizeListener((width, height) -> {
 			camera2D.updateViewport();
 			camera2D.update();
 		});
@@ -149,11 +148,17 @@ public class Application implements SimpleApplicationListener {
 		blueMat = Materials.get(new Vector3f(0, 0, 1), new Vector3f(1, 1, 1), new Vector3f(1, 1, 1), 0.5f, -1, -1, -1,
 				-1, -1, -1);
 
-		var modelFile = new FileHandle("deccer_cubes_tex.fbx", FileLocation.INTERNAL);
+		//var modelFile = new FileHandle("deccer_cubes_tex.fbx", FileLocation.INTERNAL);
+		var modelFile = new FileHandle("viking_room.obj", FileLocation.INTERNAL);
 		var resolvedModel = modelLoader.load(modelFile);
 
 		model = graphics.createModel(resolvedModel.orElseThrow());
-		groundTexture = textureLoader.get("/ground.png");
+		//groundTexture = textureLoader.get("/ground.png");
+
+		var camera = renderer.getCamera();
+		camera.setPosition(new Vector3f(10, 10, 10));
+		camera.lookAt(new Vector3f(0, 0, 0));
+		camera.update();
 	}
 
 	@Override
@@ -187,6 +192,36 @@ public class Application implements SimpleApplicationListener {
 			cameraPos.y -= 1f;
 		camera.setPosition(cameraPos);
 		camera.update();
+
+		/*var windowX = window.getX();
+		var windowY = window.getY();
+		if (input.isKeyPressed(Key.A)) {
+			windowX -= 5;
+		}
+
+		if (input.isKeyPressed(Key.D)) {
+			windowX += 5;
+		}
+
+		if (input.isKeyPressed(Key.W)) {
+			windowY -= 5;
+		}
+
+		if (input.isKeyPressed(Key.S)) {
+			windowY += 5;
+		}
+
+		if (new Random().nextBoolean()) {
+			windowX += 15;
+		} else {
+			windowX -= 15;
+		}
+
+		if (input.isKeyPressed(Key.ESCAPE)) {
+			window.setShouldClose(true);
+		}
+
+		window.setPosition(windowX, windowY);*/
 
 		playerTransform.position.x = playerX;
 		playerTransform.position.z = playerZ;

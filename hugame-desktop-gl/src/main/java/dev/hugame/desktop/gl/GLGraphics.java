@@ -4,10 +4,12 @@ import dev.hugame.core.Graphics;
 import dev.hugame.core.GraphicsAPI;
 import dev.hugame.core.Renderer;
 import dev.hugame.desktop.gl.model.OpenGLModel;
+import dev.hugame.graphics.Batch;
 import dev.hugame.graphics.Texture;
 import dev.hugame.graphics.model.Model;
 import dev.hugame.model.spec.ResolvedModel;
 import dev.hugame.util.ImageLoader;
+import dev.hugame.window.DesktopWindow;
 import org.lwjgl.opengl.GL;
 
 import static org.lwjgl.opengl.GL45.*;
@@ -15,12 +17,14 @@ import static org.lwjgl.opengl.GL45.*;
 public final class GLGraphics implements Graphics {
 
 	private final GLRenderer renderer;
+	private final DesktopWindow window;
 	private TextureCollector textureCollector;
-	
-	public GLGraphics() {
+
+	public GLGraphics(DesktopWindow window) {
 		GL.createCapabilities();
 
 		renderer = new GLRenderer();
+		this.window = window;
 		textureCollector = new TextureCollector();
 	}
 	
@@ -42,6 +46,11 @@ public final class GLGraphics implements Graphics {
 	}
 
 	@Override
+	public Batch createBatch() {
+		return new GLBatch(renderer);
+	}
+
+	@Override
 	public Model createModel(ResolvedModel resolvedModel) {
 		return OpenGLModel.from(resolvedModel);
 	}
@@ -49,6 +58,11 @@ public final class GLGraphics implements Graphics {
 	@Override
 	public void create() {
 		textureCollector.generate();
+	}
+
+	@Override
+	public void swapBuffers() {
+		window.swapBuffers();
 	}
 
 	@Override

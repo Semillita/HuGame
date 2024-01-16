@@ -41,7 +41,6 @@ public class Materials {
 		var mat = new Material(ambientColor, diffuseColor, specularColor, shininess, albedoMapID, normalMapID,
 				specularMapID, albedoMapIndex, normalMapIndex, specularMapIndex, count++);
 		materials.add(mat);
-		System.out.println("Creating material with diffuse " + diffuseColor + " at " + mat.getIndex());
 		return mat;
 	}
 

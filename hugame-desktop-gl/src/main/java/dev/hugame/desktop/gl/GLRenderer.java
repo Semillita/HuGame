@@ -98,6 +98,16 @@ public class GLRenderer implements Renderer {
 	}
 
 	@Override
+	public void beginFrame() {
+		// No need to do anything.
+	}
+
+	@Override
+	public void endFrame() {
+		// No need to do anything
+	}
+
+	@Override
 	@Deprecated
 	public void draw(Model model, Transform transform, /*Unused*/Material material) {
 //		var instanceData = new InstanceData(transform, material);

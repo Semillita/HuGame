@@ -18,8 +18,8 @@ import java.util.stream.Stream;
 
 public class Reflections {
 
-	private static Map<String, Class<?>> loadedClasses;
-	private static boolean runningInJar;
+	private static final Map<String, Class<?>> loadedClasses;
+	private static final boolean runningInJar;
 	
 	static {
 		loadedClasses = new HashMap<>();
@@ -43,8 +43,7 @@ public class Reflections {
 	}
 	
 	private List<Class<?>> getClassesPresentExternal(Predicate<String> classNameFilter) {
-		return Arrays.asList(System.getProperty("java.class.path").split(File.pathSeparator))
-				.stream()
+		return Arrays.stream(System.getProperty("java.class.path").split(File.pathSeparator))
 				.flatMap(path -> getClassesInFile(path, classNameFilter).stream())
 				.toList();
 	}
@@ -60,7 +59,7 @@ public class Reflections {
 		return getFilesInDirRecursive(sourceDir)
 				.stream()
 				.map(File::getPath)
-				.map(path -> path.substring(sourceDirLength + 1, path.length()))
+				.map(path -> path.substring(sourceDirLength + 1))
 				.map(name -> name.replace('\\', '.'))
 				.filter(name -> name.endsWith(".class"))
 				.map(name -> name.substring(0, name.length() - 6))

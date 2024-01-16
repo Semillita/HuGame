@@ -4,7 +4,7 @@ import java.util.List;
 
 import dev.hugame.environment.DirectionalLight;
 
-public class DirectionalLightBuffer extends ShaderStorageBuffer<DirectionalLight> {
+public class DirectionalLightBuffer extends GLShaderStorageBuffer<DirectionalLight> {
 
 	public static DirectionalLightBuffer createFrom(List<DirectionalLight> lights) {
 		var handle = Buffer.generate();

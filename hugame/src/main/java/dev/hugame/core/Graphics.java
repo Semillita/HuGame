@@ -1,6 +1,7 @@
 package dev.hugame.core;
 
 import dev.hugame.context.TextureFactory;
+import dev.hugame.graphics.Batch;
 import dev.hugame.graphics.Texture;
 import dev.hugame.graphics.model.Model;
 import dev.hugame.model.spec.ResolvedModel;
@@ -20,7 +21,13 @@ public interface Graphics extends TextureFactory {
 	 * @return a model implementation */
 	Model createModel(ResolvedModel resolvedModel);
 
+	/** Creates a 2D batch capable of batching 2D draw calls */
+	Batch createBatch();
+
 	void create();
+
+	/** Swaps the graphic context's draw and display buffers */
+	void swapBuffers();
 
 	/** Clears the context's framebuffer with the given RGB value. */
 	void clear(float red, float green, float blue);

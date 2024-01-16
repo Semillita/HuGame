@@ -60,9 +60,12 @@ public class SimpleHuGameApplication extends HuGameApplication {
 	@Override
 	protected void update() {
 		window.pollEvents();
+		// TODO: Don't clear like this, instead set graphics clearColor value
+		graphics.getRenderer().beginFrame();
 		graphics.clear(1f, 1f, 0.5f);
 		listener.onRender();
-		window.swapBuffers();
+		graphics.getRenderer().endFrame();
+		graphics.swapBuffers();
 	}
 
 	@Override

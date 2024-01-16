@@ -22,6 +22,11 @@
 		</dependency>
 		<dependency>
 			<groupId>io.semillita.hugame</groupId>
+			<artifactId>hugame-desktop-vulkan</artifactId>
+			<version>0.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>io.semillita.hugame</groupId>
 			<artifactId>hugame-assimp</artifactId>
 			<version>0.0.1</version>
 		</dependency>
