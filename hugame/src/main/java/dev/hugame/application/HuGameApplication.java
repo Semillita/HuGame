@@ -1,7 +1,6 @@
 package dev.hugame.application;
 
 public abstract class HuGameApplication {
-
 	private boolean running = false;
 	// TODO: Implement pausing
 	private boolean paused = false;

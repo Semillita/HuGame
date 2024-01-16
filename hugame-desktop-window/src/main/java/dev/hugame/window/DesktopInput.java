@@ -91,7 +91,6 @@ public class DesktopInput implements Input {
 	}
 
 	private void mouseMoveCallback(long windowHandle, double x, double y) {
-		System.out.println("    MOUSE MOVE CALLBACK");
 		mousePosition = new Point((int) x, window.getHeight() - 1 - ((int) y));
 	}
 

@@ -19,8 +19,8 @@ public final class DesktopGLContext implements HuGameContext {
 	private DesktopInput input;
 
 	public DesktopGLContext(WindowConfiguration windowConfig) {
-		window = new DesktopWindow(windowConfig, (width, height) -> glViewport(0, 0, width, height));
-		graphics = new GLGraphics();
+		window = new DesktopWindow(windowConfig, (width, height) -> glViewport(0, 0, width, height), true);
+		graphics = new GLGraphics(window);
 		input = new DesktopInput(window);
 	}
 

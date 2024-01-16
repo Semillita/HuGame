@@ -3,6 +3,7 @@ package dev.hugame.graphics;
 public interface Batch {
 
 	/** Prepares this batch for accepting draw calls. */
+	// TODO: Make this happen automatically if drawn to when closed.
 	public void begin();
 	
 	/**
@@ -26,8 +27,8 @@ public interface Batch {
 	/** Sets the camera to be used to draw this batch. */
 	public void setCamera(Camera2D camera);
 
-	/** Sets the shader to be used to draw this batch. */
-	public void setShader(Shader shader);
+	/** Returns the camera used to draw this batch. */
+	Camera2D getCamera();
 
 	/** Flushes this batch to the renderer. */
 	public void flush();

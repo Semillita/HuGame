@@ -4,27 +4,29 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import dev.hugame.util.Bufferable;
 import dev.hugame.util.ByteSerializer;
 
 /** A render material that describes different lighting effects. */
+// TODO: Have the material record the Texture, not the index and layer, and resolve it through the graphics implementation.
+//  That way, the graphics implementation can decide whether or not texture arrays are used.
 public class Material implements Bufferable {
 
 	public static final int SIZE_IN_BYTES = 16 * Float.BYTES;
+	public static final int BYTES = 16 * Float.BYTES;
 
 	private final int index;
 	private final Vector3f ambientColor;
 	private final Vector3f diffuseColor;
 	private final Vector3f specularColor;
 	private final float shininess;
-	private final int albedoMapID;
-	private final int normalMapID;
-	private final int specularMapID;
-	private final int albedoMapSlice;
-	private final int normalMapSlice;
-	private final int specularMapSlice;
+	private final int albedoMapIndex;
+	private final int normalMapIndex;
+	private final int specularMapIndex;
+	private final int albedoMapLayer;
+	private final int normalMapLayer;
+	private final int specularMapLayer;
 
 	@Deprecated
 	public Material(MaterialCreateInfo createInfo, int index) {
@@ -34,28 +36,28 @@ public class Material implements Bufferable {
 		this.diffuseColor = createInfo.diffuseColor();
 		this.specularColor = createInfo.specularColor();
 		this.shininess = createInfo.shininess();
-		this.albedoMapID = -1;
-		this.normalMapID = -1;
-		this.specularMapID = -1;
-		this.albedoMapSlice = -1;
-		this.normalMapSlice = -1;
-		this.specularMapSlice = -1;
+		this.albedoMapIndex = -1;
+		this.normalMapIndex = -1;
+		this.specularMapIndex = -1;
+		this.albedoMapLayer = -1;
+		this.normalMapLayer = -1;
+		this.specularMapLayer = -1;
 	}
 
 	public Material(Vector3f ambientColor, Vector3f diffuseColor, Vector3f specularColor, float shininess,
-			int albedoMapID, int normalMapID, int specularMapID, int albedoMapIndex, int normalMapIndex, int specularMapIndex, int index) {
+			int albedoMapIndex, int normalMapIndex, int specularMapIndex, int albedoMapLayer, int normalMapLayer, int specularMapLayer, int index) {
 		this.index = index;
 
 		this.ambientColor = ambientColor;
 		this.diffuseColor = diffuseColor;
 		this.specularColor = specularColor;
 		this.shininess = shininess;
-		this.albedoMapID = albedoMapID;
-		this.normalMapID = normalMapID;
-		this.specularMapID = specularMapID;
-		this.albedoMapSlice = albedoMapIndex;
-		this.normalMapSlice = normalMapIndex;
-		this.specularMapSlice = specularMapIndex;
+		this.albedoMapIndex = albedoMapIndex;
+		this.normalMapIndex = normalMapIndex;
+		this.specularMapIndex = specularMapIndex;
+		this.albedoMapLayer = albedoMapLayer;
+		this.normalMapLayer = normalMapLayer;
+		this.specularMapLayer = specularMapLayer;
 	}
 
 	// TODO: Make this getGlobalIndex, indicating that it's used to index into material buffer
@@ -75,15 +77,15 @@ public class Material implements Bufferable {
 		var diffuseBytes = ByteSerializer.toBytes(diffuseColor);
 		var specularBytes = ByteSerializer.toBytes(specularColor);
 		var shininessBytes = ByteSerializer.toBytes(shininess);
-		var albedoMapIDBytes = ByteSerializer.toBytes(albedoMapID);
-		var normalMapIDBytes = ByteSerializer.toBytes(normalMapID);
-		var specularMapIDBytes = ByteSerializer.toBytes(specularMapID);
-		var albedoMapSliceBytes = ByteSerializer.toBytes(albedoMapSlice);
-		var normalMapSliceBytes = ByteSerializer.toBytes(normalMapSlice);
-		var specularMapSliceBytes = ByteSerializer.toBytes(specularMapSlice);
+		var albedoMapIndexBytes = ByteSerializer.toBytes(albedoMapIndex);
+		var normalMapIndexBytes = ByteSerializer.toBytes(normalMapIndex);
+		var specularMapIndexBytes = ByteSerializer.toBytes(specularMapIndex);
+		var albedoMapLayerBytes = ByteSerializer.toBytes(albedoMapLayer);
+		var normalMapLayerBytes = ByteSerializer.toBytes(normalMapLayer);
+		var specularMapLayerBytes = ByteSerializer.toBytes(specularMapLayer);
 
-		return ByteSerializer.squash(Arrays.asList(ambientBytes, albedoMapIDBytes, diffuseBytes, normalMapIDBytes,
-				specularBytes, specularMapIDBytes, shininessBytes, albedoMapSliceBytes, normalMapSliceBytes, specularMapSliceBytes));
+		return ByteSerializer.squash(Arrays.asList(ambientBytes, albedoMapIndexBytes, diffuseBytes, normalMapIndexBytes,
+				specularBytes, specularMapIndexBytes, shininessBytes, albedoMapLayerBytes, normalMapLayerBytes, specularMapLayerBytes));
 	}
 
 	/**
@@ -92,6 +94,7 @@ public class Material implements Bufferable {
 	 * @param buffer the buffer to insert into
 	 * @param index  the index to put the bytes at
 	 */
+	// TODO: Actually put all material data into the buffer
 	public void putIntoBuffer(ByteBuffer buffer, int index) {
 		for (var val : new float[] { ambientColor.x, ambientColor.y, ambientColor.z }) {
 			buffer.putFloat(index, val);
@@ -101,6 +104,6 @@ public class Material implements Bufferable {
 
 	@Override
 	public String toString() {
-		return "<Material " + index + " - ambientColor: " + ambientColor.toString() + ">";
+		return "Material[index=%d, ambientColor=%s]".formatted(index, ambientColor);
 	}
 }

@@ -92,8 +92,6 @@ public class HuGame {
 
 	/** Initiates the main loop of the application */
 	private static void mainloop() {
-		System.out.println("Mainloop...");
-
 		while (true) {
 			if (window.shouldClose()) {
 				if (listener.shouldClose()) {

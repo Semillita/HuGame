@@ -7,24 +7,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import dev.hugame.graphics.Texture;
 import org.lwjgl.BufferUtils;
 
-import dev.hugame.graphics.ImageData;
+import dev.hugame.graphics.ResolvedTexture;
 
 import static org.lwjgl.opengl.GL45.*;
 
 public class TextureCollector {
 
-	private static Map<Dimension, TextureArraySpec> texturesBySize;
+	private final Map<Dimension, TextureArraySpec> texturesBySize;
 
 	public TextureCollector() {
 		texturesBySize = new HashMap<>();
 	}
 
-	public GLTexture addTexture(ImageData imageData) {
-		System.out.println("-- Adding texture of size (" + imageData.width() + ", " + imageData.height() + ")");
-		var width = imageData.width();
-		var height = imageData.height();
+	public GLTexture addTexture(ResolvedTexture resolvedTexture) {
+		var width = resolvedTexture.width();
+		var height = resolvedTexture.height();
 		var dim = new Dimension(width, height);
 
 		var textureArrayData = Optional.ofNullable(texturesBySize.get(dim)).orElseGet(() -> {
@@ -37,7 +37,7 @@ public class TextureCollector {
 		var images = textureArrayData.images();
 
 		var index = images.size();
-		images.add(imageData);
+		images.add(resolvedTexture);
 
 		return new GLTexture(textureArrayData.textureArray(), index, width, height);
 	}
@@ -73,7 +73,7 @@ public class TextureCollector {
 		return handle;
 	}
 	
-	private static record TextureArraySpec(GLTextureArray textureArray, int width, int height, List<ImageData> images) {
+	private static record TextureArraySpec(GLTextureArray textureArray, int width, int height, List<ResolvedTexture> images) {
 	}
 
 }

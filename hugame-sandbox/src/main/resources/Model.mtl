@@ -1,0 +1,44 @@
+newmtl Solid
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+Ns 0.0
+illum 0
+
+newmtl Model.1001
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+Ns 0.0
+illum 0
+map_Kd Model.1001.jpg
+
+newmtl Model.1002
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+Ns 0.0
+illum 0
+map_Kd Model.1002.jpg
+
+newmtl Model.1003
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+Ns 0.0
+illum 0
+map_Kd Model.1003.jpg
+
+newmtl Model.1004
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 0.0 0.0 0.0
+d 1.0
+Ns 0.0
+illum 0
+map_Kd Model.1004.jpg
+

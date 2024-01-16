@@ -1,5 +1,6 @@
 package dev.hugame.desktop.gl.model;
 
+import dev.hugame.desktop.gl.GLTexture;
 import dev.hugame.desktop.gl.GLUtils;
 import dev.hugame.graphics.Texture;
 import dev.hugame.graphics.material.Material;
@@ -52,23 +53,18 @@ public class OpenGLModel implements Model {
 		var resolvedMaterials = resolvedModel.getMaterials();
 		var resolvedMeshes = resolvedModel.getMeshes();
 
-		// before this constructor is called, so that Model doesn't need
-		// to know that Assimp is being used. AssimpMaterial::generate
-		// or whatever can be used.
 		var materials = resolvedMaterials.stream().map(resolvedMaterial -> {
-			System.out.println("---- MATERIAL");
-			var maybeAlbedoMap = resolvedMaterial.getAlbedoMap();
+			var maybeAlbedoMap = resolvedMaterial.getAlbedoMap().map(GLTexture.class::cast);
 			var maybeAlbedoMapIdentity = maybeAddTextureToList(maybeAlbedoMap, textures);
 			var albedoMapId = maybeAlbedoMapIdentity.map(TextureIdentity::id).orElse(-1);
 			var albedoMapSlice = maybeAlbedoMapIdentity.map(TextureIdentity::slice).orElse(-1);
-			System.out.println("Albedo ID: " + albedoMapId + ", albedo slice: " + albedoMapSlice);
 
-			var maybeNormalMap = resolvedMaterial.getNormalMap();
+			var maybeNormalMap = resolvedMaterial.getNormalMap().map(GLTexture.class::cast);
 			var maybeNormalMapIdentity = maybeAddTextureToList(maybeNormalMap, textures);
 			var normalMapId = maybeNormalMapIdentity.map(TextureIdentity::id).orElse(-1);
 			var normalMapSlice = maybeNormalMapIdentity.map(TextureIdentity::slice).orElse(-1);
 
-			var maybeSpecularMap = resolvedMaterial.getSpecularMap();
+			var maybeSpecularMap = resolvedMaterial.getSpecularMap().map(GLTexture.class::cast);
 			var maybeSpecularMapIdentity = maybeAddTextureToList(maybeSpecularMap, textures);
 			var specularMapId = maybeSpecularMapIdentity.map(TextureIdentity::id).orElse(-1);
 			var specularMapSlice = maybeSpecularMapIdentity.map(TextureIdentity::slice).orElse(-1);
@@ -79,8 +75,7 @@ public class OpenGLModel implements Model {
 		}).toList();
 
 		int indexOffset = 0;
-		for (int i = 0; i < resolvedMeshes.size(); i++) {
-			final var mesh = resolvedMeshes.get(i);
+		for (var mesh : resolvedMeshes) {
 			final var meshIndexOffset = indexOffset;
 			final var meshVertices = mesh.getVertices();
 			final var localIndices = mesh.getIndices();
@@ -204,15 +199,13 @@ public class OpenGLModel implements Model {
 		glBindVertexArray(0);
 	}
 
-	private static Optional<TextureIdentity> maybeAddTextureToList(Optional<Texture> maybeTexture, List<Texture> textures) {
+	private static Optional<TextureIdentity> maybeAddTextureToList(Optional<GLTexture> maybeTexture, List<Texture> textures) {
 		if (maybeTexture.isPresent()) {
-//			System.out.println("-- Adding texture to list");
 			var texture = maybeTexture.orElseThrow();
 			textures.add(texture);
 			var localID = textures.size() - 1;
 			return Optional.of(new TextureIdentity(localID, texture.getSlice()));
 		} else {
-//			System.out.println("-- No texture specified");
 			return Optional.empty();
 		}
 	}

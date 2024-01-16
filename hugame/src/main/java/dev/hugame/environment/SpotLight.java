@@ -13,6 +13,7 @@ import dev.hugame.util.ByteSerializer;
 public non-sealed class SpotLight extends Light {
 
 	public static final int SIZE_IN_BYTES = 20 * Float.BYTES;
+	public static final int BYTES = 20 * Float.BYTES;
 
 	private Vector3f position;
 	private Vector3f direction;

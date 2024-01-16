@@ -2,10 +2,9 @@ package dev.hugame.desktop.gl.buffer;
 
 import java.util.List;
 
-import dev.hugame.environment.PointLight;
 import dev.hugame.environment.SpotLight;
 
-public class SpotLightBuffer extends ShaderStorageBuffer<SpotLight> {
+public class SpotLightBuffer extends GLShaderStorageBuffer<SpotLight> {
 
 	public static SpotLightBuffer createFrom(List<SpotLight> lights) {
 		var handle = Buffer.generate();

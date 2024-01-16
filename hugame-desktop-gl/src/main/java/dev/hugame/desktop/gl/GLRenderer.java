@@ -39,13 +39,13 @@ import static org.lwjgl.opengl.GL43.*;
 
 /** Renderer master class for rendering all different components */
 public class GLRenderer implements Renderer {
-
-	private Map<Model, List<InstanceData>> modelInstanceData;
-	private PerspectiveCamera camera;
+	private final GLGraphics graphics;
+	private final Map<Model, List<InstanceData>> modelInstanceData;
+	private final PerspectiveCamera camera;
 
 	// TODO: Implement support for custom shaders
-	private OpenGLShader instanceShader;
-	private OpenGLShader batchShader;
+	private final OpenGLShader modelShader;
+	private final OpenGLShader quadShader;
 
 	private MaterialBuffer matBuffer;
 	private PointLightBuffer pointLightBuffer;
@@ -54,20 +54,22 @@ public class GLRenderer implements Renderer {
 	
 	private boolean initialized = false;
 	
-	public GLRenderer() {
+	public GLRenderer(GLGraphics graphics) {
+		this.graphics = graphics;
+
 		modelInstanceData = new HashMap<>();
 		camera = new PerspectiveCamera(new Vector3f(200f, 200f, 200f));
 		camera.lookAt(new Vector3f(0, 0, 0));
 		camera.update();
 
 		var shaderFactory = new ShaderFactory();
-		var instanceVertexSource = Files.read("/shaders/instance_vertex_shader.glsl").orElseThrow();
-		var instanceFragmentSource = Files.read("/shaders/instance_fragment_shader.glsl").orElseThrow();
-		var batchVertexSource = Files.read("/shaders/batch_vertex_shader.glsl").orElseThrow();
-		var batchFragmentSource = Files.read("/shaders/batch_fragment_shader.glsl").orElseThrow();
+		var modelVertexSource = Files.read("/shaders/opengl_model_vertex_shader.glsl").orElseThrow();
+		var modelFragmentSource = Files.read("/shaders/opengl_model_fragment_shader.glsl").orElseThrow();
+		var quadVertexSource = Files.read("/shaders/opengl_quad_vertex_shader.glsl").orElseThrow();
+		var quadFragmentSource = Files.read("/shaders/opengl_quad_fragment_shader.glsl").orElseThrow();
 
-		instanceShader = shaderFactory.createShader(instanceVertexSource, instanceFragmentSource).orElseThrow();
-		batchShader = shaderFactory.createShader(batchVertexSource, batchFragmentSource).orElseThrow();
+		modelShader = shaderFactory.createShader(modelVertexSource, modelFragmentSource).orElseThrow();
+		quadShader = shaderFactory.createShader(quadVertexSource, quadFragmentSource).orElseThrow();
 
 		pointLightBuffer = PointLightBuffer.allocateNew(10);
 		spotLightBuffer = SpotLightBuffer.allocateNew(10);
@@ -98,23 +100,29 @@ public class GLRenderer implements Renderer {
 	}
 
 	@Override
+	public void beginFrame() {
+		var clearColor = graphics.getClearColor();
+		glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
+
+	@Override
+	public void endFrame() {
+		// No need to do anything
+	}
+
+	@Override
 	@Deprecated
 	public void draw(Model model, Transform transform, /*Unused*/Material material) {
-//		var instanceData = new InstanceData(transform, material);
 		draw(model, transform);
 	}
 	
 	// We should actually support drawing a model with some random material, like wood
 	@Override
 	public void draw(Model model, Transform transform) {
-//		var instanceData = new InstanceData(transform, null);
 		var instanceData = new InstanceData(transform);
 
-		var instanceDataList = modelInstanceData.get(model);
-		if (instanceDataList == null) {
-			instanceDataList = new ArrayList<>();
-			modelInstanceData.put(model, instanceDataList);
-		}
+		var instanceDataList = modelInstanceData.computeIfAbsent(model, ignored -> new ArrayList<>());
 		instanceDataList.add(instanceData);
 	}
 
@@ -127,11 +135,10 @@ public class GLRenderer implements Renderer {
 			var model = entry.getKey();
 			var instanceDataList = entry.getValue();
 
-			if (!(model instanceof OpenGLModel)) {
+			if (!(model instanceof OpenGLModel glModel)) {
 				// TODO: Make a utility service for getting
 				throw new RuntimeException("Invalid type of Model: " + model.getClass());
 			}
-			var glModel = (OpenGLModel) model;
 
 			var instanceDataArray = createInstanceDataArray(instanceDataList);
 			var vaoID = glModel.getVAO();
@@ -146,12 +153,12 @@ public class GLRenderer implements Renderer {
 
 			GLUtils.fillVBO(vboID, instanceDataArray);
 
-			instanceShader.uploadVec3("cameraPosition", camera.getPosition());
+			modelShader.uploadVec3("cameraPosition", camera.getPosition());
 
-			GLUtils.uploadMatricesToShader(camera, instanceShader);
+			GLUtils.uploadMatricesToShader(camera, modelShader);
 			
 			activateAndBindTextures(textures);
-			uploadTexturesToShader(getTextureSlotArray(textures.size()), instanceShader);
+			uploadTexturesToShader(getTextureSlotArray(textures.size()), modelShader);
 
 			glBindVertexArray(vaoID);
 			enableVertexAttribArrays(0, 1, 2, 3, 4, 5, 6, 7, 8);
@@ -167,12 +174,14 @@ public class GLRenderer implements Renderer {
 			glBindVertexArray(0);
 			unbindTextureArrays();
 
-			instanceShader.detach();
+			modelShader.detach();
 
 			instanceDataList.clear();
 
 			camera.update();
 		}
+
+		modelInstanceData.clear();
 	}
 
 	@Override
@@ -198,23 +207,23 @@ public class GLRenderer implements Renderer {
 		var textures = batch.getTextures();
 		
 		GLUtils.fillVBO(batch.getVboID(), batch.getVertices());
-		batchShader.use();
-		GLUtils.uploadMatricesToShader(batch.getCamera(), batchShader);
+		quadShader.use();
+		GLUtils.uploadMatricesToShader(batch.getCamera(), quadShader);
 		
-		activateAndBindTextures(batch.getTextures());
-		uploadTexturesToShader(getTextureSlotArray(textures.size() + 1), batchShader);
+		activateAndBindTextures(textures);
+		uploadTexturesToShader(getTextureSlotArray(textures.size() + 1), quadShader);
 
 		glBindVertexArray(batch.getVaoID());
 		enableVertexAttribArrays(0, 1);
 
-		glDrawElements(GL_TRIANGLES, textures.size() * 6, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, batch.getQuadCount() * 6, GL_UNSIGNED_INT, 0);
 
 		disableVertexAttribArrays(0, 1);
 
 		glBindVertexArray(0);
 
 		unbindTextureArrays();
-		batchShader.detach();
+		quadShader.detach();
 	}
 
 	private void activateAndBindTextures(List<GLTextureArray> textures) {
@@ -232,7 +241,7 @@ public class GLRenderer implements Renderer {
 			pointLightBuffer.fill(lights);
 		}
 		
-		instanceShader.uploadInt("pointLightAmount", lights.size());
+		modelShader.uploadInt("pointLightAmount", lights.size());
 	}
 	
 	private void fillSpotLightBuffer(List<SpotLight> lights) {
@@ -242,7 +251,7 @@ public class GLRenderer implements Renderer {
 			spotLightBuffer.fill(lights);
 		}
 		
-		instanceShader.uploadInt("spotLightAmount", lights.size());
+		modelShader.uploadInt("spotLightAmount", lights.size());
 	}
 	
 	private void fillDirectionalLightBuffer(List<DirectionalLight> lights) {
@@ -252,7 +261,7 @@ public class GLRenderer implements Renderer {
 			directionalLightBuffer.fill(lights);
 		}
 		
-		instanceShader.uploadInt("directionalLightAmount", lights.size());
+		modelShader.uploadInt("directionalLightAmount", lights.size());
 	}
 
 	private void uploadTexturesToShader(int[] textureSlots, OpenGLShader shader) {

@@ -21,6 +21,7 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.*;
+import java.util.stream.IntStream;
 
 import static org.lwjgl.assimp.Assimp.*;
 
@@ -29,8 +30,8 @@ public class AssimpModelLoader extends ModelLoader {
 	private final TextureLoader textureLoader;
 	private final AIFileIO fileSystem;
 
-	private Map<String, ByteBuffer> fileContentByName;
-	private Stack<LoadedFile> fileStack;
+	private final Map<String, ByteBuffer> fileContentByName;
+	private final Stack<LoadedFile> fileStack;
 
 	public AssimpModelLoader(TextureLoader textureLoader) {
 		this.textureLoader = textureLoader;
@@ -106,33 +107,16 @@ public class AssimpModelLoader extends ModelLoader {
 			if (height <= 0) {
 				var address = pcData.address();
 				var dataBuffer = MemoryUtil.memByteBuffer(address, width);
-				var image = ImageLoader.read(dataBuffer, 4);
 
 				var fileBytes = new byte[dataBuffer.limit()];
 				dataBuffer.get(fileBytes);
 				MemoryUtil.memFree(dataBuffer);
-				var texture = HuGame.getGraphics().createTexture(fileBytes);
+				var texture = textureLoader.get(fileBytes);
 				textures.add(texture);
-				System.out.println(filename + ":");
-				System.out.println(image);
 			} else {
 				throw new RuntimeException("Should not be happening, look into adding support!");
 			}
 		}
-		
-		Map<Dimension, Integer> textureSizes = new HashMap<>();
-		for (var texture : textures) {
-			var dim = new Dimension(texture.getWidth(), texture.getHeight());
-			var amount = textureSizes.get(dim);
-
-			if (amount != null) {
-				textureSizes.put(dim, amount + 1);
-			} else {
-				textureSizes.put(dim, 1);
-			}
-		}
-
-		System.out.println(textureSizes);
 
 		return textures;
 	}
@@ -158,7 +142,6 @@ public class AssimpModelLoader extends ModelLoader {
 			ind += "	";
 		}
 		
-		System.out.println(ind + "Node");
 		var aiTransform = node.mTransformation();
 		var transform = toJomlMatrix(aiTransform);
 		var parentTransform = maybeParentTransform.orElse(new Matrix4f().identity());
@@ -167,7 +150,6 @@ public class AssimpModelLoader extends ModelLoader {
 		var meshes = new ArrayList<ResolvedMesh>();
 		var meshesIndices = node.mMeshes();
 		for (int i = 0; i < node.mNumMeshes(); i++) {
-			System.out.println(ind + "	Mesh");
 			var meshIndex = meshesIndices.get(i);
 			
 			var aiMesh = meshesInScene.get(meshIndex);
@@ -192,6 +174,10 @@ public class AssimpModelLoader extends ModelLoader {
 		return new Matrix4f(buffer).transpose();
 	}
 
+	private Vector3f copy(Vector3f source) {
+		return new Vector3f(source.x, source.y, source.z);
+	}
+
 	private ResolvedMesh createAssimpMesh(AIMesh mesh, Matrix4f transformation) {
 		final var positions = new ArrayList<Vector3f>();
 		final var normals = new ArrayList<Vector3f>();
@@ -207,9 +193,30 @@ public class AssimpModelLoader extends ModelLoader {
 
 		// Vertex normals
 		var nNormals = mesh.mNormals();
-		for (int i = 0; i < nNormals.limit(); i++) {
-			var normal = nNormals.get(i);
-			normals.add(new Vector3f(normal.x(), normal.y(), normal.z()));
+		if (nNormals != null) {
+			for (int i = 0; i < nNormals.limit(); i++) {
+				var normal = nNormals.get(i);
+				normals.add(new Vector3f(normal.x(), normal.y(), normal.z()));
+			}
+		} else {
+			for (int i = 0; i < (nPositions.limit() / 3); i++) {
+				var p0 = positions.get(i * 3);
+				var p1 = positions.get(i * 3 + 1);
+				var p2 = positions.get(i * 3 + 2);
+
+				var position0 = copy(p0);
+				var position1 = copy(p1);
+				var position2 = copy(p2);
+
+				var a = position1.sub(position0);
+				var b = position2.sub(position0);
+
+				var normal = a.cross(b);
+
+				normals.add(normal);
+				normals.add(normal);
+				normals.add(normal);
+			}
 		}
 
 		// Vertex texture coordinates
@@ -259,15 +266,12 @@ public class AssimpModelLoader extends ModelLoader {
 
 	private ResolvedMaterial getMaterial(AIScene aiScene, AIMaterial aiMaterial, List<Texture> embeddedTextures,
 			List<Texture> texturesInScene) {
-		System.out.println("  getMaterial()");
 		var albedoColor = getAlbedoColor(aiMaterial);
 
 		var maybeAlbedoTextureIndex = getMaterialTextureIndex(aiScene, aiMaterial, TextureType.ALBEDO, embeddedTextures,
 				texturesInScene);
-		System.out.println("  -maybeAlbedoTextureIndex: " + maybeAlbedoTextureIndex);
 		// TODO: Stop using embeddedTextures::get, should probably be some combined list
-		// of those
-		// and external textures in texturesInScene
+		//  of those and external textures in texturesInScene
 		var maybeAlbedoMap = maybeAlbedoTextureIndex.map(texturesInScene::get);
 
 		var maybeNormalTextureIndex = getMaterialTextureIndex(aiScene, aiMaterial, TextureType.NORMAL, embeddedTextures,
@@ -287,14 +291,11 @@ public class AssimpModelLoader extends ModelLoader {
 	// Should this method really be called that? What loades disk textures?
 	private Optional<Integer> getMaterialTextureIndex(AIScene aiScene, AIMaterial aiMaterial, TextureType type,
 			List<Texture> embeddedTextures, List<Texture> texturesInScene) {
-		System.out.println("    getMaterialTextureIndices()");
 		final var textureAmount = aiGetMaterialTextureCount(aiMaterial, type.getID());
-		System.out.println("    -textureAmount: " + textureAmount);
 
 		if (textureAmount == 0) {
 			return Optional.empty();
 		} else if (textureAmount > 1) {
-			System.err.println("???????????????????? More than 1 texture of specific type in material??");
 			return Optional.empty();
 		}
 
@@ -306,16 +307,13 @@ public class AssimpModelLoader extends ModelLoader {
 			// This texture is embedded and has already been read
 			var index = Integer.parseInt(path.substring(1));
 			var texture = embeddedTextures.get(index);
-			System.out.println("    |-Embedded texture with index " + index);
 
 			var globalIndex = texturesInScene.size();
 			texturesInScene.add(texture);
 			return Optional.of(globalIndex);
 		} else {
 			// This texture is external
-			System.out.println("    |-Load texture with path " + path);
 			var texture = textureLoader.get("/" + path);
-			System.out.println("    -texture: " + texture);
 
 			var globalIndex = texturesInScene.size();
 			texturesInScene.add(texture);
@@ -330,8 +328,6 @@ public class AssimpModelLoader extends ModelLoader {
 
 	private long openProc(long pFileIO, long pFileName, long openMode) {
 		var fileName = MemoryUtil.memUTF8(pFileName);
-		System.out.println(String.format("Opening [%s] with openMode %d", fileName, openMode));
-
 		var file = getFile(fileName);
 		fileStack.push(file);
 
@@ -344,8 +340,10 @@ public class AssimpModelLoader extends ModelLoader {
 
 	private void closeProc(long pFileIO, long pFile) {
 		var file = fileStack.pop();
-		System.out.println("Closing " + file.fileName());
-		System.out.println(aiGetErrorString());
+		var errorString = aiGetErrorString();
+		if (errorString != null && !errorString.isEmpty()) {
+			System.out.println("Error: " + errorString);
+		}
 		var aiFile = AIFile.create(pFile);
 		aiFile.ReadProc().free();
 		aiFile.SeekProc().free();
@@ -354,18 +352,13 @@ public class AssimpModelLoader extends ModelLoader {
 	}
 
 	private long readProc(long pBuffer, long size, long count, ByteBuffer data) {
-		System.out.println("    Reading " + fileStack.peek().fileName() + ": size = " + size + ", count = " + count);
-		System.out.println("        Remaining: " + data.remaining() + ", size * count: " + size * count);
-		System.out.println("        Position: " + data.position());
 		var amount = Math.min(data.remaining(), size * count);
-//		var amount = Math.min(data.remaining() / size, count);
 		MemoryUtil.memCopy(MemoryUtil.memAddress(data), pBuffer, amount);
 		data.position(data.position() + (int) (amount * size));
 		return amount;
 	}
 
 	private int seekProc(long offset, long origin, ByteBuffer data) {
-		System.out.println("    Seeking " + fileStack.peek().fileName());
 		switch ((int) origin) {
 		case Assimp.aiOrigin_CUR -> data.position(data.position() + (int) offset);
 		case Assimp.aiOrigin_SET -> data.position((int) offset);
@@ -377,18 +370,15 @@ public class AssimpModelLoader extends ModelLoader {
 
 	private LoadedFile getFile(String fileName) {
 		if (fileContentByName.containsKey(fileName)) {
-			System.out.println("Using cached buffer for [" + fileName + "]");
 			return new LoadedFile(fileName, fileContentByName.get(fileName));
 		}
 
-		System.out.println("Loading buffer for [" + fileName + "]");
 		var maybeFileBytes = Files.readBytes("/" + fileName);
 		if (maybeFileBytes.isEmpty()) {
 			System.out.println("ERROR: File not found: [/" + fileName + "]");
 		}
 		var fileBytes = maybeFileBytes.orElseThrow();
 		var fileContent = MemoryUtil.memCalloc(fileBytes.length);
-		System.out.println("File size: " + fileContent.capacity());
 		fileContent.put(fileBytes);
 		fileContent.rewind();
 		fileContentByName.put(fileName, fileContent);
@@ -398,10 +388,6 @@ public class AssimpModelLoader extends ModelLoader {
 
 	private Optional<AIScene> loadScene(String fileName, AIFileIO fileSystem) {
 		var scene = aiImportFileEx(fileName, aiProcess_Triangulate | aiProcess_FlipUVs, fileSystem);
-		System.out.println("Generated scene: " + scene);
-		// Shouldn't close these, as they might be used later for another model
-		// fileSystem.OpenProc().free();
-		// fileSystem.CloseProc().free();
 
 		fileContentByName.values().forEach(MemoryUtil::memFree);
 		fileContentByName.clear();
@@ -432,11 +418,11 @@ public class AssimpModelLoader extends ModelLoader {
 		}
 	}
 
-	private static record LoadedFile(String fileName, ByteBuffer fileContent) {
+	private record LoadedFile(String fileName, ByteBuffer fileContent) {
 	}
 	
-	private static interface SceneLoader {
-		public AIScene load(String filePath);
+	private interface SceneLoader {
+		AIScene load(String filePath);
 	}
 	
 	

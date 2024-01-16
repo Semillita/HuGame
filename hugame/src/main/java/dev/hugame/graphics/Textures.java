@@ -7,6 +7,7 @@ import dev.hugame.core.Graphics;
 import dev.hugame.core.HuGame;
 import dev.hugame.inject.Inject;
 import dev.hugame.util.Files;
+import dev.hugame.util.ImageLoader;
 
 /** Utility class for loading and caching texture file content. 
  *  Might become deprecated, or at least have its static API deprecated
@@ -31,8 +32,10 @@ public class Textures {
 			return loadedTextures.get(filepath);
 		} else {
 			var maybeSource = Files.readBytes(filepath);
-			if (maybeSource.isEmpty()) return null;
-			var texture = graphics.createTexture(maybeSource.get());
+			if (maybeSource.isEmpty()) {
+				return null;
+			}
+			var texture = graphics.createTexture(ImageLoader.read(maybeSource.orElseThrow(), 4));
 			loadedTextures.put(filepath, texture);
 			return texture;
 		}

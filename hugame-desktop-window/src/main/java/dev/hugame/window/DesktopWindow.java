@@ -3,6 +3,8 @@ package dev.hugame.window;
 import static org.lwjgl.glfw.GLFW.*;
 
 import java.awt.Dimension;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
@@ -10,6 +12,10 @@ import dev.hugame.core.Window;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryUtil;
 
+import static org.lwjgl.system.MemoryStack.stackPush;
+
+// TODO: Make this not extend Window, instead let the engine create a
+//       Window impl forwarding calls to a DesktopWindow (or mobile)
 public class DesktopWindow implements Window {
 
 	static {
@@ -17,15 +23,19 @@ public class DesktopWindow implements Window {
 	}
 	
 	private final long handle;
-	private final BiConsumer<Integer, Integer> updateViewport;
-	private Optional<BiConsumer<Integer, Integer>> maybeResizeListener;
+	private final BiConsumer<Integer, Integer> updateViewport; // TODO: Remove, can't really have final
+	private List<BiConsumer<Integer, Integer>> resizeListeners;
 	private Dimension size;
 	
-	public DesktopWindow(WindowConfiguration config, BiConsumer<Integer, Integer> updateViewport) {
+	public DesktopWindow(WindowConfiguration config, BiConsumer<Integer, Integer> updateViewport, boolean autoGLContext) {
 		glfwSetErrorCallback((error, descriptionPointer) -> {
 			var message = MemoryUtil.memUTF8(descriptionPointer);
 			System.err.println("GLFW Error " + error + ": " + message);
 		});
+
+		if (!autoGLContext) {
+			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		}
 
 		glfwWindowHint(GLFW_RESIZABLE, config.resizable ? 1 : 0);
 		glfwWindowHint(GLFW_DECORATED, config.decorated ? 1 : 0);
@@ -44,16 +54,17 @@ public class DesktopWindow implements Window {
 		
 		glfwSetWindowPos(handle, config.x, config.y);
 				
-		glfwMakeContextCurrent(handle);
-		glfwSwapInterval(GLFW_TRUE);
+		if (autoGLContext) {
+			glfwMakeContextCurrent(handle);
+			glfwSwapInterval(GLFW_TRUE);
+		}
 		
 		glfwShowWindow(handle);
 
 		size = new Dimension(config.width, config.height);
 		
-		maybeResizeListener = Optional.empty();
+		resizeListeners = new ArrayList<>();
 		glfwSetWindowSizeCallback(handle, this::resizeCallback);
-		glfwMakeContextCurrent(handle);
 
 		this.updateViewport = updateViewport;
 	}
@@ -101,8 +112,8 @@ public class DesktopWindow implements Window {
 	}
 	
 	@Override
-	public void setResizeListener(BiConsumer<Integer, Integer> resizeListener) {
-		maybeResizeListener = Optional.ofNullable(resizeListener);
+	public void addResizeListener(BiConsumer<Integer, Integer> resizeListener) {
+		resizeListeners.add(resizeListener);
 	}
 	
 	@Override
@@ -138,11 +149,29 @@ public class DesktopWindow implements Window {
 	public void setShouldClose(boolean shouldClose) {
 		glfwSetWindowShouldClose(handle, shouldClose);
 	}
-	
+
+	public void setPosition(int x, int y) {
+		glfwSetWindowPos(handle, x, y);
+	}
+
+	public void waitUntilNotMinimized() {
+		try (var memoryStack = stackPush()) {
+			var widthBuffer = memoryStack.callocInt(1);
+			var heightBuffer = memoryStack.callocInt(1);
+
+			glfwGetFramebufferSize(handle, widthBuffer, heightBuffer);
+
+			while (widthBuffer.get(0) == 0 || heightBuffer.get(0) == 0) {
+				glfwGetFramebufferSize(handle, widthBuffer, heightBuffer);
+				glfwWaitEvents();
+			}
+		}
+	}
+
 	private void resizeCallback(long handle, int width, int height) {
 		size = new Dimension(width, height);
 		updateViewport.accept(width, height);
-		maybeResizeListener.ifPresent(resizeListener -> resizeListener.accept(width, height));
+		resizeListeners.forEach(resizeListener -> resizeListener.accept(width, height));
 	}
 	
 }

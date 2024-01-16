@@ -2,11 +2,9 @@ package dev.hugame.desktop.gl.buffer;
 
 import java.util.List;
 
-import org.lwjgl.system.MemoryUtil;
-
 import dev.hugame.graphics.material.Material;
 
-public class MaterialBuffer extends ShaderStorageBuffer<Material> {
+public class MaterialBuffer extends GLShaderStorageBuffer<Material> {
 
 	public static MaterialBuffer createFrom(List<Material> materials) {
 		var handle = Buffer.generate();

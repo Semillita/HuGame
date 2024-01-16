@@ -1,0 +1,96 @@
+package dev.hugame.vulkan.core;
+
+import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_SUBMIT_INFO;
+import static org.lwjgl.vulkan.VK12.VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+
+import dev.hugame.vulkan.sync.Semaphore;
+import dev.hugame.vulkan.sync.TimelineSemaphoreSyncPoint;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkSubmitInfo;
+import org.lwjgl.vulkan.VkTimelineSemaphoreSubmitInfo;
+
+public class QueueSubmitInfo {
+  private VulkanCommandBuffer commandBuffer;
+  private Semaphore.SyncPoint waitSyncPoint;
+  private Semaphore.SyncPoint signalSyncPoint;
+  private Integer waitDestinationStageMask;
+
+  public VulkanCommandBuffer getCommandBuffer() {
+    return commandBuffer;
+  }
+
+  public Semaphore.SyncPoint getWaitSyncPoint() {
+    return waitSyncPoint;
+  }
+
+  public Semaphore.SyncPoint getSignalSyncPoint() {
+    return signalSyncPoint;
+  }
+
+  public QueueSubmitInfo setCommandBuffer(VulkanCommandBuffer commandBuffer) {
+    this.commandBuffer = commandBuffer;
+
+    return this;
+  }
+
+  public QueueSubmitInfo setWaitSyncPoint(Semaphore.SyncPoint waitSyncPoint) {
+    this.waitSyncPoint = waitSyncPoint;
+    return this;
+  }
+
+  public QueueSubmitInfo setSignalSyncPoint(Semaphore.SyncPoint signalSyncPoint) {
+    this.signalSyncPoint = signalSyncPoint;
+    return this;
+  }
+
+  public QueueSubmitInfo setWaitDestinationStageMask(int waitDestinationStageMask) {
+    this.waitDestinationStageMask = waitDestinationStageMask;
+
+    return this;
+  }
+
+  public VkSubmitInfo generateStruct(MemoryStack memoryStack) {
+    var submitInfo = VkSubmitInfo.calloc(memoryStack).sType(VK_STRUCTURE_TYPE_SUBMIT_INFO);
+
+    if (commandBuffer != null) {
+      submitInfo.pCommandBuffers(memoryStack.pointers(commandBuffer.getVkCommandBuffer()));
+    }
+
+    if (waitSyncPoint instanceof TimelineSemaphoreSyncPoint
+        || signalSyncPoint instanceof TimelineSemaphoreSyncPoint) {
+      var timelineSemaphoreSubmitInfo =
+          VkTimelineSemaphoreSubmitInfo.calloc(memoryStack)
+              .sType(VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO);
+
+      if (waitSyncPoint instanceof TimelineSemaphoreSyncPoint waitTimelineSemaphoreSyncPoint) {
+        timelineSemaphoreSubmitInfo.waitSemaphoreValueCount(1);
+        timelineSemaphoreSubmitInfo.pWaitSemaphoreValues(
+            memoryStack.longs(waitTimelineSemaphoreSyncPoint.getValue()));
+      }
+
+      if (signalSyncPoint instanceof TimelineSemaphoreSyncPoint signalTimelineSemaphoreSyncPoint) {
+        timelineSemaphoreSubmitInfo.signalSemaphoreValueCount(1);
+        timelineSemaphoreSubmitInfo.pSignalSemaphoreValues(
+            memoryStack.longs(signalTimelineSemaphoreSyncPoint.getValue()));
+      }
+
+      submitInfo.pNext(timelineSemaphoreSubmitInfo);
+    }
+
+    if (waitSyncPoint != null) {
+      submitInfo
+          .waitSemaphoreCount(1)
+          .pWaitSemaphores(memoryStack.longs(waitSyncPoint.getSemaphoreHandle()));
+    }
+
+    if (signalSyncPoint != null) {
+      submitInfo.pSignalSemaphores(memoryStack.longs(signalSyncPoint.getSemaphoreHandle()));
+    }
+
+    if (waitDestinationStageMask != null) {
+      submitInfo.pWaitDstStageMask(memoryStack.ints(waitDestinationStageMask));
+    }
+
+    return submitInfo;
+  }
+}

@@ -12,7 +12,7 @@ import dev.hugame.core.HuGame;
 
 /** A camera used to capture rendering of 2D images and shapes. */
 public non-sealed class Camera2D extends Camera {
-
+	// TODO: Make the camera not need to hold a reference to the window
 	private final Window window;
 	private final Dimension minViewportSize;
 	private Dimension viewportSize;

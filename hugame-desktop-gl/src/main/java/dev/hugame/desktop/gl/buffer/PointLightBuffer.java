@@ -2,11 +2,9 @@ package dev.hugame.desktop.gl.buffer;
 
 import java.util.List;
 
-import dev.hugame.environment.Light;
 import dev.hugame.environment.PointLight;
-import dev.hugame.graphics.material.Material;
 
-public class PointLightBuffer extends ShaderStorageBuffer<PointLight> {
+public class PointLightBuffer extends GLShaderStorageBuffer<PointLight> {
 
 	public static PointLightBuffer createFrom(List<PointLight> lights) {
 		var handle = Buffer.generate();
