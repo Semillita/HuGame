@@ -10,6 +10,7 @@ import dev.hugame.util.ByteSerializer;
 public non-sealed class PointLight extends Light {
 
 	public static final int SIZE_IN_BYTES = 16 * Float.BYTES;
+	public static final int BYTES = 16 * Float.BYTES;
 
 	private Vector3f position;
 

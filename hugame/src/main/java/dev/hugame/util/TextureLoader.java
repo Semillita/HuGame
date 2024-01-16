@@ -20,10 +20,17 @@ public class TextureLoader {
 			return loadedTextures.get(filepath);
 		} else {
 			var maybeSource = Files.readBytes(filepath);
-			if (maybeSource.isEmpty()) return null;
-			var texture = graphics.createTexture(maybeSource.get());
+			if (maybeSource.isEmpty()) {
+				return null;
+			}
+			var texture = graphics.createTexture(ImageLoader.read(maybeSource.get(), 4));
 			loadedTextures.put(filepath, texture);
 			return texture;
 		}
+	}
+
+	public Texture get(byte[] content) {
+		var resolvedTexture = ImageLoader.read(content, 4);
+		return graphics.createTexture(resolvedTexture);
 	}
 }

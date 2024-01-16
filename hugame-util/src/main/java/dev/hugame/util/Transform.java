@@ -5,7 +5,6 @@ import org.joml.Vector3f;
 
 /** Utility class representing a model transformation */
 public class Transform {
-
 	public Vector3f position;
 	public Vector3f rotation;
 	public Vector3f scale;

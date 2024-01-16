@@ -2,7 +2,7 @@ package dev.hugame.desktop.gl;
 
 import static org.lwjgl.opengl.GL40.*;
 
-import dev.hugame.graphics.ImageData;
+import dev.hugame.graphics.ResolvedTexture;
 import dev.hugame.graphics.Texture;
 import dev.hugame.util.ImageLoader;
 
@@ -52,19 +52,19 @@ public class GLTexture implements Texture {
 		this.arrayIndex = -1;
 	}
 	
-	public GLTexture(ImageData imageData) {
+	public GLTexture(ResolvedTexture resolvedTexture) {
 		bindHandle();
 		setTextureParameters();
 
-		if (imageData.buffer() != null) {
-			glTexImage2D(GL_TEXTURE_2D, 0, getInternalPixelFormat(imageData.channels()), imageData.width(), imageData.height(), 
-					0, getPixelFormat(imageData.channels()), GL_UNSIGNED_BYTE, imageData.buffer());
+		if (resolvedTexture.buffer() != null) {
+			glTexImage2D(GL_TEXTURE_2D, 0, getInternalPixelFormat(resolvedTexture.channels()), resolvedTexture.width(), resolvedTexture.height(),
+					0, getPixelFormat(resolvedTexture.channels()), GL_UNSIGNED_BYTE, resolvedTexture.buffer());
 		}
 		
-		width = imageData.width();
-		height = imageData.height();
+		width = resolvedTexture.width();
+		height = resolvedTexture.height();
 		
-		stbi_image_free(imageData.buffer());
+		stbi_image_free(resolvedTexture.buffer());
 
 		unbind();
 		

@@ -29,7 +29,7 @@ public interface Window {
 	public int getY();
 
 	/** Saves a listener for window resize events. */
-	public void setResizeListener(BiConsumer<Integer, Integer> listener);
+	void addResizeListener(BiConsumer<Integer, Integer> listener);
 
 	/**
 	 * Makes the window icon appear as though it requests attention. Appearance
@@ -51,4 +51,6 @@ public interface Window {
 
 	/** Sets whether the window is requested to close. */
 	public void setShouldClose(boolean shouldClose);
+
+	void setPosition(int x, int y);
 }

@@ -12,9 +12,7 @@ import java.util.stream.Stream;
 import dev.hugame.desktop.gl.shader.ShaderFactory;
 import org.lwjgl.BufferUtils;
 
-import dev.hugame.core.HuGame;
 import dev.hugame.graphics.Batch;
-import dev.hugame.graphics.Camera;
 import dev.hugame.graphics.Camera2D;
 import dev.hugame.graphics.Shader;
 import dev.hugame.graphics.Texture;
@@ -41,8 +39,8 @@ public class GLBatch implements Batch {
 
 	public static Shader getDefaultShader() {
 		var shaderFactory = new ShaderFactory();
-		var vertexSource = Files.read("/shaders/batch_vertex_shader.glsl").orElseThrow();
-		var fragmentSource = Files.read("/shaders/batch_fragment_shader.glsl").orElseThrow();
+		var vertexSource = Files.read("/shaders/opengl_quad_vertex_shader.glsl").orElseThrow();
+		var fragmentSource = Files.read("/shaders/opengl_quad_fragment_shader.glsl").orElseThrow();
 
 		return shaderFactory.createShader(vertexSource, fragmentSource).orElseThrow();
 	}
@@ -106,8 +104,8 @@ public class GLBatch implements Batch {
 		return textureArrays;
 	}
 
-	/** Returns the camera used to draw this batch. */
-	public Camera getCamera() {
+	@Override
+	public Camera2D getCamera() {
 		return camera;
 	}
 
@@ -121,10 +119,12 @@ public class GLBatch implements Batch {
 		textureArrays.clear();
 	}
 
+	@Override
 	public void end() {
 		flush();
 	}
 
+	@Override
 	public void draw(Texture texture, int x, int y, int width, int height) {
 		if (idx / 40 >= maxQuadCount || textureArrays.size() >= textureSlotAmount - 1) {
 			flush();
@@ -237,19 +237,21 @@ public class GLBatch implements Batch {
 		idx += VERTEX_SIZE;
 	}
 
+	@Override
 	public void setCamera(Camera2D camera) {
 		this.camera = camera;
 	}
 
-	public void setShader(Shader shader) {
-		this.shader = shader;
-	}
-
+	@Override
 	public void flush() {
 		renderer.renderBatch(this);
 
 		textureArrays.clear();
 		idx = 0;
+	}
+
+	public int getQuadCount() {
+		return idx / (4 * VERTEX_SIZE);
 	}
 
 	/**

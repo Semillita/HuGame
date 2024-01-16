@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
 
 public class JarInspector {
 
@@ -36,7 +37,7 @@ public class JarInspector {
 			var jarFile = new JarFile(jarPath);
 			var classes = Collections.list(jarFile.entries())
 					.stream()
-					.map(entry -> entry.getName())
+					.map(ZipEntry::getName)
 					.map(fileName -> fileName.replace('/', '.'))
 					.filter(classFileFilter.and(metaInfFilter).and(lwjglFilter).and(classNameFilter))
 					.map(fileName -> fileName.substring(0, fileName.length() - 6))
@@ -56,11 +57,13 @@ public class JarInspector {
 	
 	private Optional<Class<?>> getClass(String className) {
 		var cached = loadedClasses.get(className);
-		if (cached != null) return Optional.ofNullable(cached);
+		if (cached != null) {
+			return Optional.of(cached);
+		}
 		try {
 			var c = Class.forName(className);
 			loadedClasses.put(className, c);
-			return Optional.ofNullable(c);
+			return Optional.of(c);
 		} catch (ClassNotFoundException e) {
 			return Optional.empty();
 		}
