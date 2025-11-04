@@ -1,9 +1,12 @@
 package dev.hugame.core;
 
+import dev.hugame.graphics.Graphics;
+import dev.hugame.graphics.Renderer;
 import dev.hugame.inject.Inject;
 import dev.hugame.inject.InjectionEngine;
 
 public class HuGame {
+	public static double MSDF_RANGE = 0.30;
 	// TODO: Add some System class with utils like injection and jar state check.
 
 	private static final boolean runningInJar;

@@ -1,6 +1,6 @@
 package dev.hugame.util;
 
-import dev.hugame.core.Graphics;
+import dev.hugame.graphics.Graphics;
 import dev.hugame.graphics.Texture;
 
 import java.util.HashMap;

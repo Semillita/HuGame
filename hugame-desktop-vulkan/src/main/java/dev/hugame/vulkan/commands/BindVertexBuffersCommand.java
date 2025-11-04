@@ -7,8 +7,10 @@ import dev.hugame.vulkan.buffer.VulkanVertexBuffer;
 import dev.hugame.vulkan.core.VulkanGraphics;
 import java.util.Arrays;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.lwjgl.vulkan.VkCommandBuffer;
 
+@RequiredArgsConstructor
 public class BindVertexBuffersCommand extends VulkanCommand {
   private final List<VulkanVertexBuffer> vertexBuffers;
 

@@ -1,8 +1,6 @@
 package dev.hugame.desktop.gl;
 
-import org.lwjgl.opengl.GL;
-
-import dev.hugame.core.Graphics;
+import dev.hugame.graphics.Graphics;
 import dev.hugame.core.HuGameContext;
 import dev.hugame.core.Input;
 import dev.hugame.core.Window;

@@ -1,20 +1,20 @@
 package dev.hugame.desktop.gl;
 
-import dev.hugame.core.Graphics;
-import dev.hugame.core.GraphicsAPI;
-import dev.hugame.core.Renderer;
+import dev.hugame.graphics.FrameBuffer;
+import dev.hugame.graphics.Graphics;
+import dev.hugame.graphics.GraphicsAPI;
+import dev.hugame.graphics.Renderer;
 import dev.hugame.desktop.gl.model.OpenGLModel;
 import dev.hugame.graphics.Batch;
 import dev.hugame.graphics.ResolvedTexture;
 import dev.hugame.graphics.Texture;
 import dev.hugame.graphics.model.Model;
+import dev.hugame.graphics.text.Font;
+import dev.hugame.graphics.text.ResolvedFont;
 import dev.hugame.model.spec.ResolvedModel;
-import dev.hugame.util.ImageLoader;
 import dev.hugame.window.DesktopWindow;
 import org.joml.Vector4f;
 import org.lwjgl.opengl.GL;
-
-import static org.lwjgl.opengl.GL45.*;
 
 public final class GLGraphics implements Graphics {
 
@@ -59,8 +59,18 @@ public final class GLGraphics implements Graphics {
 	}
 
 	@Override
+	public Font createFont(ResolvedFont resolvedFont) {
+		return null; // TODO: Implement
+	}
+
+	@Override
 	public void create() {
 		textureCollector.generate();
+	}
+
+	@Override
+	public void endFrame() {
+
 	}
 
 	@Override
@@ -78,6 +88,21 @@ public final class GLGraphics implements Graphics {
 	@Override
 	public void setClearColor(float red, float green, float blue, float alpha) {
 		clearColor = new Vector4f(red, green, blue, alpha);
+	}
+
+	@Override
+	public FrameBuffer getSwapChainFrameBuffer() {
+		return null;
+	}
+
+	@Override
+	public FrameBuffer createFrameBuffer(int width, int height) {
+		return null;
+	}
+
+	@Override
+	public Texture createTextureFromFrameBuffer(FrameBuffer frameBuffer) {
+		return null;
 	}
 
 	public Vector4f getClearColor() {

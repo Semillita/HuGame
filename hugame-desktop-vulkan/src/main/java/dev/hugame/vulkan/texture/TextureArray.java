@@ -1,6 +1,5 @@
 package dev.hugame.vulkan.texture;
 
-import static org.lwjgl.vulkan.VK10.VK_FORMAT_R8G8B8A8_SRGB;
 import static org.lwjgl.vulkan.VK10.VK_IMAGE_ASPECT_COLOR_BIT;
 
 import dev.hugame.graphics.ResolvedTexture;
@@ -9,6 +8,8 @@ import dev.hugame.vulkan.image.ImageUtils;
 import dev.hugame.vulkan.image.VulkanImage;
 import dev.hugame.vulkan.image.VulkanImageSampler;
 import dev.hugame.vulkan.image.VulkanImageView;
+import dev.hugame.vulkan.types.ImageAspect;
+import dev.hugame.vulkan.types.ImageFormat;
 import dev.hugame.vulkan.types.ImageType;
 import dev.hugame.vulkan.types.ImageViewType;
 import java.util.List;
@@ -45,8 +46,8 @@ public class TextureArray {
             image,
             ImageViewType._2D_ARRAY,
             layerCount,
-            VK_FORMAT_R8G8B8A8_SRGB,
-            VK_IMAGE_ASPECT_COLOR_BIT);
+            ImageFormat.R8_G8_B8_A8_SRGB,
+            ImageAspect.COLOR);
     this.imageSampler = VulkanImageSampler.create(graphics);
   }
 }

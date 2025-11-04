@@ -1,6 +1,7 @@
 package dev.hugame.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Util {
@@ -22,5 +23,13 @@ public class Util {
 		}
 		return null;
 	}
-	
+
+	public static String getCallingMethod() {
+		var stackTraceElements = Thread.currentThread().getStackTrace();
+		var element = stackTraceElements[3];
+		var fullClassName = element.getClassName();
+		var simpleClassName = fullClassName.substring(fullClassName.lastIndexOf(".") + 1);
+
+		return "%s#%s:%d".formatted(simpleClassName, element.getMethodName(), element.getLineNumber());
+	}
 }

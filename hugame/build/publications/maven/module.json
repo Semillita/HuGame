@@ -55,11 +55,11 @@
         {
           "name": "hugame-0.0.1.jar",
           "url": "hugame-0.0.1.jar",
-          "size": 476407,
-          "sha512": "aa905248d48d4e9eb5f77d8835c65806ec9b3d6ff5d704a90c63361fdf42f379aaad437eb1d1e8bad8debb40cc9b36de252e92bc1da3649088f80fe7764cd7ff",
-          "sha256": "b80d5a8f253ebfa71cb2f9de7864f03a6f38ac57e54bd9d049435a5e6aff5a54",
-          "sha1": "92e5157e64f1c41abf7a05d792429d6ee98c2eed",
-          "md5": "1008859ab86eb2a1681020822e130e8b"
+          "size": 488975,
+          "sha512": "49d3e841b3e8d517c0f3ffa03c1a1462b43e437480636e26daa68ceb89aafd802e4cd8c061e7f77b3a4da751ac1da2854addb56fb9fac842713ffa899f147712",
+          "sha256": "462618c3089ca2f08cb43b7d256c2251c010b0eef5b65385ab092e7d08a22009",
+          "sha1": "a303c030ba3f8fe62e436d0bd0f7ecf88e0a50ed",
+          "md5": "2832116cae2ac9b8734aa165003db09a"
         }
       ]
     },
@@ -158,11 +158,11 @@
         {
           "name": "hugame-0.0.1.jar",
           "url": "hugame-0.0.1.jar",
-          "size": 476407,
-          "sha512": "aa905248d48d4e9eb5f77d8835c65806ec9b3d6ff5d704a90c63361fdf42f379aaad437eb1d1e8bad8debb40cc9b36de252e92bc1da3649088f80fe7764cd7ff",
-          "sha256": "b80d5a8f253ebfa71cb2f9de7864f03a6f38ac57e54bd9d049435a5e6aff5a54",
-          "sha1": "92e5157e64f1c41abf7a05d792429d6ee98c2eed",
-          "md5": "1008859ab86eb2a1681020822e130e8b"
+          "size": 488975,
+          "sha512": "49d3e841b3e8d517c0f3ffa03c1a1462b43e437480636e26daa68ceb89aafd802e4cd8c061e7f77b3a4da751ac1da2854addb56fb9fac842713ffa899f147712",
+          "sha256": "462618c3089ca2f08cb43b7d256c2251c010b0eef5b65385ab092e7d08a22009",
+          "sha1": "a303c030ba3f8fe62e436d0bd0f7ecf88e0a50ed",
+          "md5": "2832116cae2ac9b8734aa165003db09a"
         }
       ]
     }

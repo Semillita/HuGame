@@ -138,7 +138,8 @@ void main() {
         textureSample = vec4(1, 1, 1, 1);
     }
 
-    color = textureSample * vec4(light, 1.0);
+    //color = textureSample * vec4(light, 1.0);
+    color = vec4(normal, 1.0);
     //color = vec4(light, 1.0);
     //color = vec4(light, 1.0);
     //color = textureSample;

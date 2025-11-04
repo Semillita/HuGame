@@ -3,6 +3,8 @@ package dev.hugame.vulkan.image;
 import static org.lwjgl.vulkan.VK10.*;
 
 import dev.hugame.vulkan.core.VulkanGraphics;
+import dev.hugame.vulkan.types.ImageAspect;
+import dev.hugame.vulkan.types.ImageFormat;
 import dev.hugame.vulkan.types.ImageType;
 import dev.hugame.vulkan.types.ImageViewType;
 
@@ -16,12 +18,12 @@ public class DepthBuffer {
             graphics,
             width,
             height,
-            format,
+            ImageFormat.D32_SFLOAT,
             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
             ImageType._2D);
     var imageView =
         VulkanImageView.create(
-            graphics, image, ImageViewType._2D, format, VK_IMAGE_ASPECT_DEPTH_BIT);
+            graphics, image, ImageViewType._2D, ImageFormat.D32_SFLOAT, ImageAspect.DEPTH);
 
     return new DepthBuffer(image, imageView);
   }

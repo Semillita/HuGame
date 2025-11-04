@@ -6,6 +6,7 @@ import java.util.Arrays;
 import lombok.Getter;
 
 public enum ImageFormat {
+  D32_SFLOAT(VK_FORMAT_D32_SFLOAT),
   R8_G8_B8_A8_SRGB(VK_FORMAT_R8G8B8A8_SRGB);
 
   @Getter private final int value;

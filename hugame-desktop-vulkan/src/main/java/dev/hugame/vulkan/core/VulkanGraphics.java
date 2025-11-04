@@ -3,17 +3,24 @@ package dev.hugame.vulkan.core;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.VK10.*;
 
-import dev.hugame.core.Graphics;
-import dev.hugame.core.GraphicsAPI;
-import dev.hugame.graphics.Batch;
-import dev.hugame.graphics.ResolvedTexture;
-import dev.hugame.graphics.Shader;
-import dev.hugame.graphics.Texture;
+import dev.hugame.graphics.*;
 import dev.hugame.graphics.model.Model;
+import dev.hugame.graphics.text.Font;
+import dev.hugame.graphics.text.FontMetadata;
+import dev.hugame.graphics.text.ResolvedFont;
 import dev.hugame.model.spec.ResolvedModel;
 import dev.hugame.util.Files;
 import dev.hugame.util.ImageLoader;
 import dev.hugame.vulkan.buffer.VulkanUniformBuffer;
+import dev.hugame.vulkan.commands.BeginRenderPassCommand;
+import dev.hugame.vulkan.commands.BindDescriptorSetsCommand;
+import dev.hugame.vulkan.commands.BindIndexBufferCommand;
+import dev.hugame.vulkan.commands.BindPipelineCommand;
+import dev.hugame.vulkan.commands.BindVertexBuffersCommand;
+import dev.hugame.vulkan.commands.DrawCommand;
+import dev.hugame.vulkan.commands.VulkanCommand;
+import dev.hugame.vulkan.image.ImageUtils;
+import dev.hugame.vulkan.image.VulkanImageView;
 import dev.hugame.vulkan.layout.VulkanDescriptorPool;
 import dev.hugame.vulkan.layout.VulkanDescriptorSet;
 import dev.hugame.vulkan.layout.VulkanDescriptorSetLayout;
@@ -25,10 +32,17 @@ import dev.hugame.vulkan.pipeline.shader.VulkanShader;
 import dev.hugame.vulkan.surface.VulkanSurface;
 import dev.hugame.vulkan.surface.VulkanSurfaceContext;
 import dev.hugame.vulkan.sync.*;
+import dev.hugame.vulkan.text.DefaultTextPipelineDescriptors;
 import dev.hugame.vulkan.texture.TextureCollector;
 import dev.hugame.vulkan.texture.VulkanTexture;
+import dev.hugame.vulkan.types.ImageAspect;
+import dev.hugame.vulkan.types.ImageFormat;
+import dev.hugame.vulkan.types.ImageType;
+import dev.hugame.vulkan.types.ImageViewType;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.Setter;
 import org.joml.Vector4f;
@@ -44,7 +58,10 @@ public class VulkanGraphics implements Graphics {
   private static final int MODEL_PIPELINE_VERTEX_SHADER_UNIFORM_BUFFER_SIZE = 2 * 16 * Float.BYTES;
   private static final int MODEL_PIPELINE_FRAGMENT_SHADER_UNIFORM_BUFFER_SIZE = 6 * Float.BYTES;
   private static final int QUAD_PIPELINE_UNIFORM_BUFFER_SIZE = 2 * 16 * Float.BYTES;
+  private static final int TEXT_PIPELINE_VERTEX_SHADER_UNIFORM_BUFFER_SIZE = 2 * 16 * Float.BYTES;
+  private static final int TEXT_PIPELINE_FRAGMENT_SHADER_UNIFORM_BUFFER_SIZE = Float.BYTES;
 
+  @Getter
   private final VulkanSurfaceContext
       surfaceContext; // TODO: Maybe use some identity interface instead
 
@@ -53,29 +70,39 @@ public class VulkanGraphics implements Graphics {
   @Getter private final VulkanSurface surface;
   @Getter private final VulkanDevice device;
   @Getter private VulkanSwapChain swapChain;
-  private final VulkanDescriptorSetLayout modelPipelineDescriptorSetLayout;
-  private final VulkanDescriptorSetLayout quadPipelineDescriptorSetLayout;
-  @Getter private final VulkanPipeline modelPipeline;
-  @Getter private final VulkanPipeline quadPipeline;
+
   @Getter private final VulkanCommandPool commandPool;
 
   @Getter
-  private List<VulkanFrameBuffer> frameBuffers; // TODO: Maybe make these belong to the swap chain
+  private List<VulkanSwapChainFrameBuffer>
+      frameBuffers; // TODO: Maybe make these belong to the swap chain
 
   @Getter private final VulkanCommandBuffer commandBuffer;
   @Getter private final List<InFlightFrame> framesInFlight;
   private final VulkanRenderer renderer;
+
+  private final VulkanDescriptorSetLayout modelPipelineDescriptorSetLayout;
+  private final VulkanDescriptorSetLayout quadPipelineDescriptorSetLayout;
+  private final VulkanDescriptorSetLayout textPipelineDescriptorSetLayout;
+
+  @Getter private final VulkanPipeline modelPipeline;
+  @Getter private final VulkanPipeline quadPipeline;
+  @Getter private final VulkanPipeline textPipeline;
+
+  @Getter private final List<VulkanUniformBuffer> quadPipelineUniformBuffers;
   @Getter private final List<VulkanUniformBuffer> modelPipelineVertexShaderUniformBuffers;
   @Getter private final List<VulkanUniformBuffer> modelPipelineFragmentShaderUniformBuffers;
 
-  // TODO: Move these to some SwapChainFrame structure
-  @Getter private final List<VulkanUniformBuffer> quadPipelineUniformBuffers;
+  @Getter private final List<VulkanUniformBuffer> textPipelineVertexShaderUniformBuffers;
+  @Getter private final List<VulkanUniformBuffer> textPipelineFragmentShaderUniformBuffers;
 
-  // TODO: Try to put along other pipeline-specific stuff
   private final VulkanDescriptorPool modelPipelineDescriptorPool;
   private final VulkanDescriptorPool quadPipelineDescriptorPool;
+  private final VulkanDescriptorPool textPipelineDescriptorPool;
+
   @Getter private final List<VulkanDescriptorSet> modelPipelineDescriptorSets;
   @Getter private final List<VulkanDescriptorSet> quadPipelineDescriptorSets;
+  @Getter private final List<VulkanDescriptorSet> textPipelineDescriptorSets;
 
   private final ModelFactory modelFactory;
   private final TextureCollector textureCollector;
@@ -84,6 +111,8 @@ public class VulkanGraphics implements Graphics {
   @Setter private boolean frameBufferResized = false;
 
   @Getter private Vector4f clearColor;
+
+  private int frame = 0;
 
   public VulkanGraphics(VulkanSurfaceContext surfaceContext) {
     if (VALIDATION_LAYERS_ENABLED) {
@@ -120,7 +149,8 @@ public class VulkanGraphics implements Graphics {
             modelPipelineDescriptors,
             modelPipelineDescriptorSetLayout,
             modelPipelineVertexShaderSource,
-            modelPipelineFragmentShaderSource);
+            modelPipelineFragmentShaderSource,
+            true);
 
     this.quadPipeline =
         VulkanPipeline.create(
@@ -128,9 +158,27 @@ public class VulkanGraphics implements Graphics {
             quadPipelineDescriptors,
             quadPipelineDescriptorSetLayout,
             quadPipelineVertexSource,
-            quadPipelineFragmentSource);
+            quadPipelineFragmentSource,
+            false);
 
-    this.frameBuffers = VulkanFrameBuffer.createAll(this);
+    var textPipelineDescriptors = new DefaultTextPipelineDescriptors();
+    var textPipelineVertexSource =
+        Files.read("/shaders/vulkan_text_vertex_shader.glsl").orElseThrow();
+    var textPipelineFragmentSource =
+        Files.read("/shaders/vulkan_text_fragment_shader.glsl").orElseThrow();
+
+    this.textPipelineDescriptorSetLayout = textPipelineDescriptors.createDescriptorSetLayout(this);
+
+    this.textPipeline =
+        VulkanPipeline.create(
+            this,
+            textPipelineDescriptors,
+            textPipelineDescriptorSetLayout,
+            textPipelineVertexSource,
+            textPipelineFragmentSource,
+            true);
+
+    this.frameBuffers = VulkanSwapChainFrameBuffer.createAll(this);
     // TODO: Check if command pool needs to be created this early
     this.commandPool = VulkanCommandPool.create(this);
     this.commandBuffer = VulkanCommandBuffer.create(this);
@@ -169,14 +217,34 @@ public class VulkanGraphics implements Graphics {
                 ignored -> VulkanUniformBuffer.create(this, QUAD_PIPELINE_UNIFORM_BUFFER_SIZE))
             .toList();
 
+    this.textPipelineVertexShaderUniformBuffers =
+        IntStream.range(0, getFramesInFlightCount())
+            .mapToObj(
+                ignored ->
+                    VulkanUniformBuffer.create(
+                        this, TEXT_PIPELINE_VERTEX_SHADER_UNIFORM_BUFFER_SIZE))
+            .toList();
+
+    this.textPipelineFragmentShaderUniformBuffers =
+        IntStream.range(0, getFramesInFlightCount())
+            .mapToObj(
+                ignored ->
+                    VulkanUniformBuffer.create(
+                        this, TEXT_PIPELINE_FRAGMENT_SHADER_UNIFORM_BUFFER_SIZE))
+            .toList();
+
     this.modelPipelineDescriptorPool = modelPipelineDescriptors.createDescriptorPool(this);
     this.quadPipelineDescriptorPool = quadPipelineDescriptors.createDescriptorPool(this);
+    this.textPipelineDescriptorPool = textPipelineDescriptors.createDescriptorPool(this);
 
     this.modelPipelineDescriptorSets =
         modelPipelineDescriptorPool.allocateDescriptorSets(this, modelPipelineDescriptorSetLayout);
 
     this.quadPipelineDescriptorSets =
         quadPipelineDescriptorPool.allocateDescriptorSets(this, quadPipelineDescriptorSetLayout);
+
+    this.textPipelineDescriptorSets =
+        textPipelineDescriptorPool.allocateDescriptorSets(this, textPipelineDescriptorSetLayout);
 
     var defaultTextureBytes = Files.readBytes("/default_texture.png").orElseThrow();
     this.modelFactory = new ModelFactory();
@@ -193,6 +261,24 @@ public class VulkanGraphics implements Graphics {
   @Override
   public VulkanTexture createTexture(ResolvedTexture resolvedTexture) {
     return textureCollector.addTexture(resolvedTexture);
+  }
+
+  @Override
+  public Font createFont(ResolvedFont resolvedFont) {
+    var atlasTexture = createTexture(resolvedFont.getAtlas());
+
+    var metadata = resolvedFont.getMetadata();
+    return new Font() {
+      @Override
+      public Texture getTexture() {
+        return atlasTexture;
+      }
+
+      @Override
+      public FontMetadata getMetadata() {
+        return metadata;
+      }
+    };
   }
 
   @Override
@@ -223,6 +309,11 @@ public class VulkanGraphics implements Graphics {
   }
 
   @Override
+  public void endFrame() {
+    frame++;
+  }
+
+  @Override
   public void swapBuffers() {}
 
   @Override
@@ -231,6 +322,38 @@ public class VulkanGraphics implements Graphics {
   @Override
   public void setClearColor(float red, float green, float blue, float alpha) {
     clearColor = new Vector4f(red, green, blue, alpha);
+  }
+
+  @Override
+  public FrameBuffer getSwapChainFrameBuffer() {
+    var inFlightFrameIndex = frame % getFramesInFlightCount();
+
+    return frameBuffers.get(inFlightFrameIndex);
+  }
+
+  @Override
+  public FrameBuffer createFrameBuffer(int width, int height) {
+    // TODO: Implement
+
+    var image =
+        ImageUtils.createImage(
+            this,
+            width,
+            height,
+            ImageFormat.R8_G8_B8_A8_SRGB,
+            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+            ImageType._2D);
+
+    var imageView =
+        VulkanImageView.create(
+            this, image, ImageViewType._2D, ImageFormat.R8_G8_B8_A8_SRGB, ImageAspect.COLOR);
+
+    return null;
+  }
+
+  @Override
+  public Texture createTextureFromFrameBuffer(FrameBuffer frameBuffer) {
+    return null;
   }
 
   public void destroy() {
@@ -277,7 +400,47 @@ public class VulkanGraphics implements Graphics {
     cleanupSwapChain();
 
     swapChain = VulkanSwapChain.create(this, surfaceContext);
-    frameBuffers = VulkanFrameBuffer.createAll(this);
+    frameBuffers = VulkanSwapChainFrameBuffer.createAll(this);
+  }
+
+  public void render(RenderInfo renderInfo) {
+    var renderPipeline = renderInfo.getPipeline();
+    var pipeline = renderPipeline.getPipeline();
+
+    var hasDrawnDuringCurrentFrame = renderer.isHasDrawnDuringCurrentFrame();
+    var currentImageIndex = renderer.getCurrentImageIndex();
+
+    var clearCommands =
+        hasDrawnDuringCurrentFrame
+            ? Collections.<VulkanCommand>emptyList()
+            : renderer.getClearBufferCommands();
+
+    var renderCommands =
+        List.of(
+            new BeginRenderPassCommand(pipeline.getRenderPass(), renderInfo.getFrameBuffer()),
+            new BindPipelineCommand(pipeline.getHandle()),
+            renderer.getSetViewportCommand(),
+            renderer.getSetScissorCommand(),
+            new BindVertexBuffersCommand(renderInfo.getVertexBuffers()),
+            new BindIndexBufferCommand(renderInfo.getIndexBuffer()),
+            new BindDescriptorSetsCommand(renderInfo.getDescriptorSet(), pipeline),
+            new DrawCommand(renderInfo.getIndexCount(), 1),
+            renderer.getEndRenderPassCommand());
+
+    var commands = Stream.concat(clearCommands.stream(), renderCommands.stream()).toList();
+    commandBuffer.reset();
+    commandBuffer.record(this, commands);
+
+    var submitInfo =
+        new QueueSubmitInfo()
+            .setCommandBuffer(commandBuffer)
+            .setWaitSyncPoint(renderInfo.getWaitSyncPoint())
+            .setWaitDestinationStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+    var submitResult = device.getGraphicsQueue().submit(submitInfo, null);
+    if (submitResult != VulkanResult.SUCCESS) {
+      throw new RuntimeException("[HuGame] Failed to submit queue");
+    }
   }
 
   private void cleanupSwapChain() {

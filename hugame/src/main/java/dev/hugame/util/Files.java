@@ -11,7 +11,8 @@ import java.util.Optional;
 
 public class Files {
 	private static final Map<String, byte[]> bytesInFiles = new HashMap<>();;
-	
+
+	// TODO: Remove the need for leading /
 	public static Optional<String> read(String filepath) {
 		try {
 			if (bytesInFiles.containsKey(filepath)) {
@@ -67,6 +68,7 @@ public class Files {
 
 				var nativeBuffer = MemoryUtil.memAlloc(bytes.length);
 				nativeBuffer.put(bytes);
+				nativeBuffer.rewind();
 				return Optional.of(nativeBuffer);
 			}
 		} catch (IOException e) {

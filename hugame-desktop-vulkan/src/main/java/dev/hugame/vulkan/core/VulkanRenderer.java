@@ -4,15 +4,17 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.VK12.*;
 
-import dev.hugame.core.Renderer;
 import dev.hugame.environment.DirectionalLight;
 import dev.hugame.environment.Environment;
 import dev.hugame.environment.PointLight;
 import dev.hugame.environment.SpotLight;
 import dev.hugame.graphics.PerspectiveCamera;
+import dev.hugame.graphics.RenderTarget;
+import dev.hugame.graphics.Renderer;
 import dev.hugame.graphics.material.Material;
 import dev.hugame.graphics.material.Materials;
 import dev.hugame.graphics.model.Model;
+import dev.hugame.graphics.text.Font;
 import dev.hugame.util.Logger;
 import dev.hugame.util.Transform;
 import dev.hugame.vulkan.buffer.BufferUtils;
@@ -22,7 +24,10 @@ import dev.hugame.vulkan.image.ImageUtils;
 import dev.hugame.vulkan.layout.DescriptorSource;
 import dev.hugame.vulkan.model.VulkanModel;
 import dev.hugame.vulkan.sync.*;
+import dev.hugame.vulkan.text.TextRenderer;
 import java.util.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkPresentInfoKHR;
@@ -33,9 +38,9 @@ public class VulkanRenderer implements Renderer {
   private final VulkanGraphics graphics;
   private PerspectiveCamera camera;
 
-  private final SetViewportCommand setViewportCommand;
-  private final SetScissorCommand setScissorCommand;
-  private final EndRenderPassCommand endRenderPassCommand;
+  @Getter private final SetViewportCommand setViewportCommand;
+  @Getter private final SetScissorCommand setScissorCommand;
+  @Getter private final EndRenderPassCommand endRenderPassCommand;
 
   private final Map<Model, List<Transform>> modelInstanceData;
   private final SyncManager syncManager;
@@ -47,9 +52,11 @@ public class VulkanRenderer implements Renderer {
 
   private final List<UsedCommandBuffer> usedCommandBuffers = new ArrayList<>();
 
-  private int currentImageIndex;
-  private boolean hasDrawnDuringCurrentFrame = false;
-  int frame = 0;
+  private final TextRenderer textRenderer;
+
+  @Getter private int currentImageIndex;
+  @Getter @Setter private boolean hasDrawnDuringCurrentFrame = false;
+  @Getter int frame = 0;
 
   VulkanRenderer(VulkanGraphics graphics) {
     this.graphics = graphics;
@@ -71,6 +78,8 @@ public class VulkanRenderer implements Renderer {
     this.spotLightBuffer = VulkanShaderStorageBuffer.create(graphics, SpotLight.SIZE_IN_BYTES, 10);
     this.directionalLightBuffer =
         VulkanShaderStorageBuffer.create(graphics, DirectionalLight.SIZE_IN_BYTES, 10);
+
+    this.textRenderer = new TextRenderer(graphics);
   }
 
   @Override
@@ -115,6 +124,19 @@ public class VulkanRenderer implements Renderer {
   public void draw(Model model, Transform transform) {
     modelInstanceData.computeIfAbsent(model, ignored -> new ArrayList<>()).add(transform);
   }
+
+  @Override
+  public void drawText(String text, Font font, int fontSize, int x, int y) {
+    textRenderer.drawText(graphics, text, font, fontSize, x, y);
+  }
+
+  @Override
+  public void flushTextRenderer() {
+    textRenderer.flushTextRenderer(graphics);
+  }
+
+  @Override
+  public void setRenderTarget(RenderTarget renderTarget) {}
 
   @Override
   public void flush() {
@@ -440,7 +462,7 @@ public class VulkanRenderer implements Renderer {
     }
   }
 
-  private List<VulkanCommand> getClearBufferCommands() {
+  public List<VulkanCommand> getClearBufferCommands() {
     var swapChain = graphics.getSwapChain();
     var swapChainColorImageHandle = swapChain.getImageHandles().get(currentImageIndex);
     var depthBufferImage = swapChain.getDepthBuffer().getImage();

@@ -34,6 +34,7 @@ dependencies {
     api "io.semillita.hugame:hugame-desktop-gl:0.0.1"
     api "io.semillita.hugame:hugame-desktop-vulkan:0.0.1"
     api "io.semillita.hugame:hugame-assimp:0.0.1"
+    api "io.semillita.hugame:hugame-msdfgen:0.0.1"
 }
 
 group = 'io.semillita.hugame'

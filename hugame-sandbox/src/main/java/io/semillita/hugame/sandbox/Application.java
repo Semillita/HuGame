@@ -1,11 +1,11 @@
 package io.semillita.hugame.sandbox;
 
-import dev.hugame.core.Graphics;
+import dev.hugame.freetype.FreeTypeFontLoader;
+import dev.hugame.freetype.MsdfGenFontLoader;
+import dev.hugame.graphics.Graphics;
 import dev.hugame.desktop.gl.GLGraphics;
-import dev.hugame.graphics.Camera;
+import dev.hugame.graphics.text.Font;
 import dev.hugame.graphics.model.ModelBuilder;
-import dev.hugame.util.Logger;
-import dev.hugame.vulkan.core.VulkanBatch;
 import dev.hugame.vulkan.core.VulkanGraphics;
 import dev.hugame.application.HuGameApplicationContext;
 import dev.hugame.application.SimpleApplicationConfiguration;
@@ -13,7 +13,7 @@ import dev.hugame.application.SimpleApplicationListener;
 import dev.hugame.application.SimpleHuGameApplication;
 import dev.hugame.assimp.AssimpModelLoader;
 import dev.hugame.core.Input;
-import dev.hugame.core.Renderer;
+import dev.hugame.graphics.Renderer;
 import dev.hugame.core.Window;
 import dev.hugame.environment.DirectionalLight;
 import dev.hugame.environment.Environment;
@@ -107,6 +107,8 @@ public class Application implements SimpleApplicationListener {
 	private Texture groundTexture;
 	private TextureLoader textureLoader;
 
+    private Font qilkaFont;
+
 	@Override
 	public void onCreate(HuGameApplicationContext applicationContext) {
 		this.window = applicationContext.getWindow();
@@ -182,6 +184,11 @@ public class Application implements SimpleApplicationListener {
 		camera.update();
 
 		graphics.setClearColor(0, 0, 1, 1);
+
+        var freeTypeFontLoader = new FreeTypeFontLoader();
+        var msdfGenFontLoader = new MsdfGenFontLoader();
+        var maybeResolvedQilkaFont = msdfGenFontLoader.load(new FileHandle("/fonts/Qilka-Bold.ttf", FileLocation.INTERNAL));
+        this.qilkaFont = graphics.createFont(maybeResolvedQilkaFont.orElseThrow());
 	}
 
 	@Override
@@ -230,6 +237,9 @@ public class Application implements SimpleApplicationListener {
 		batch.draw(groundTexture, 300, 200, 100, 100);
 		batch.draw(groundTexture, 300, 200, 100, 100);
 		batch.end();
+
+        renderer.drawText("Hej, jag heter Hugo", qilkaFont, 100, 550, 400);
+        renderer.flushTextRenderer();
 	}
 
 	@Override

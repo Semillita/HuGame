@@ -4,6 +4,8 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
 
 import dev.hugame.vulkan.core.VulkanGraphics;
+import dev.hugame.vulkan.types.ImageAspect;
+import dev.hugame.vulkan.types.ImageFormat;
 import dev.hugame.vulkan.types.ImageViewType;
 import org.lwjgl.vulkan.VkImageSubresourceRange;
 import org.lwjgl.vulkan.VkImageViewCreateInfo;
@@ -13,9 +15,9 @@ public class VulkanImageView {
       VulkanGraphics graphics,
       VulkanImage image,
       ImageViewType imageViewType,
-      int format,
-      int aspectMask) {
-    return create(graphics, image, imageViewType, 1, format, aspectMask);
+      ImageFormat format,
+      ImageAspect aspect) {
+    return create(graphics, image, imageViewType, 1, format, aspect);
   }
 
   public static VulkanImageView create(
@@ -23,18 +25,18 @@ public class VulkanImageView {
       VulkanImage image,
       ImageViewType imageViewType,
       int layerCount,
-      int format,
-      int aspectMask) {
+      ImageFormat format,
+      ImageAspect aspect) {
     try (var memoryStack = stackPush()) {
       var imageViewCreateInfo =
           VkImageViewCreateInfo.calloc(memoryStack)
               .sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
               .image(image.getHandle())
               .viewType(imageViewType.getValue())
-              .format(format)
+              .format(format.getValue())
               .subresourceRange(
                   VkImageSubresourceRange.calloc(memoryStack)
-                      .aspectMask(aspectMask)
+                      .aspectMask(aspect.getValue())
                       .baseMipLevel(0)
                       .levelCount(1)
                       .baseArrayLayer(0)

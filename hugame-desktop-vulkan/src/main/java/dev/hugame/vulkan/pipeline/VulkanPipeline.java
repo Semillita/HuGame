@@ -9,10 +9,14 @@ import dev.hugame.vulkan.layout.VulkanDescriptorSetLayout;
 import dev.hugame.vulkan.pipeline.shader.ShaderFactory;
 import dev.hugame.vulkan.pipeline.shader.ShaderType;
 import dev.hugame.vulkan.pipeline.shader.ShaderUtils;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.lwjgl.vulkan.*;
 
 // TODO: Make this class, or the shaders, own the descriptors.
 // TODO: Create the pipeline and descriptors through a builder
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class VulkanPipeline {
   private static final String SHADER_ENTRYPOINT_METHOD_NAME = "main";
 
@@ -21,7 +25,8 @@ public class VulkanPipeline {
       DescriptorFactory descriptorFactory,
       VulkanDescriptorSetLayout descriptorSetLayout,
       String vertexShaderSource,
-      String fragmentShaderSource) {
+      String fragmentShaderSource,
+      boolean depthTestEnabled) {
     var logicalDevice = graphics.getDevice().getLogical();
 
     try (var memoryStack = stackPush()) {
@@ -143,7 +148,7 @@ public class VulkanPipeline {
       var depthStencilStateCreateInfo =
           VkPipelineDepthStencilStateCreateInfo.calloc(memoryStack)
               .sType(VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO)
-              .depthTestEnable(true)
+              .depthTestEnable(depthTestEnabled)
               .depthWriteEnable(true)
               .depthCompareOp(VK_COMPARE_OP_LESS)
               .depthBoundsTestEnable(false)
@@ -187,25 +192,7 @@ public class VulkanPipeline {
     }
   }
 
-  private final long handle;
-  private final long layoutHandle;
-  private final VulkanRenderPass renderPass;
-
-  private VulkanPipeline(long handle, long layoutHandle, VulkanRenderPass renderPass) {
-    this.handle = handle;
-    this.layoutHandle = layoutHandle;
-    this.renderPass = renderPass;
-  }
-
-  public long getHandle() {
-    return handle;
-  }
-
-  public long getLayoutHandle() {
-    return layoutHandle;
-  }
-
-  public VulkanRenderPass getRenderPass() {
-    return renderPass;
-  }
+  @Getter private final long handle;
+  @Getter private final long layoutHandle;
+  @Getter private final VulkanRenderPass renderPass;
 }

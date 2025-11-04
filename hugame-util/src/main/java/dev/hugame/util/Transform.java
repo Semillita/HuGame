@@ -29,5 +29,11 @@ public class Transform {
 	public Matrix4f getMatrix() {
 		return matrix;
 	}
-	
+
+	public static Transform identity() {
+		return new Transform(
+				new Vector3f(0, 0, 0),
+				new Vector3f(0, 0, 0),
+				new Vector3f(1, 1, 1));
+	}
 }

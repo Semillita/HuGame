@@ -9,9 +9,11 @@ import java.util.stream.IntStream;
 import dev.hugame.desktop.gl.model.OpenGLModel;
 import dev.hugame.desktop.gl.shader.OpenGLShader;
 import dev.hugame.desktop.gl.shader.ShaderFactory;
+import dev.hugame.graphics.RenderTarget;
+import dev.hugame.graphics.text.Font;
 import org.joml.Vector3f;
 
-import dev.hugame.core.Renderer;
+import dev.hugame.graphics.Renderer;
 import dev.hugame.desktop.gl.buffer.DirectionalLightBuffer;
 import dev.hugame.desktop.gl.buffer.MaterialBuffer;
 import dev.hugame.desktop.gl.buffer.PointLightBuffer;
@@ -53,6 +55,7 @@ public class GLRenderer implements Renderer {
 	private DirectionalLightBuffer directionalLightBuffer;
 	
 	private boolean initialized = false;
+	private RenderTarget renderTarget;
 	
 	public GLRenderer(GLGraphics graphics) {
 		this.graphics = graphics;
@@ -124,6 +127,16 @@ public class GLRenderer implements Renderer {
 
 		var instanceDataList = modelInstanceData.computeIfAbsent(model, ignored -> new ArrayList<>());
 		instanceDataList.add(instanceData);
+	}
+
+	@Override
+	public void drawText(String text, Font font, int fontSize, int x, int y) {
+
+	}
+
+	@Override
+	public void flushTextRenderer() {
+
 	}
 
 	@Override
@@ -199,7 +212,12 @@ public class GLRenderer implements Renderer {
 		fillDirectionalLightBuffer(environment.getDirectionalLights());
 		System.out.println("Done");
 	}
-	
+
+	@Override
+	public void setRenderTarget(RenderTarget renderTarget) {
+		this.renderTarget = renderTarget;
+	}
+
 	public void renderBatch(GLBatch batch) {
 		glDisable(GL_DEPTH_TEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

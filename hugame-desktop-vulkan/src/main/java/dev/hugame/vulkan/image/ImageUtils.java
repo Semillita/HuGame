@@ -14,50 +14,22 @@ import dev.hugame.vulkan.core.VulkanDevice;
 import dev.hugame.vulkan.core.VulkanGraphics;
 import dev.hugame.vulkan.sync.Semaphore;
 import dev.hugame.vulkan.types.ImageAspect;
+import dev.hugame.vulkan.types.ImageFormat;
 import dev.hugame.vulkan.types.ImageLayout;
 import dev.hugame.vulkan.types.ImageType;
 import java.util.List;
 import org.lwjgl.vulkan.*;
 
 public class ImageUtils {
-  /*public static VulkanImage createImage(
-      VulkanGraphics graphics, ResolvedTexture resolvedTexture, int aspectMask) {
-    var dataBuffer = resolvedTexture.buffer();
-    var width = resolvedTexture.width();
-    var height = resolvedTexture.height();
-
-    var stagingBuffer =
-        BufferUtils.createStagingBuffer(graphics, dataBuffer.capacity(), b -> b.put(dataBuffer));
-
-    var image =
-        createImage(
-            graphics,
-            width,
-            height,
-            1,
-            VK_FORMAT_R8G8B8A8_SRGB,
-            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-
-    transitionImageLayout(
-        graphics,
-        image,
-        VK_FORMAT_R8G8B8A8_SRGB,
-        aspectMask,
-        VK_IMAGE_LAYOUT_UNDEFINED,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-    copyBufferToImage(graphics, stagingBuffer, image, width, height);
-
-    transitionImageLayout(
-        graphics,
-        image,
-        VK_FORMAT_R8G8B8A8_SRGB,
-        aspectMask,
-        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-    return image;
-  }*/
+  public static VulkanImage createImage(
+      VulkanGraphics graphics,
+      int width,
+      int height,
+      ImageFormat format,
+      int usageFlags,
+      ImageType imageType) {
+    return createImage(graphics, width, height, 1, format, usageFlags, imageType);
+  }
 
   public static VulkanImage createImage(
       VulkanGraphics graphics,
@@ -123,6 +95,18 @@ public class ImageUtils {
       int usageFlags,
       ImageType imageType) {
     return createImage(graphics, width, height, 1, format, usageFlags, imageType);
+  }
+
+  private static VulkanImage createImage(
+      VulkanGraphics graphics,
+      int width,
+      int height,
+      int layerCount,
+      ImageFormat format,
+      int usageFlags,
+      ImageType imageType) {
+    return createImage(
+        graphics, width, height, layerCount, format.getValue(), usageFlags, imageType);
   }
 
   private static VulkanImage createImage(

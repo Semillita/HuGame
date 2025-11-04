@@ -30,26 +30,26 @@ public interface Input {
 	 * 
 	 * @param listener the listener to save
 	 */
-	public void setMouseButtonListener(Consumer<MouseEvent> listener);
+	void setMouseButtonListener(Consumer<MouseEvent> listener);
 
 	/**
 	 * Saves a listener for key input events.
 	 * 
 	 * @param listener the listener to save
 	 */
-	public void setKeyListener(BiConsumer<Key, KeyAction> listener);
+	void setKeyListener(BiConsumer<Key, KeyAction> listener);
 
 	/** Enum to represent different action that can be done with a key. */
-	public static enum KeyAction {
+	enum KeyAction {
 		PRESS, RELEASE;
 	}
 
 	/** Enum to represent different actions that can be done with a mouse button. */
-	public static enum MouseAction {
+	enum MouseAction {
 		PRESS, RELEASE;
 	}
 
 	/** Container of data for a mouse button input event. */
-	public static record MouseEvent(int x, int y, MouseAction action, int button) {
+	record MouseEvent(int x, int y, MouseAction action, int button) {
 	}
 }

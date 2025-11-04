@@ -1,6 +1,6 @@
 package dev.hugame.application;
 
-import dev.hugame.core.Graphics;
+import dev.hugame.graphics.Graphics;
 import dev.hugame.core.Input;
 import dev.hugame.core.Window;
 import dev.hugame.model.spec.DelegatingModelLoader;
@@ -60,12 +60,11 @@ public class SimpleHuGameApplication extends HuGameApplication {
 	@Override
 	protected void update() {
 		window.pollEvents();
-		// TODO: Don't clear like this, instead set graphics clearColor value
 		graphics.getRenderer().beginFrame();
-		//graphics.clear(1f, 1f, 0.5f, 0.0f);
-		graphics.clear(0f, 0f, 1, 1);
+		graphics.clear(0f, 0f, 1, 1); // TODO: Is this used?
 		listener.onRender();
 		graphics.getRenderer().endFrame();
+		graphics.endFrame();
 		graphics.swapBuffers();
 	}
 

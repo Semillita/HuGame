@@ -8,6 +8,8 @@ import dev.hugame.vulkan.surface.VulkanSurface;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
+
+import lombok.Getter;
 import org.lwjgl.vulkan.*;
 
 public class VulkanDevice {
@@ -291,9 +293,12 @@ public class VulkanDevice {
 
   public static class DeviceSupport {
     private boolean geometryShaderSupport;
+    @Getter
     private QueueFamilyIndices queueFamilyIndices;
     private List<String> supportedExtensions;
+    @Getter
     private DeviceSwapChainSupport swapChainSupport;
+    @Getter
     private DeviceLimits limits;
 
     public boolean isAdequate() {
@@ -303,47 +308,27 @@ public class VulkanDevice {
           && swapChainSupport.isAdequate();
     }
 
-    public QueueFamilyIndices getQueueFamilyIndices() {
-      return queueFamilyIndices;
-    }
-
-    public DeviceSwapChainSupport getSwapChainSupport() {
-      return swapChainSupport;
-    }
-
-    public DeviceLimits getLimits() {
-      return limits;
-    }
   }
 
   public static class DeviceSwapChainSupport {
-    private VkSurfaceCapabilitiesKHR surfaceCapabilities;
+    @Getter private VkSurfaceCapabilitiesKHR surfaceCapabilities;
     // TODO: Maybe keep own struct instead of native resource
-    private List<VkSurfaceFormatKHR> formats;
+    @Getter private List<VkSurfaceFormatKHR> formats;
 
-    private int[] presentModes;
+    @Getter private int[] presentModes;
 
     public boolean isAdequate() {
       return !formats.isEmpty() && presentModes != null;
-    }
-
-    public VkSurfaceCapabilitiesKHR getSurfaceCapabilities() {
-      return surfaceCapabilities;
-    }
-
-    public List<VkSurfaceFormatKHR> getFormats() {
-      return formats;
-    }
-
-    public int[] getPresentModes() {
-      return presentModes;
     }
   }
 
   private final VkPhysicalDevice physicalDevice;
   private final VkDevice logicalDevice;
+  @Getter
   private final GraphicsQueue graphicsQueue;
+  @Getter
   private final PresentQueue presentQueue;
+  @Getter
   private final DeviceSupport support;
 
   private VulkanDevice(
@@ -365,17 +350,5 @@ public class VulkanDevice {
 
   public VkDevice getLogical() {
     return logicalDevice;
-  }
-
-  public GraphicsQueue getGraphicsQueue() {
-    return graphicsQueue;
-  }
-
-  public PresentQueue getPresentQueue() {
-    return presentQueue;
-  }
-
-  public DeviceSupport getSupport() {
-    return support;
   }
 }

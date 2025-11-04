@@ -9,7 +9,7 @@ public interface Batch {
 	/**
 	 * Flushes this batch to the renderer.
 	 * 
-	 * @see GLBatch#flush()
+	 * @see Batch#flush()
 	 */
 	public void end();
 	

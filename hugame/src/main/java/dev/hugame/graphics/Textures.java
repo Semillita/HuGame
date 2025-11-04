@@ -3,7 +3,6 @@ package dev.hugame.graphics;
 import java.util.HashMap;
 import java.util.Map;
 
-import dev.hugame.core.Graphics;
 import dev.hugame.core.HuGame;
 import dev.hugame.inject.Inject;
 import dev.hugame.util.Files;

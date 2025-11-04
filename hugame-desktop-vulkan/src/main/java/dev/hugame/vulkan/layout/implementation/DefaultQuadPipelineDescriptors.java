@@ -2,7 +2,6 @@ package dev.hugame.vulkan.layout.implementation;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.VK10.*;
-import static org.lwjgl.vulkan.VK10.VK_FORMAT_R32_SINT;
 
 import dev.hugame.vulkan.core.VulkanGraphics;
 import dev.hugame.vulkan.layout.DescriptorFactory;

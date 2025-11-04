@@ -1,5 +1,7 @@
 package dev.hugame.core;
 
+import dev.hugame.graphics.Graphics;
+
 /** A context used to provide objects specific to the platform and API. */
 public interface HuGameContext {
 
