@@ -8,7 +8,6 @@ import dev.hugame.vulkan.surface.VulkanSurface;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
-
 import lombok.Getter;
 import org.lwjgl.vulkan.*;
 
@@ -293,13 +292,10 @@ public class VulkanDevice {
 
   public static class DeviceSupport {
     private boolean geometryShaderSupport;
-    @Getter
-    private QueueFamilyIndices queueFamilyIndices;
+    @Getter private QueueFamilyIndices queueFamilyIndices;
     private List<String> supportedExtensions;
-    @Getter
-    private DeviceSwapChainSupport swapChainSupport;
-    @Getter
-    private DeviceLimits limits;
+    @Getter private DeviceSwapChainSupport swapChainSupport;
+    @Getter private DeviceLimits limits;
 
     public boolean isAdequate() {
       return geometryShaderSupport
@@ -307,7 +303,6 @@ public class VulkanDevice {
           && supportedExtensions.contains("VK_KHR_swapchain")
           && swapChainSupport.isAdequate();
     }
-
   }
 
   public static class DeviceSwapChainSupport {
@@ -324,12 +319,9 @@ public class VulkanDevice {
 
   private final VkPhysicalDevice physicalDevice;
   private final VkDevice logicalDevice;
-  @Getter
-  private final GraphicsQueue graphicsQueue;
-  @Getter
-  private final PresentQueue presentQueue;
-  @Getter
-  private final DeviceSupport support;
+  @Getter private final GraphicsQueue graphicsQueue;
+  @Getter private final PresentQueue presentQueue;
+  @Getter private final DeviceSupport support;
 
   private VulkanDevice(
       VkPhysicalDevice physicalDevice,
