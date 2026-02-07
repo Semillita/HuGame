@@ -18,7 +18,7 @@ public class VulkanSwapChainFrameBuffer implements FrameBuffer {
     var swapChainImageViewHandles = swapChain.getImageViewHandles();
     // TODO: Look into this: Using the model pipeline's render pass for swap chain frame buffers
     // isn't necessarily correct.
-    var renderPass = graphics.getModelPipeline().getRenderPass();
+    var renderPass = graphics.getModelPipeline().getPipeline().getRenderPass();
     var swapChainExtent = swapChain.getExtent();
     var width = swapChainExtent.width();
     var height = swapChainExtent.height();

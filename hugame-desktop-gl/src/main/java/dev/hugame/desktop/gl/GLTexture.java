@@ -13,13 +13,13 @@ public class GLTexture implements Texture {
 	private int handle;
 	
 	private final GLTextureArray textureArray;
-	private final int arrayIndex;
+	private final int layer;
 	private int width;
 	private int height;
 
-	public GLTexture(GLTextureArray textureArray, int arrayIndex, int width, int height) {
+	public GLTexture(GLTextureArray textureArray, int layer, int width, int height) {
 		this.textureArray = textureArray;
-		this.arrayIndex = arrayIndex;
+		this.layer = layer;
 		this.width = width;
 		this.height = height;
 	}
@@ -47,7 +47,7 @@ public class GLTexture implements Texture {
 		unbind();
 		
 		this.textureArray = null;
-		this.arrayIndex = -1;
+		this.layer = -1;
 	}
 	
 	public GLTexture(ResolvedTexture resolvedTexture) {
@@ -67,15 +67,15 @@ public class GLTexture implements Texture {
 		unbind();
 		
 		this.textureArray = null;
-		this.arrayIndex = -1;
+		this.layer = -1;
 	}
 
 	public GLTextureArray getTextureArray() {
 		return textureArray;
 	}
 	
-	public int getArrayIndex() {
-		return arrayIndex;
+	public int getLayer() {
+		return layer;
 	}
 	
 	public int getWidth() {
@@ -87,7 +87,7 @@ public class GLTexture implements Texture {
 	}
 	
 	public int getSlice() {
-		return arrayIndex;
+		return layer;
 	}
 	
 	/** Returns the gl handle of this texture. */

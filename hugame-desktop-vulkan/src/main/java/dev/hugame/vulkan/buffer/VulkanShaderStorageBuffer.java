@@ -98,11 +98,6 @@ public class VulkanShaderStorageBuffer<T extends Bufferable> implements ShaderSt
       data.put(item.getBytes());
     }
 
-    var bytes = new ArrayList<String>();
-    for (int i = 0; i < items.size() * bytesPerItem; i++) {
-      var b = data.get(i);
-      bytes.add(String.format("0x%02X", b));
-    }
     data.rewind();
     BufferUtils.fillWithStagingBuffer(graphics, buffer, data);
 

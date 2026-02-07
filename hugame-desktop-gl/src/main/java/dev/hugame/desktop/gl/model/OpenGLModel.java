@@ -10,7 +10,9 @@ import dev.hugame.model.spec.ResolvedMaterial;
 import dev.hugame.model.spec.ResolvedModel;
 import dev.hugame.util.Util;
 import org.joml.Vector3f;
+import org.lwjgl.BufferUtils;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -45,7 +47,10 @@ public class OpenGLModel implements Model {
 	private List<Texture> textures;
 
 	public static Model from(ResolvedModel resolvedModel) {
-		final var vertices = new ArrayList<Float>();
+        final var vertexData = BufferUtils.createByteBuffer(resolvedModel.getMeshes()
+                .stream()
+                .mapToInt(mesh -> mesh.getVertices().size() * VERTEX_SIZE_BYTES)
+                .sum());
 		final var indices = new ArrayList<Integer>();
 
 		final var textures = new ArrayList<Texture>();
@@ -90,18 +95,18 @@ public class OpenGLModel implements Model {
 				final var normal = vertex.getNormal();
 				final var texCoords = vertex.getTextureCoordinates();
 
-				vertices.add(position.x);
-				vertices.add(position.y);
-				vertices.add(position.z);
+                vertexData.putFloat(position.x);
+                vertexData.putFloat(position.y);
+                vertexData.putFloat(position.z);
 
-				vertices.add(normal.x);
-				vertices.add(normal.y);
-				vertices.add(normal.z);
+                vertexData.putFloat(normal.x);
+                vertexData.putFloat(normal.y);
+                vertexData.putFloat(normal.z);
 
-				vertices.add(texCoords.x);
-				vertices.add(texCoords.y);
+                vertexData.putFloat(texCoords.x);
+                vertexData.putFloat(texCoords.y);
 
-				vertices.add((float) globalMatIndex);
+                vertexData.putInt(globalMatIndex);
 			}
 			indices.addAll(globalIndices);
 			indexOffset += meshVertices.size();
@@ -110,7 +115,8 @@ public class OpenGLModel implements Model {
 
 		var model = new OpenGLModel();
 
-		model.setup(vertices, indices, textures);
+        vertexData.rewind();
+		model.setup(vertexData, indices, textures);
 
 		return model;
 	}
@@ -143,31 +149,28 @@ public class OpenGLModel implements Model {
 		return textures;
 	}
 
-	private void setup(List<Float> vertices, List<Integer> indices, List<Texture> textures) {
+	private void setup(ByteBuffer vertexData, List<Integer> indices, List<Texture> textures) {
 		System.out.println("Model::setup");
-		vertexAmount = vertices.size() / VERTEX_SIZE;
+		vertexAmount = vertexData.capacity() / VERTEX_SIZE_BYTES;
 		System.out.println("Vertex amount: " + vertexAmount);
 		indexAmount = indices.size();
 		System.out.println("Index amount: " + indexAmount);
 		this.textures = textures;
 
 		vaoID = GLUtils.createVAO();
-		vboID = GLUtils.createStaticVBO(vertices.size() * VERTEX_SIZE_BYTES, Util.toFloatArray(vertices));
+		vboID = GLUtils.createStaticVBO(vertexData.capacity(), vertexData);
 
 		glBindVertexArray(vaoID);
 
 		glVertexAttribPointer(0, POSITION_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, POSITION_OFFSET);
 		glEnableVertexAttribArray(0);
+        // TODO: Maybe explicitly use glVertexAttribDivisor(..., 0) on per-vertex attributes.
 
 		glVertexAttribPointer(1, NORMAL_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, NORMAL_OFFSET);
 		glEnableVertexAttribArray(1);
 
 		glVertexAttribPointer(2, TEX_COORDS_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_COORDS_OFFSET);
 		glEnableVertexAttribArray(2);
-
-		// glVertexAttribPointer(3, TEX_ID_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES,
-		// TEX_ID_OFFSET);
-		// glEnableVertexAttribArray(3);
 
 		glVertexAttribPointer(3, MAT_ID_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, MAT_ID_OFFSET);
 		glEnableVertexAttribArray(3);

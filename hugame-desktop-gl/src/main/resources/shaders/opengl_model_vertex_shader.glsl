@@ -1,24 +1,27 @@
 #version 430 core
-layout (location=0) in vec3 aPos;
-layout (location=1) in vec3 aNormal;
-layout (location=2) in vec2 aTexCoords;
-layout (location=3) in float aMatID;
-layout (location=4) in mat4 aTransform;
 
-uniform mat4 uProjection;
-uniform mat4 uView;
+layout(binding = 0) uniform UniformBuffer0 {
+    mat4 projection;
+    mat4 view;
+} uniformBuffer;
 
-out vec3 fPosition;
-out vec3 fNormal;
-out vec2 fTexCoords;
-flat out int fMatID;
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec3 inNormal;
+layout(location = 2) in vec2 inTextureCoordinates;
+layout(location = 3) in int inMaterialIndex;
+layout(location = 4) in mat4 inTransform;
+
+layout(location = 0) out vec3 position;
+layout(location = 1) out vec3 normal;
+layout(location = 2) out vec2 textureCoordinates;
+layout(location = 3) flat out int materialIndex;
 
 void main()
 {
-    fNormal = aNormal; // TODO: normal matrix
-    fTexCoords = aTexCoords;
-    fMatID = int(aMatID);
+    gl_Position = uniformBuffer.projection * uniformBuffer.view * inTransform * vec4(inPosition, 1.0);
 
-	gl_Position = (uProjection * uView * aTransform) * vec4(aPos, 1.0);
-    fPosition = vec3(aTransform * vec4(aPos, 1.0));
+    position = vec3(inTransform * vec4(inPosition, 1.0));
+    normal = inNormal; // TODO: normal matrix
+    textureCoordinates = inTextureCoordinates;
+    materialIndex = inMaterialIndex;
 }

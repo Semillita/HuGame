@@ -40,29 +40,9 @@ public class OpenGLShader implements Shader {
 		glUniformMatrix4fv(getLocation(varName), false, matBuffer);
 	}
 
-	public void uploadFloat(String varName, float val) {
-		use();
-		glUniform1f(getLocation(varName), val);
-	}
-
-	public void uploadInt(String varName, int val) {
-		use();
-		glUniform1i(getLocation(varName), val);
-	}
-
-	public void uploadTexture(String varName, int slot) {
-		use();
-		glUniform1i(getLocation(varName), slot);
-	}
-
 	public void uploadTextureArray(String varName, int[] slots) {
 		use();
 		glUniform1iv(getLocation(varName), slots);
-	}
-
-	public void uploadVec3(String varName, Vector3f var) {
-		use();
-		glUniform3f(getLocation(varName), var.x, var.y, var.z);
 	}
 
 	private int getLocation(String varName) {

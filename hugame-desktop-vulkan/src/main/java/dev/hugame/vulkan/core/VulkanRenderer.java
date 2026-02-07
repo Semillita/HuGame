@@ -4,10 +4,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.vulkan.KHRSwapchain.*;
 import static org.lwjgl.vulkan.VK12.*;
 
-import dev.hugame.environment.DirectionalLight;
 import dev.hugame.environment.Environment;
-import dev.hugame.environment.PointLight;
-import dev.hugame.environment.SpotLight;
 import dev.hugame.graphics.PerspectiveCamera;
 import dev.hugame.graphics.RenderTarget;
 import dev.hugame.graphics.Renderer;
@@ -17,18 +14,15 @@ import dev.hugame.graphics.model.Model;
 import dev.hugame.graphics.text.Font;
 import dev.hugame.util.Logger;
 import dev.hugame.util.Transform;
-import dev.hugame.vulkan.buffer.BufferUtils;
-import dev.hugame.vulkan.buffer.VulkanShaderStorageBuffer;
 import dev.hugame.vulkan.commands.*;
 import dev.hugame.vulkan.image.ImageUtils;
-import dev.hugame.vulkan.layout.DescriptorSource;
-import dev.hugame.vulkan.model.VulkanModel;
+import dev.hugame.vulkan.renderer.ModelRenderer;
+import dev.hugame.vulkan.renderer.QuadRenderer;
 import dev.hugame.vulkan.sync.*;
 import dev.hugame.vulkan.text.TextRenderer;
 import java.util.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.joml.Vector3f;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.VkPresentInfoKHR;
 
@@ -36,22 +30,17 @@ public class VulkanRenderer implements Renderer {
   private static final long UNSIGNED_LONG_MAX_VALUE = 0xFFFFFFFFFFFFFFFFL;
 
   private final VulkanGraphics graphics;
-  private PerspectiveCamera camera;
 
   @Getter private final SetViewportCommand setViewportCommand;
   @Getter private final SetScissorCommand setScissorCommand;
   @Getter private final EndRenderPassCommand endRenderPassCommand;
 
-  private final Map<Model, List<Transform>> modelInstanceData;
   private final SyncManager syncManager;
-
-  private final VulkanShaderStorageBuffer<Material> materialBuffer;
-  private final VulkanShaderStorageBuffer<PointLight> pointLightBuffer;
-  private final VulkanShaderStorageBuffer<SpotLight> spotLightBuffer;
-  private final VulkanShaderStorageBuffer<DirectionalLight> directionalLightBuffer;
 
   private final List<UsedCommandBuffer> usedCommandBuffers = new ArrayList<>();
 
+  private final ModelRenderer modelRenderer;
+  private final QuadRenderer quadRenderer;
   private final TextRenderer textRenderer;
 
   @Getter private int currentImageIndex;
@@ -61,32 +50,21 @@ public class VulkanRenderer implements Renderer {
   VulkanRenderer(VulkanGraphics graphics) {
     this.graphics = graphics;
 
-    camera = new PerspectiveCamera(new Vector3f(100, 100, 100));
-    camera.lookAt(new Vector3f(0, 0, 0));
-    camera.update();
-
     this.setViewportCommand = new SetViewportCommand();
     this.setScissorCommand = new SetScissorCommand();
     this.endRenderPassCommand = new EndRenderPassCommand();
 
-    this.modelInstanceData = new HashMap<>();
     this.syncManager = new SyncManager();
 
-    this.materialBuffer = VulkanShaderStorageBuffer.create(graphics, Material.SIZE_IN_BYTES, 1);
-    this.pointLightBuffer =
-        VulkanShaderStorageBuffer.create(graphics, PointLight.SIZE_IN_BYTES, 10);
-    this.spotLightBuffer = VulkanShaderStorageBuffer.create(graphics, SpotLight.SIZE_IN_BYTES, 10);
-    this.directionalLightBuffer =
-        VulkanShaderStorageBuffer.create(graphics, DirectionalLight.SIZE_IN_BYTES, 10);
-
+    this.modelRenderer = new ModelRenderer(graphics);
+    this.quadRenderer = new QuadRenderer(graphics);
     this.textRenderer = new TextRenderer(graphics);
   }
 
   @Override
   public void create() {
     Logger.pushScope("VulkanRenderer#create");
-    var materials = Materials.collect();
-    materialBuffer.fill(materials);
+    modelRenderer.setMaterials(Materials.collect());
     Logger.popScope();
   }
 
@@ -122,7 +100,7 @@ public class VulkanRenderer implements Renderer {
 
   @Override
   public void draw(Model model, Transform transform) {
-    modelInstanceData.computeIfAbsent(model, ignored -> new ArrayList<>()).add(transform);
+    modelRenderer.draw(model, transform);
   }
 
   @Override
@@ -140,121 +118,11 @@ public class VulkanRenderer implements Renderer {
 
   @Override
   public void flush() {
-    if (modelInstanceData.isEmpty()) {
-      return;
-    }
-
-    var currentFrameVertexShaderUniformBuffer =
-        graphics.getModelPipelineVertexShaderUniformBuffers().get(currentImageIndex);
-    currentFrameVertexShaderUniformBuffer.update(
-        buffer -> {
-          camera.getViewMatrix().get(0, buffer);
-          buffer.position(buffer.position() + 16 * Float.BYTES);
-          camera.getProjectionMatrix().get(buffer);
-        });
-
-    var currentFrameFragmentShaderUniformBuffer =
-        graphics.getModelPipelineFragmentShaderUniformBuffers().get(currentImageIndex);
-    currentFrameFragmentShaderUniformBuffer.update(
-        buffer -> {
-          camera.getPosition().get(buffer);
-          buffer.position(buffer.position() + 3 * Float.BYTES);
-          buffer.putInt(pointLightBuffer.getItemCount());
-          buffer.putInt(spotLightBuffer.getItemCount());
-          buffer.putInt(directionalLightBuffer.getItemCount());
-        });
-
-    for (var modelAndTransforms : modelInstanceData.entrySet()) {
-      var uncheckedModel = modelAndTransforms.getKey();
-      var instanceTransforms = modelAndTransforms.getValue();
-      if (!(uncheckedModel instanceof VulkanModel model)) {
-        throw new RuntimeException("Invalid type of Model: " + uncheckedModel.getClass());
-      }
-
-      renderModel(model, instanceTransforms);
-    }
-
-    modelInstanceData.clear();
+    modelRenderer.flush(graphics);
   }
 
   public void renderBatch(VulkanBatch batch) {
-    var device = graphics.getDevice();
-
-    var frameBuffer = graphics.getFrameBuffers().get(currentImageIndex);
-
-    var currentFrameUniformBuffer = graphics.getQuadPipelineUniformBuffers().get(currentImageIndex);
-
-    var descriptorSets = graphics.getQuadPipelineDescriptorSets();
-    var currentDescriptorSet = descriptorSets.get(currentImageIndex);
-
-    var commandBuffer = graphics.getCommandBuffer();
-
-    var inFlightFrameIndex = frame % graphics.getFramesInFlightCount();
-    var inFlightFrame = graphics.getFramesInFlight().get(inFlightFrameIndex);
-    var imageAvailableSemaphore = inFlightFrame.getImageAvailableSemaphore();
-
-    var vertexBuffer = batch.getVertexBuffer();
-    var indexBuffer = batch.getIndexBuffer();
-
-    BufferUtils.fillWithStagingBuffer(
-        graphics, vertexBuffer.getBuffer(), batch.getVertexDataBuffer());
-
-    var textureArrays = batch.getTextureArrays();
-
-    currentDescriptorSet.write(
-        graphics,
-        DescriptorSource.fromUniformBuffer(currentFrameUniformBuffer),
-        DescriptorSource.fromTextureArrays(textureArrays, 32));
-
-    var pipeline = graphics.getQuadPipeline();
-
-    var commands =
-        new ArrayList<VulkanCommand>() {
-          {
-            if (!hasDrawnDuringCurrentFrame) {
-              addAll(getClearBufferCommands());
-            }
-
-            addAll(
-                Arrays.asList(
-                    new BeginRenderPassCommand(pipeline.getRenderPass(), frameBuffer),
-                    new BindPipelineCommand(pipeline.getHandle()),
-                    setViewportCommand,
-                    setScissorCommand,
-                    new BindVertexBuffersCommand(vertexBuffer),
-                    new BindIndexBufferCommand(indexBuffer),
-                    new BindDescriptorSetsCommand(currentDescriptorSet, pipeline),
-                    new DrawCommand(batch.getIndexCount(), 1),
-                    endRenderPassCommand));
-          }
-        };
-
-    commandBuffer.reset();
-    commandBuffer.record(graphics, commands);
-
-    var batchCamera = batch.getCamera();
-    currentFrameUniformBuffer.update(
-        buffer -> {
-          batchCamera.getViewMatrix().get(0, buffer);
-          batchCamera.getProjectionMatrix().get(16 * Float.BYTES, buffer);
-        });
-
-    var waitSyncPoint = hasDrawnDuringCurrentFrame ? null : imageAvailableSemaphore;
-
-    var submitInfo =
-        new QueueSubmitInfo()
-            .setCommandBuffer(commandBuffer)
-            .setWaitSyncPoint(waitSyncPoint)
-            .setWaitDestinationStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-    VulkanFence signalFence = null; // Don't use a fence for each draw call
-
-    var submitResult = device.getGraphicsQueue().submit(submitInfo, signalFence);
-    if (submitResult != VulkanResult.SUCCESS) {
-      throw new RuntimeException("[HuGame] Failed to submit queue");
-    }
-
-    hasDrawnDuringCurrentFrame = true;
+    quadRenderer.renderBatch(graphics, batch);
   }
 
   @Override
@@ -316,111 +184,13 @@ public class VulkanRenderer implements Renderer {
 
   @Override
   public PerspectiveCamera getCamera() {
-    return camera;
+    // return camera;
+    return modelRenderer.getCamera();
   }
 
   @Override
   public void updateEnvironment(Environment environment) {
-    var pointLights = environment.getPointLights();
-    var spotLights = environment.getSpotLights();
-    var directionalLights = environment.getDirectionalLights();
-
-    pointLightBuffer.refill(pointLights);
-    spotLightBuffer.refill(spotLights);
-    directionalLightBuffer.refill(directionalLights);
-  }
-
-  private void renderModel(VulkanModel model, List<Transform> transforms) {
-    var instanceCount = transforms.size();
-    var transformSizeBytes = 16 * Float.BYTES;
-    var instanceDataBuffer = MemoryUtil.memAlloc(instanceCount * transformSizeBytes).rewind();
-
-    var instanceOffset = 0;
-    for (var transform : transforms) {
-      var transformationMatrix = transform.getMatrix();
-      transformationMatrix.get(instanceOffset * transformSizeBytes, instanceDataBuffer);
-
-      instanceOffset++;
-    }
-
-    var instanceBuffer = model.getInstanceBuffer();
-    var instanceBufferContent = instanceBuffer.getBuffer();
-    BufferUtils.fillWithStagingBuffer(graphics, instanceBufferContent, instanceDataBuffer);
-    MemoryUtil.memFree(instanceDataBuffer);
-
-    var indexBuffer = model.getIndexBuffer();
-
-    var textureArrays = model.getTextureArrays();
-
-    var descriptorSets = graphics.getModelPipelineDescriptorSets();
-    var currentDescriptorSet = descriptorSets.get(currentImageIndex);
-
-    var currentFrameVertexShaderUniformBuffer =
-        graphics.getModelPipelineVertexShaderUniformBuffers().get(currentImageIndex);
-    var currentFrameFragmentShaderUniformBuffer =
-        graphics.getModelPipelineFragmentShaderUniformBuffers().get(currentImageIndex);
-
-    currentDescriptorSet.write(
-        graphics,
-        DescriptorSource.fromUniformBuffer(currentFrameVertexShaderUniformBuffer),
-        DescriptorSource.fromUniformBuffer(currentFrameFragmentShaderUniformBuffer),
-        DescriptorSource.fromTextureArrays(textureArrays, 32),
-        DescriptorSource.fromShaderStorageBuffer(materialBuffer),
-        DescriptorSource.fromShaderStorageBuffer(pointLightBuffer),
-        DescriptorSource.fromShaderStorageBuffer(spotLightBuffer),
-        DescriptorSource.fromShaderStorageBuffer(directionalLightBuffer));
-
-    var device = graphics.getDevice();
-    var frameBuffer = graphics.getFrameBuffers().get(currentImageIndex);
-    var pipeline = graphics.getModelPipeline();
-
-    var commands =
-        new ArrayList<VulkanCommand>() {
-          {
-            if (!hasDrawnDuringCurrentFrame) {
-              addAll(getClearBufferCommands());
-            }
-
-            addAll(
-                Arrays.asList(
-                    new BeginRenderPassCommand(pipeline.getRenderPass(), frameBuffer),
-                    new BindPipelineCommand(pipeline.getHandle()),
-                    setViewportCommand,
-                    setScissorCommand,
-                    new BindVertexBuffersCommand(model.getVertexBuffer(), instanceBuffer),
-                    new BindIndexBufferCommand(indexBuffer),
-                    new BindDescriptorSetsCommand(currentDescriptorSet, pipeline),
-                    new DrawCommand(model.getIndexCount(), 100),
-                    endRenderPassCommand));
-          }
-        };
-
-    var commandBuffer = graphics.getCommandBuffer();
-    commandBuffer.reset();
-    commandBuffer.record(graphics, commands);
-
-    var inFlightFrameIndex = frame % graphics.getFramesInFlightCount();
-    var inFlightFrame = graphics.getFramesInFlight().get(inFlightFrameIndex);
-    var imageAvailableSemaphore = inFlightFrame.getImageAvailableSemaphore();
-    var waitSyncPoint = hasDrawnDuringCurrentFrame ? null : imageAvailableSemaphore;
-
-    var submitInfo =
-        new QueueSubmitInfo()
-            .setCommandBuffer(commandBuffer)
-            .setWaitSyncPoint(waitSyncPoint)
-            .setWaitDestinationStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-    VulkanFence signalFence = null; // Don't use a fence for each draw call
-
-    var graphicsQueue = device.getGraphicsQueue();
-    var submitResult = graphicsQueue.submit(submitInfo, signalFence);
-    if (submitResult != VulkanResult.SUCCESS) {
-      throw new RuntimeException("[HuGame] Failed to submit queue: " + submitResult);
-    }
-
-    hasDrawnDuringCurrentFrame = true;
-
-    transforms.clear();
+    modelRenderer.updateEnvironment(environment);
   }
 
   private Integer acquireNextImage(InFlightFrame inFlightFrame) {

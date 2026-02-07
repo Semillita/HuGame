@@ -1,24 +1,24 @@
-#version 330 core
-layout (location=0) in vec3 aPos;
-layout (location=1) in vec4 aColor;
-layout (location=2) in vec2 aTexCoords;
-layout (location=3) in float aTexArrayID;
-layout (location=4) in float aTexArrayIndex;
+#version 430 core
 
-uniform mat4 uProjection;
-uniform mat4 uView;
+layout(binding = 0) uniform UniformBuffer0 {
+    mat4 projection;
+    mat4 view;
+} uniformBuffer;
 
-out vec4 fColor;
-out vec2 fTexCoords;
-out float fTexArrayID;
-out float fTexArrayIndex;
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec2 inTextureCoordinates;
+layout(location = 2) in int inTextureIndex;
+layout(location = 3) in int inTextureLayer;
+
+layout(location = 0) out vec2 outTextureCoordinates;
+layout(location = 1) out int outTextureIndex;
+layout(location = 2) out int outTextureLayer;
 
 void main()
 {
-    fColor = aColor;
-    fTexCoords = aTexCoords;
-    fTexArrayID = aTexArrayID;
-    fTexArrayIndex = aTexArrayIndex;
+    gl_Position = uniformBuffer.projection * uniformBuffer.view * vec4(inPosition, 1.0);
 
-    gl_Position = uProjection * uView * vec4(aPos, 1.0);
+    outTextureCoordinates = inTextureCoordinates;
+    outTextureIndex = inTextureIndex;
+    outTextureLayer = inTextureLayer;
 }

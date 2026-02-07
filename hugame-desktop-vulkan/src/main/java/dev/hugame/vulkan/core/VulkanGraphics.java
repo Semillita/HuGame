@@ -11,7 +11,6 @@ import dev.hugame.graphics.text.ResolvedFont;
 import dev.hugame.model.spec.ResolvedModel;
 import dev.hugame.util.Files;
 import dev.hugame.util.ImageLoader;
-import dev.hugame.vulkan.buffer.VulkanUniformBuffer;
 import dev.hugame.vulkan.commands.BeginRenderPassCommand;
 import dev.hugame.vulkan.commands.BindDescriptorSetsCommand;
 import dev.hugame.vulkan.commands.BindIndexBufferCommand;
@@ -21,18 +20,14 @@ import dev.hugame.vulkan.commands.DrawCommand;
 import dev.hugame.vulkan.commands.VulkanCommand;
 import dev.hugame.vulkan.image.ImageUtils;
 import dev.hugame.vulkan.image.VulkanImageView;
-import dev.hugame.vulkan.layout.VulkanDescriptorPool;
-import dev.hugame.vulkan.layout.VulkanDescriptorSet;
-import dev.hugame.vulkan.layout.VulkanDescriptorSetLayout;
 import dev.hugame.vulkan.layout.implementation.DefaultModelPipelineDescriptors;
 import dev.hugame.vulkan.layout.implementation.DefaultQuadPipelineDescriptors;
 import dev.hugame.vulkan.model.ModelFactory;
-import dev.hugame.vulkan.pipeline.VulkanPipeline;
+import dev.hugame.vulkan.pipeline.RenderPipeline;
 import dev.hugame.vulkan.pipeline.shader.VulkanShader;
 import dev.hugame.vulkan.surface.VulkanSurface;
 import dev.hugame.vulkan.surface.VulkanSurfaceContext;
 import dev.hugame.vulkan.sync.*;
-import dev.hugame.vulkan.text.DefaultTextPipelineDescriptors;
 import dev.hugame.vulkan.texture.TextureCollector;
 import dev.hugame.vulkan.texture.VulkanTexture;
 import dev.hugame.vulkan.types.ImageAspect;
@@ -55,11 +50,6 @@ import org.joml.Vector4f;
 //  respective renderers like ModelRenderer, QuadRenderer, TextRenderer.
 public class VulkanGraphics implements Graphics {
   private static final boolean VALIDATION_LAYERS_ENABLED = true;
-  private static final int MODEL_PIPELINE_VERTEX_SHADER_UNIFORM_BUFFER_SIZE = 2 * 16 * Float.BYTES;
-  private static final int MODEL_PIPELINE_FRAGMENT_SHADER_UNIFORM_BUFFER_SIZE = 6 * Float.BYTES;
-  private static final int QUAD_PIPELINE_UNIFORM_BUFFER_SIZE = 2 * 16 * Float.BYTES;
-  private static final int TEXT_PIPELINE_VERTEX_SHADER_UNIFORM_BUFFER_SIZE = 2 * 16 * Float.BYTES;
-  private static final int TEXT_PIPELINE_FRAGMENT_SHADER_UNIFORM_BUFFER_SIZE = Float.BYTES;
 
   @Getter
   private final VulkanSurfaceContext
@@ -81,28 +71,8 @@ public class VulkanGraphics implements Graphics {
   @Getter private final List<InFlightFrame> framesInFlight;
   private final VulkanRenderer renderer;
 
-  private final VulkanDescriptorSetLayout modelPipelineDescriptorSetLayout;
-  private final VulkanDescriptorSetLayout quadPipelineDescriptorSetLayout;
-  private final VulkanDescriptorSetLayout textPipelineDescriptorSetLayout;
-
-  @Getter private final VulkanPipeline modelPipeline;
-  @Getter private final VulkanPipeline quadPipeline;
-  @Getter private final VulkanPipeline textPipeline;
-
-  @Getter private final List<VulkanUniformBuffer> quadPipelineUniformBuffers;
-  @Getter private final List<VulkanUniformBuffer> modelPipelineVertexShaderUniformBuffers;
-  @Getter private final List<VulkanUniformBuffer> modelPipelineFragmentShaderUniformBuffers;
-
-  @Getter private final List<VulkanUniformBuffer> textPipelineVertexShaderUniformBuffers;
-  @Getter private final List<VulkanUniformBuffer> textPipelineFragmentShaderUniformBuffers;
-
-  private final VulkanDescriptorPool modelPipelineDescriptorPool;
-  private final VulkanDescriptorPool quadPipelineDescriptorPool;
-  private final VulkanDescriptorPool textPipelineDescriptorPool;
-
-  @Getter private final List<VulkanDescriptorSet> modelPipelineDescriptorSets;
-  @Getter private final List<VulkanDescriptorSet> quadPipelineDescriptorSets;
-  @Getter private final List<VulkanDescriptorSet> textPipelineDescriptorSets;
+  @Getter private final RenderPipeline modelPipeline;
+  @Getter private final RenderPipeline quadPipeline;
 
   private final ModelFactory modelFactory;
   private final TextureCollector textureCollector;
@@ -127,56 +97,20 @@ public class VulkanGraphics implements Graphics {
     this.device = VulkanDevice.create(this);
     this.swapChain = VulkanSwapChain.create(this, surfaceContext);
 
-    var modelPipelineDescriptors = new DefaultModelPipelineDescriptors();
-    var modelPipelineVertexShaderSource =
-        Files.read("/shaders/vulkan_model_vertex_shader.glsl").orElseThrow();
-    var modelPipelineFragmentShaderSource =
-        Files.read("/shaders/vulkan_model_fragment_shader.glsl").orElseThrow();
-
-    var quadPipelineDescriptors = new DefaultQuadPipelineDescriptors();
-    var quadPipelineVertexSource =
-        Files.read("/shaders/vulkan_quad_vertex_shader.glsl").orElseThrow();
-    var quadPipelineFragmentSource =
-        Files.read("/shaders/vulkan_quad_fragment_shader.glsl").orElseThrow();
-
-    this.modelPipelineDescriptorSetLayout =
-        modelPipelineDescriptors.createDescriptorSetLayout(this);
-    this.quadPipelineDescriptorSetLayout = quadPipelineDescriptors.createDescriptorSetLayout(this);
-
     this.modelPipeline =
-        VulkanPipeline.create(
+        new RenderPipeline(
             this,
-            modelPipelineDescriptors,
-            modelPipelineDescriptorSetLayout,
-            modelPipelineVertexShaderSource,
-            modelPipelineFragmentShaderSource,
+            new DefaultModelPipelineDescriptors(),
+            Files.read("/shaders/vulkan_model_vertex_shader.glsl").orElseThrow(),
+            Files.read("/shaders/vulkan_model_fragment_shader.glsl").orElseThrow(),
             true);
-
     this.quadPipeline =
-        VulkanPipeline.create(
+        new RenderPipeline(
             this,
-            quadPipelineDescriptors,
-            quadPipelineDescriptorSetLayout,
-            quadPipelineVertexSource,
-            quadPipelineFragmentSource,
+            new DefaultQuadPipelineDescriptors(),
+            Files.read("/shaders/vulkan_quad_vertex_shader.glsl").orElseThrow(),
+            Files.read("/shaders/vulkan_quad_fragment_shader.glsl").orElseThrow(),
             false);
-
-    var textPipelineDescriptors = new DefaultTextPipelineDescriptors();
-    var textPipelineVertexSource =
-        Files.read("/shaders/vulkan_text_vertex_shader.glsl").orElseThrow();
-    var textPipelineFragmentSource =
-        Files.read("/shaders/vulkan_text_fragment_shader.glsl").orElseThrow();
-
-    this.textPipelineDescriptorSetLayout = textPipelineDescriptors.createDescriptorSetLayout(this);
-
-    this.textPipeline =
-        VulkanPipeline.create(
-            this,
-            textPipelineDescriptors,
-            textPipelineDescriptorSetLayout,
-            textPipelineVertexSource,
-            textPipelineFragmentSource,
-            true);
 
     this.frameBuffers = VulkanSwapChainFrameBuffer.createAll(this);
     // TODO: Check if command pool needs to be created this early
@@ -194,57 +128,6 @@ public class VulkanGraphics implements Graphics {
             .toList();
 
     this.renderer = new VulkanRenderer(this);
-
-    this.modelPipelineVertexShaderUniformBuffers =
-        IntStream.range(0, swapChain.getImageViewHandles().size())
-            .mapToObj(
-                ignored ->
-                    VulkanUniformBuffer.create(
-                        this, MODEL_PIPELINE_VERTEX_SHADER_UNIFORM_BUFFER_SIZE))
-            .toList();
-
-    this.modelPipelineFragmentShaderUniformBuffers =
-        IntStream.range(0, swapChain.getImageViewHandles().size())
-            .mapToObj(
-                ignored ->
-                    VulkanUniformBuffer.create(
-                        this, MODEL_PIPELINE_FRAGMENT_SHADER_UNIFORM_BUFFER_SIZE))
-            .toList();
-
-    this.quadPipelineUniformBuffers =
-        IntStream.range(0, getFramesInFlightCount())
-            .mapToObj(
-                ignored -> VulkanUniformBuffer.create(this, QUAD_PIPELINE_UNIFORM_BUFFER_SIZE))
-            .toList();
-
-    this.textPipelineVertexShaderUniformBuffers =
-        IntStream.range(0, getFramesInFlightCount())
-            .mapToObj(
-                ignored ->
-                    VulkanUniformBuffer.create(
-                        this, TEXT_PIPELINE_VERTEX_SHADER_UNIFORM_BUFFER_SIZE))
-            .toList();
-
-    this.textPipelineFragmentShaderUniformBuffers =
-        IntStream.range(0, getFramesInFlightCount())
-            .mapToObj(
-                ignored ->
-                    VulkanUniformBuffer.create(
-                        this, TEXT_PIPELINE_FRAGMENT_SHADER_UNIFORM_BUFFER_SIZE))
-            .toList();
-
-    this.modelPipelineDescriptorPool = modelPipelineDescriptors.createDescriptorPool(this);
-    this.quadPipelineDescriptorPool = quadPipelineDescriptors.createDescriptorPool(this);
-    this.textPipelineDescriptorPool = textPipelineDescriptors.createDescriptorPool(this);
-
-    this.modelPipelineDescriptorSets =
-        modelPipelineDescriptorPool.allocateDescriptorSets(this, modelPipelineDescriptorSetLayout);
-
-    this.quadPipelineDescriptorSets =
-        quadPipelineDescriptorPool.allocateDescriptorSets(this, quadPipelineDescriptorSetLayout);
-
-    this.textPipelineDescriptorSets =
-        textPipelineDescriptorPool.allocateDescriptorSets(this, textPipelineDescriptorSetLayout);
 
     var defaultTextureBytes = Files.readBytes("/default_texture.png").orElseThrow();
     this.modelFactory = new ModelFactory();
@@ -408,7 +291,6 @@ public class VulkanGraphics implements Graphics {
     var pipeline = renderPipeline.getPipeline();
 
     var hasDrawnDuringCurrentFrame = renderer.isHasDrawnDuringCurrentFrame();
-    var currentImageIndex = renderer.getCurrentImageIndex();
 
     var clearCommands =
         hasDrawnDuringCurrentFrame
@@ -418,7 +300,7 @@ public class VulkanGraphics implements Graphics {
     var renderCommands =
         List.of(
             new BeginRenderPassCommand(pipeline.getRenderPass(), renderInfo.getFrameBuffer()),
-            new BindPipelineCommand(pipeline.getHandle()),
+            new BindPipelineCommand(pipeline),
             renderer.getSetViewportCommand(),
             renderer.getSetScissorCommand(),
             new BindVertexBuffersCommand(renderInfo.getVertexBuffers()),
@@ -428,19 +310,31 @@ public class VulkanGraphics implements Graphics {
             renderer.getEndRenderPassCommand());
 
     var commands = Stream.concat(clearCommands.stream(), renderCommands.stream()).toList();
+    var commandBuffer = renderInfo.getCommandBuffer();
     commandBuffer.reset();
     commandBuffer.record(this, commands);
+
+    var waitSyncPoint = hasDrawnDuringCurrentFrame ? null : getImageAvailableSemaphore();
 
     var submitInfo =
         new QueueSubmitInfo()
             .setCommandBuffer(commandBuffer)
-            .setWaitSyncPoint(renderInfo.getWaitSyncPoint())
+            .setWaitSyncPoint(waitSyncPoint)
             .setWaitDestinationStageMask(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
     var submitResult = device.getGraphicsQueue().submit(submitInfo, null);
     if (submitResult != VulkanResult.SUCCESS) {
       throw new RuntimeException("[HuGame] Failed to submit queue");
     }
+
+    // TODO: Set renderer has drawn current frame
+    renderer.setHasDrawnDuringCurrentFrame(true);
+  }
+
+  public BinarySemaphore getImageAvailableSemaphore() {
+    var inFlightFrameIndex = renderer.getFrame() % getFramesInFlightCount();
+    var inFlightFrame = framesInFlight.get(inFlightFrameIndex);
+    return inFlightFrame.getImageAvailableSemaphore();
   }
 
   private void cleanupSwapChain() {

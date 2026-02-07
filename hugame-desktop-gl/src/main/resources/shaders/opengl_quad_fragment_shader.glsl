@@ -1,16 +1,13 @@
-#version 330 core
+#version 430 core
 
-in vec4 fColor;
-in vec2 fTexCoords;
-in float fTexArrayID;
-in float fTexArrayIndex;
+layout(binding = 1) uniform sampler2DArray uTextures[32];
 
-uniform sampler2DArray uTextures[32];
+layout(location = 0) in vec2 textureCoordinates;
+layout(location = 1) flat in int textureIndex;
+layout(location = 2) flat in int textureLayer;
 
-out vec4 color;
+layout(location = 0) out vec4 color;
 
-void main()
-{
-	int id = int(fTexArrayID);
-    color = fColor * texture(uTextures[id], vec3(fTexCoords, fTexArrayIndex));
+void main() {
+    color = texture(uTextures[textureIndex], vec3(textureCoordinates, textureLayer));
 }

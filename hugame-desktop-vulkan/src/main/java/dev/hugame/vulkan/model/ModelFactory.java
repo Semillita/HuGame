@@ -151,7 +151,7 @@ public class ModelFactory {
         .map(VulkanTexture.class::cast)
         .toList();*/
 
-    var vertexBuffer = VulkanVertexBuffer.create(graphics, vertices);
+    var vertexBuffer = VulkanVertexBuffer.create(graphics, vertices); // TODO: Use verticesByteBuffer
     var instanceBuffer = VulkanVertexBuffer.create(graphics, 10_000 * 16 * Float.BYTES);
     var indexBuffer = VulkanIndexBuffer.create(graphics, indices);
 

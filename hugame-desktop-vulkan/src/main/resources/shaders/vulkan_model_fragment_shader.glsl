@@ -58,7 +58,7 @@ const float ambientStrength = 0.5;
 const float diffuseStrength = 0.5;
 const float specularStrength = 0.3;
 
-layout(binding = 1) uniform UniformBuffer {
+layout (binding = 1) uniform UniformBuffer {
     vec3 cameraPosition;
     int pointLightAmount;
     int spotLightAmount;
@@ -67,22 +67,22 @@ layout(binding = 1) uniform UniformBuffer {
 
 layout(binding = 2) uniform sampler2DArray textures[32];
 
-layout (std430, binding = 3) readonly buffer materialBuffer
+layout(std430, binding = 3) readonly buffer materialBuffer
 {
     Material materials[];
 };
 
-layout (std430, binding = 4) readonly buffer pointLightBuffer
+layout(std430, binding = 4) readonly buffer pointLightBuffer
 {
     PointLight pointLights[];
 };
 
-layout (std430, binding = 5) readonly buffer spotLightBuffer
+layout(std430, binding = 5) readonly buffer spotLightBuffer
 {
     SpotLight spotLights[];
 };
 
-layout (std430, binding = 6) readonly buffer directionalLightBuffer
+layout(std430, binding = 6) readonly buffer directionalLightBuffer
 {
     DirectionalLight directionalLights[];
 };
@@ -92,23 +92,11 @@ layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 textureCoordinates;
 layout(location = 3) flat in int materialIndex;
 
-//layout(location = 0) in vec3 fragColor;
-//layout(location = 1) in vec2 fragTextureCoordinates;
-//layout(location = 2) flat in int fragTextureIndex;
-
 layout(location = 0) out vec4 color;
 
 vec3 calculatePointLight(PointLight light, Material material);
 vec3 calculateSpotLight(SpotLight light, Material material);
 vec3 calculateDirectionalLight(DirectionalLight light, Material material);
-
-// TODO: Can remove?
-float getAttenuation(vec3 lightPos, vec3 fragPos, float constant, float linear, float quadratic);
-
-//void main() {
-//    vec4 textureSample = texture(textureSampler[nonuniformEXT(fragTextureIndex)], fragTextureCoordinates);
-//    color = textureSample;
-//}
 
 void main() {
     Material material = materials[materialIndex];
@@ -125,9 +113,6 @@ void main() {
     for (int i = 0; i < uniformBuffer.directionalLightAmount; i++) {
         light += calculateDirectionalLight(directionalLights[i], material);
     }
-    //float l = 10 / (length(uniformBuffer.cameraPosition - position));
-    //light = vec3(l);
-    //light = normal;
 
     vec4 textureSample;
     int albedoMapTextureIndex = material.albedoMapTextureIndex;
@@ -138,17 +123,13 @@ void main() {
         textureSample = vec4(1, 1, 1, 1);
     }
 
-    //color = textureSample * vec4(light, 1.0);
-    color = vec4(normal, 1.0);
-    //color = vec4(light, 1.0);
-    //color = vec4(light, 1.0);
-    //color = textureSample;
+    color = textureSample * vec4(light, 1.0);
 }
 
 vec3 calculatePointLight(PointLight light, Material material) {
     float distance = length(light.position - position);
     float attenuation = 1.0 / (light.constant + light.linear * distance +
-    light.quadratic * (distance * distance));
+        light.quadratic * (distance * distance));
 
     vec3 ambient = light.color * attenuation * material.ambient;
 

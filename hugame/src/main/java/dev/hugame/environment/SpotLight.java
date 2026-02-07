@@ -2,6 +2,8 @@ package dev.hugame.environment;
 
 import java.util.Arrays;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.joml.Vector3f;
 
 import dev.hugame.util.ByteSerializer;
@@ -15,8 +17,12 @@ public non-sealed class SpotLight extends Light {
 	public static final int SIZE_IN_BYTES = 20 * Float.BYTES;
 	public static final int BYTES = 20 * Float.BYTES;
 
-	private Vector3f position;
-	private Vector3f direction;
+    /**
+     * -- GETTER --
+     * Returns the position of this light.
+     */
+    @Getter @Setter private Vector3f position;
+	@Getter @Setter private Vector3f direction;
 	
 	private Vector3f color;
 	
@@ -39,16 +45,6 @@ public non-sealed class SpotLight extends Light {
 		this.constant = 1;
 		this.linear = 0.020f;
 		this.quadratic = 0.0092f;
-	}
-
-	/** Returns the position of this light. */
-	public Vector3f getPosition() {
-		return position;
-	}
-
-	/** Returns the direction of this light. */
-	public Vector3f getDirection() {
-		return direction;
 	}
 
 	@Override

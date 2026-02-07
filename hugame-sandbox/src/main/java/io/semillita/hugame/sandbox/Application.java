@@ -32,12 +32,14 @@ import dev.hugame.model.spec.ModelLoader;
 import dev.hugame.ui.Slider;
 import dev.hugame.util.TextureLoader;
 import dev.hugame.util.Transform;
+import dev.hugame.graphics.renderers.model.ModelPipelineShaderGenerator;
 import dev.hugame.vulkan.surface.GlfwSurfaceContext;
 import dev.hugame.window.DesktopInput;
 import dev.hugame.window.DesktopWindow;
 import dev.hugame.window.WindowConfiguration;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import java.awt.Dimension;
 import java.util.List;
@@ -47,6 +49,12 @@ import static org.lwjgl.opengl.GL11.glViewport;
 
 public class Application implements SimpleApplicationListener {
 	public static void main(String[] args) {
+        var modelShaderSourceTest = ModelPipelineShaderGenerator.createShader();
+        System.out.println("Generated model vertex shader:");
+        System.out.println(modelShaderSourceTest.vertexSource());
+        System.out.println("Generated model fragment shader:");
+        System.out.println(modelShaderSourceTest.fragmentSource());
+
 		var windowConfig = new WindowConfiguration()
 				.width(960)
 				.height(540)
@@ -58,7 +66,7 @@ public class Application implements SimpleApplicationListener {
 				.transparentFramebuffer(true);
 
 		Supplier<SimpleApplicationConfiguration> configurer = () -> {
-			var useVulkan = true;
+			var useVulkan = false;
 
 			DesktopWindow window;
 			Graphics graphics;
@@ -98,6 +106,25 @@ public class Application implements SimpleApplicationListener {
 
 	private Model model;
 	private Model plane;
+    private Model car;
+
+    private Vector3f initialLeftBeamPosition = new Vector3f(-125, 50, -20);
+    private Vector3f initialLeftBeamDirection = new Vector3f(-1, -0.3f, 0);
+    private SpotLight leftBeam = new SpotLight(
+            initialLeftBeamPosition,
+            initialLeftBeamDirection,
+            new Vector3f(0.8f, 1, 0.8f),
+            1f,
+            0.5f);
+
+    private Vector3f initialRightBeamPosition = new Vector3f(-125, 50, 20);
+    private Vector3f initialRightBeamDirection = new Vector3f(-1, -0.3f, 0);
+    private SpotLight rightBeam = new SpotLight(
+            initialRightBeamPosition,
+            initialRightBeamDirection,
+            new Vector3f(0.8f, 1, 0.8f),
+            1f,
+            0.5f);
 
 	private Window window;
 	private Input input;
@@ -122,7 +149,7 @@ public class Application implements SimpleApplicationListener {
 		textureLoader = new TextureLoader(graphics);
 
 		playerTransform = new Transform(new Vector3f(0, 2, 0), new Vector3f(0, 0, 0),
-				new Vector3f(0.001f, 0.001f, 0.001f));
+				new Vector3f(0.01f, 0.01f, 0.01f));
 
 		planeTransform = new Transform(new Vector3f(0, 0, 0), new Vector3f(0, 0, 0),
 				new Vector3f(10, 10, 10));
@@ -157,13 +184,17 @@ public class Application implements SimpleApplicationListener {
 		});
 
 		environment = new Environment();
-		var pointLight1 = new PointLight(new Vector3f(2, 0.1f, -2), new Vector3f(1, 0, 0), 0.5f);
-		var spotLight1 = new SpotLight(new Vector3f(0, 1, 0), new Vector3f(-1f, -1, -1), new Vector3f(1, 1, 0), 2, 0.5f);
-		var directionalLight1 = new DirectionalLight(new Vector3f(-1f, -1f, -1f), new Vector3f(1, 1, 1), 0.5f);
+		var pointLight1 = new PointLight(new Vector3f(-3, 0.1f, 3), new Vector3f(1, 1f, 1), 0.5f);
+        var pointLight2 = new PointLight(new Vector3f(3, 1f, -3), new Vector3f(1, 0.5f, 1), 0.5f);
+		var directionalLight1 = new DirectionalLight(new Vector3f(-1f, -1f, -1f), new Vector3f(1, 1, 1), 0.05f);
 		environment.add(pointLight1);
-		environment.add(spotLight1);
+        environment.add(pointLight2);
 		environment.add(directionalLight1);
-		renderer.updateEnvironment(environment);
+
+        environment.add(leftBeam);
+        environment.add(rightBeam);
+
+        renderer.updateEnvironment(environment);
 
 		blueMat = Materials.get(new Vector3f(0, 0, 1), new Vector3f(1, 1, 1), new Vector3f(1, 1, 1), 0.5f, -1, -1, -1,
 				-1, -1, -1);
@@ -178,12 +209,16 @@ public class Application implements SimpleApplicationListener {
 		var resolvedPlaneModel = new ModelBuilder().plane(groundTexture).generate();
 		this.plane = graphics.createModel(resolvedPlaneModel);
 
+        var carModelFile = new FileHandle("saab_lowpoly.fbx", FileLocation.INTERNAL);
+        var resolvedCarModel = modelLoader.load(carModelFile).orElseThrow();
+        this.car = graphics.createModel(resolvedCarModel);
+
 		var camera = renderer.getCamera();
 		camera.setPosition(new Vector3f(0, 5, 5));
 		camera.lookAt(new Vector3f(0, 0, 0));
 		camera.update();
 
-		graphics.setClearColor(0, 0, 1, 1);
+		graphics.setClearColor(0.1f, 0.1f, 0.1f, 1f);
 
         var freeTypeFontLoader = new FreeTypeFontLoader();
         var msdfGenFontLoader = new MsdfGenFontLoader();
@@ -201,6 +236,18 @@ public class Application implements SimpleApplicationListener {
 			playerZ -= 0.1f;
 		if (input.isKeyPressed(Key.S))
 			playerZ += 0.1f;
+        if (input.isKeyPressed(Key.Q))
+            playerY -= 0.1f;
+        if (input.isKeyPressed(Key.E))
+            playerY += 0.1f;
+
+        if (input.isKeyPressed(Key.G)) {
+            playerTransform.rotation.y -= 0.5f;
+        }
+
+        if (input.isKeyPressed(Key.H)) {
+            playerTransform.rotation.y += 0.5f;
+        }
 
 		var camera = renderer.getCamera();
 		var cameraPos = camera.getPosition();
@@ -224,18 +271,37 @@ public class Application implements SimpleApplicationListener {
 		}
 
 		playerTransform.position.x = playerX;
+        playerTransform.position.y = playerY;
 		playerTransform.position.z = playerZ;
 		playerTransform.update();
 
-		renderer.draw(model, playerTransform);
+        var transformedLeftBeamPosition = new Vector4f(initialLeftBeamPosition, 1)
+                .mul(playerTransform.getMatrix());
+        leftBeam.setPosition(transformedLeftBeamPosition.xyz(new Vector3f()));
+
+        var transformedLeftBeamDirection = new Vector4f(initialLeftBeamDirection, 0)
+                .mul(playerTransform.getMatrix());
+        leftBeam.setDirection(transformedLeftBeamDirection.xyz(new Vector3f()));
+
+        var transformedRightBeamPosition = new Vector4f(initialRightBeamPosition, 1)
+                .mul(playerTransform.getMatrix());
+        rightBeam.setPosition(transformedRightBeamPosition.xyz(new Vector3f()));
+
+        var transformedRightBeamDirection = new Vector4f(initialRightBeamDirection, 0)
+                .mul(playerTransform.getMatrix());
+        rightBeam.setDirection(transformedRightBeamDirection.xyz(new Vector3f()));
+
+        renderer.updateEnvironment(environment);
+
+		//renderer.draw(model, playerTransform);
 		renderer.draw(plane, planeTransform);
+        renderer.draw(car, playerTransform);
 		renderer.flush();
 
 		batch.begin();
-		batch.draw(groundTexture, -480, -320, 100, 100);
 		batch.draw(groundTexture, 300, 200, 100, 100);
-		batch.draw(groundTexture, 300, 200, 100, 100);
-		batch.draw(groundTexture, 300, 200, 100, 100);
+        batch.draw(groundTexture, 500, 200, 100, 100);
+        batch.draw(groundTexture, 700, 200, 100, 100);
 		batch.end();
 
         renderer.drawText("Hej, jag heter Hugo", qilkaFont, 100, 550, 400);

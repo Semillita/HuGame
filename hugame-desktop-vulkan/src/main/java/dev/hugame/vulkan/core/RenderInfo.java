@@ -3,7 +3,7 @@ package dev.hugame.vulkan.core;
 import dev.hugame.vulkan.buffer.VulkanIndexBuffer;
 import dev.hugame.vulkan.buffer.VulkanVertexBuffer;
 import dev.hugame.vulkan.layout.VulkanDescriptorSet;
-import dev.hugame.vulkan.sync.Semaphore;
+import dev.hugame.vulkan.pipeline.RenderPipeline;
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,5 +17,4 @@ public class RenderInfo {
   @Getter private final int indexCount;
   @Getter private final VulkanDescriptorSet descriptorSet;
   @Getter private final VulkanCommandBuffer commandBuffer;
-  @Getter private final Semaphore.SyncPoint waitSyncPoint;
 }

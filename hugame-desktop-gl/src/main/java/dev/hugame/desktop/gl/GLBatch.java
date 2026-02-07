@@ -2,6 +2,7 @@ package dev.hugame.desktop.gl;
 
 import static org.lwjgl.opengl.GL43.*;
 
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.List;
 import java.util.ArrayList;
@@ -22,20 +23,22 @@ import dev.hugame.util.Files;
 public class GLBatch implements Batch {
 
 	private static final int POSITION_SIZE = 3;
-	private static final int COLOR_SIZE = 4;
 	private static final int TEX_COORDS_SIZE = 2;
 	private static final int TEX_ARRAY_ID_SIZE = 1;
 	private static final int TEX_ARRAY_INDEX_SIZE = 1;
 
 	private static final int POSITION_OFFSET = 0;
-	private static final int COLOR_OFFSET = POSITION_OFFSET + POSITION_SIZE * Float.BYTES;
-	private static final int TEX_COORDS_OFFSET = COLOR_OFFSET + COLOR_SIZE * Float.BYTES;
+	private static final int TEX_COORDS_OFFSET = POSITION_OFFSET + POSITION_SIZE * Float.BYTES;
 	private static final int TEX_ARRAY_ID_OFFSET = TEX_COORDS_OFFSET + TEX_COORDS_SIZE * Float.BYTES;
 	private static final int TEX_ARRAY_INDEX_OFFSET = TEX_ARRAY_ID_OFFSET + TEX_ARRAY_ID_SIZE * Float.BYTES;
 
-	private static final int VERTEX_SIZE = POSITION_SIZE + COLOR_SIZE + TEX_COORDS_SIZE + TEX_ARRAY_ID_SIZE
+	private static final int VERTEX_SIZE = POSITION_SIZE + TEX_COORDS_SIZE + TEX_ARRAY_ID_SIZE
 			+ TEX_ARRAY_INDEX_SIZE;
 	private static final int VERTEX_SIZE_BYTES = VERTEX_SIZE * Float.BYTES;
+
+    private static final float Z_LAYER = 0;
+    private static final int MAX_QUAD_COUNT = 1_000;
+    private static final int MAX_VERTEX_COUNT = MAX_QUAD_COUNT * 4;
 
 	public static Shader getDefaultShader() {
 		var shaderFactory = new ShaderFactory();
@@ -49,9 +52,10 @@ public class GLBatch implements Batch {
 
 	private int vaoID;
 	private int vboID;
+    private final OpenglIndexBuffer indexBuffer;
 
-	private int maxQuadCount = 1000;
 	private float[] vertices;
+    private ByteBuffer vertexData;
 	private Camera2D camera;
 	private Shader shader;
 	
@@ -71,11 +75,12 @@ public class GLBatch implements Batch {
 		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, units);
 		textureSlotAmount = units.get(0);
 
-		vertices = new float[maxQuadCount * 4 * VERTEX_SIZE];
+		vertices = new float[MAX_VERTEX_COUNT * VERTEX_SIZE];
+        vertexData = BufferUtils.createByteBuffer(MAX_VERTEX_COUNT * VERTEX_SIZE_BYTES);
 
 		vaoID = createVAO();
 		vboID = createVBO();
-		createEBO();
+		this.indexBuffer = createEBO();
 
 		setVertexAttribPointers();
 
@@ -98,6 +103,10 @@ public class GLBatch implements Batch {
 	public float[] getVertices() {
 		return vertices;
 	}
+
+    public ByteBuffer getVertexData() {
+        return vertexData;
+    }
 
 	/** Returns the texture list used in this batch. */
 	public List<GLTextureArray> getTextures() {
@@ -126,7 +135,7 @@ public class GLBatch implements Batch {
 
 	@Override
 	public void draw(Texture texture, int x, int y, int width, int height) {
-		if (idx / 40 >= maxQuadCount || textureArrays.size() >= textureSlotAmount - 1) {
+		if (idx / (4 * VERTEX_SIZE) >= MAX_QUAD_COUNT || textureArrays.size() >= textureSlotAmount - 1) {
 			flush();
 		}
 		
@@ -144,95 +153,59 @@ public class GLBatch implements Batch {
 			textureSlot = textureArrays.size() - 1;
 		}
 		
-		// <Top left>
+		// Top left
+        vertexData.putFloat(x);
+        vertexData.putFloat(y);
+        vertexData.putFloat(Z_LAYER);
 
-		// Position
-		vertices[idx] = x;
-		vertices[idx + 1] = y;
-		vertices[idx + 2] = 0;
-		// Color
-		vertices[idx + 3] = 1;
-		vertices[idx + 4] = 1;
-		vertices[idx + 5] = 1;
-		vertices[idx + 6] = 1;
-		// Tex coords
-		vertices[idx + 7] = u1;
-		vertices[idx + 8] = v1;
-		// Tex ID
-		vertices[idx + 9] = textureSlot;
-		// Tex index
-		vertices[idx + 10] = glTexture.getArrayIndex();
+        vertexData.putFloat(u1);
+        vertexData.putFloat(v1);
 
-		// </Top Left>
+        vertexData.putInt(textureSlot);
+
+        vertexData.putInt(glTexture.getLayer());
 
 		idx += VERTEX_SIZE;
 
-		// <Bottom left>
+		// Bottom left
+        vertexData.putFloat(x);
+        vertexData.putFloat(y + height);
+        vertexData.putFloat(Z_LAYER);
 
-		// Position
-		vertices[idx] = x;
-		vertices[idx + 1] = y + height;
-		vertices[idx + 2] = 0;
-		// Color
-		vertices[idx + 3] = 1;
-		vertices[idx + 4] = 1;
-		vertices[idx + 5] = 1;
-		vertices[idx + 6] = 1;
-		// Tex coords
-		vertices[idx + 7] = u1;
-		vertices[idx + 8] = v2;
-		// Tex ID
-		vertices[idx + 9] = textureSlot;
-		// Tex index
-		vertices[idx + 10] = glTexture.getArrayIndex();
+        vertexData.putFloat(u1);
+        vertexData.putFloat(v2);
 
-		// </Bottom left>
+        vertexData.putInt(textureSlot);
+
+        vertexData.putInt(glTexture.getLayer());
 
 		idx += VERTEX_SIZE;
 
-		// <Bottom right>
+		// Bottom right
+        vertexData.putFloat(x + width);
+        vertexData.putFloat(y + height);
+        vertexData.putFloat(Z_LAYER);
 
-		// Position
-		vertices[idx] = x + width;
-		vertices[idx + 1] = y + height;
-		vertices[idx + 2] = 0;
-		// Color
-		vertices[idx + 3] = 1;
-		vertices[idx + 4] = 1;
-		vertices[idx + 5] = 1;
-		vertices[idx + 6] = 1;
-		// Tex coords
-		vertices[idx + 7] = u2;
-		vertices[idx + 8] = v2;
-		// Tex ID
-		vertices[idx + 9] = textureSlot;
-		// Tex index
-		vertices[idx + 10] = glTexture.getArrayIndex();
+        vertexData.putFloat(u2);
+        vertexData.putFloat(v2);
 
-		// </Bottom right>
+        vertexData.putInt(textureSlot);
+
+        vertexData.putInt(glTexture.getLayer());
 
 		idx += VERTEX_SIZE;
 
-		// <Top right>
+		// Top right
+        vertexData.putFloat(x + width);
+        vertexData.putFloat(y);
+        vertexData.putFloat(Z_LAYER);
 
-		// Position
-		vertices[idx] = x + width;
-		vertices[idx + 1] = y;
-		vertices[idx + 2] = 0;
-		// Color
-		vertices[idx + 3] = 1;
-		vertices[idx + 4] = 1;
-		vertices[idx + 5] = 1;
-		vertices[idx + 6] = 1;
-		// Tex coords
-		vertices[idx + 7] = u2;
-		vertices[idx + 8] = v1;
-		// Tex ID
-		vertices[idx + 9] = textureSlot;
-		// Tex index
-		vertices[idx + 10] = glTexture.getArrayIndex();
+        vertexData.putFloat(u2);
+        vertexData.putFloat(v1);
 
-		// </Top right>
+        vertexData.putInt(textureSlot);
+
+        vertexData.putInt(glTexture.getLayer());
 
 		idx += VERTEX_SIZE;
 	}
@@ -273,18 +246,21 @@ public class GLBatch implements Batch {
 	private int createVBO() {
 		var vboID = glGenBuffers();
 		glBindBuffer(GL_ARRAY_BUFFER, vboID);
-		glBufferData(GL_ARRAY_BUFFER, vertices.length * VERTEX_SIZE_BYTES, GL_DYNAMIC_DRAW);
+        vertexData.rewind();
+		glBufferData(GL_ARRAY_BUFFER, MAX_VERTEX_COUNT * VERTEX_SIZE_BYTES, GL_DYNAMIC_DRAW);
 		return vboID;
 	}
 
 	/**
 	 * Creates and binds a new gl element buffer object, and fills it with indices.
 	 */
-	private void createEBO() {
-		int eboID = glGenBuffers();
+	private OpenglIndexBuffer createEBO() {
+		int indexBufferHandle = glGenBuffers();
 		int[] indices = generateAllQuadIndices();
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboID);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferHandle);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_STATIC_DRAW);
+
+        return new OpenglIndexBuffer(indexBufferHandle);
 	}
 
 	/**
@@ -293,7 +269,7 @@ public class GLBatch implements Batch {
 	 * @return the index array
 	 */
 	private int[] generateAllQuadIndices() {
-		return IntStream.range(0, maxQuadCount).flatMap(offset -> Arrays.stream(getQuadIndices(offset * 4))).toArray();
+		return IntStream.range(0, MAX_QUAD_COUNT).flatMap(offset -> Arrays.stream(getQuadIndices(offset * 4))).toArray();
 	}
 
 	private int[] getQuadIndices(int quadOffset) {
@@ -304,17 +280,14 @@ public class GLBatch implements Batch {
 		glVertexAttribPointer(0, POSITION_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, POSITION_OFFSET);
 		glEnableVertexAttribArray(0);
 
-		glVertexAttribPointer(1, COLOR_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, COLOR_OFFSET);
+		glVertexAttribPointer(1, TEX_COORDS_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_COORDS_OFFSET);
 		glEnableVertexAttribArray(1);
 
-		glVertexAttribPointer(2, TEX_COORDS_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_COORDS_OFFSET);
+		glVertexAttribPointer(2, TEX_ARRAY_ID_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_ARRAY_ID_OFFSET);
 		glEnableVertexAttribArray(2);
-
-		glVertexAttribPointer(3, TEX_ARRAY_ID_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_ARRAY_ID_OFFSET);
-		glEnableVertexAttribArray(3);
 		
-		glVertexAttribPointer(4, TEX_ARRAY_INDEX_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_ARRAY_INDEX_OFFSET);
-		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(3, TEX_ARRAY_INDEX_SIZE, GL_FLOAT, false, VERTEX_SIZE_BYTES, TEX_ARRAY_INDEX_OFFSET);
+		glEnableVertexAttribArray(3);
 	}
 
 }

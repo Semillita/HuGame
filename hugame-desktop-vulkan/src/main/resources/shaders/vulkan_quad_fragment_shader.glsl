@@ -8,7 +8,6 @@ layout(location = 2) flat in int textureLayer;
 
 layout(location = 0) out vec4 color;
 
-void main()
-{
+void main() {
     color = texture(uTextures[textureIndex], vec3(textureCoordinates, textureLayer));
 }
